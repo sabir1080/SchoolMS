@@ -47,7 +47,7 @@ export default function CombinedPage() {
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Exams</h1>
         {isAdmin && session && (
-          <button onClick={() => setEditing(editing === "new" ? null : "new")} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white">
+          <button onClick={() => setEditing(editing === "new" ? null : "new")} className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white">
             {editing === "new" ? "Close" : "+ Annual result"}
           </button>
         )}
@@ -122,13 +122,13 @@ export default function CombinedPage() {
               </div>
             ) : (
               <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-                <Link href={`/exams/combined/result/?id=${c.id}`} className="font-medium text-indigo-600 hover:underline">
+                <Link href={`/exams/combined/result/?id=${c.id}`} className="font-medium text-brand-600 hover:underline">
                   Result →
                 </Link>
                 {isAdmin && (
                   <>
                     {c.status === "draft" ? (
-                      <button onClick={() => act(c, "PATCH", { status: "published" })} className="rounded-lg bg-indigo-600 px-3 py-1.5 font-medium text-white">
+                      <button onClick={() => act(c, "PATCH", { status: "published" })} className="rounded-lg bg-brand-600 px-3 py-1.5 font-medium text-white">
                         Publish
                       </button>
                     ) : (
@@ -136,7 +136,7 @@ export default function CombinedPage() {
                         Unpublish
                       </button>
                     )}
-                    <button onClick={() => setEditing(c.id)} className="text-indigo-600 hover:underline">
+                    <button onClick={() => setEditing(c.id)} className="text-brand-600 hover:underline">
                       Edit
                     </button>
                     <button onClick={() => act(c, "DELETE")} className="text-red-600 hover:underline">

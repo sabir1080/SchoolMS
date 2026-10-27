@@ -51,7 +51,7 @@ function Tile({ label, value, note, href, tone = "" }: { label: string; value: s
   );
   const cls = "block rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900";
   return href ? (
-    <Link href={href} className={`${cls} hover:ring-1 hover:ring-indigo-200`}>
+    <Link href={href} className={`${cls} hover:ring-1 hover:ring-brand-200`}>
       {body}
     </Link>
   ) : (

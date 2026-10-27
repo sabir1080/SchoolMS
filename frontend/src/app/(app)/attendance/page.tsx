@@ -119,7 +119,7 @@ export default function AttendancePage() {
             {user?.role === "admin" ? (
               <>
                 No {terms.sections.toLowerCase()} in the current session.{" "}
-                <Link href="/academics/?tab=sections" className="text-indigo-600 hover:underline">
+                <Link href="/academics/?tab=sections" className="text-brand-600 hover:underline">
                   Set them up in Academic setup
                 </Link>
                 .

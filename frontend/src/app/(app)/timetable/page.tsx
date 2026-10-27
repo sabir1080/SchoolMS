@@ -31,7 +31,7 @@ export default function TimetablePage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Timetable</h1>
-        <button onClick={() => window.print()} className="text-sm text-indigo-600 hover:underline print:hidden">
+        <button onClick={() => window.print()} className="text-sm text-brand-600 hover:underline print:hidden">
           Print
         </button>
       </div>
@@ -302,13 +302,13 @@ function PeriodsSetup() {
         <h2 className="mb-2 font-medium">School days</h2>
         <div className="flex flex-wrap gap-2">
           {DAY_SHORT.map((name, d) => (
-            <label key={d} className={`flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-sm ${days.includes(d) ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950" : "border-slate-300 dark:border-slate-700"}`}>
+            <label key={d} className={`flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-sm ${days.includes(d) ? "border-brand-500 bg-brand-50 dark:bg-brand-950" : "border-slate-300 dark:border-slate-700"}`}>
               <input type="checkbox" checked={days.includes(d)} onChange={() => setDays(days.includes(d) ? days.filter((x) => x !== d) : [...days, d].sort())} />
               {name}
             </label>
           ))}
         </div>
-        <button onClick={saveDays} className="mt-3 text-sm font-medium text-indigo-600 hover:underline">
+        <button onClick={saveDays} className="mt-3 text-sm font-medium text-brand-600 hover:underline">
           Save school days
         </button>
       </Card>
@@ -397,7 +397,7 @@ function PeriodRow({ period, onChanged, onError }: { period: Period; onChanged: 
       </label>
       <span className="flex gap-3 text-xs">
         {changed && (
-          <button onClick={save} className="font-medium text-indigo-600">
+          <button onClick={save} className="font-medium text-brand-600">
             Save
           </button>
         )}

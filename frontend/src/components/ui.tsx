@@ -5,7 +5,7 @@ import { useState, type InputHTMLAttributes, type SelectHTMLAttributes } from "r
 import { ApiError } from "@/lib/api";
 
 const fieldClass =
-  "w-full rounded-lg border border-slate-300 bg-transparent px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-slate-700";
+  "w-full rounded-lg border border-slate-300 bg-transparent px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-slate-700";
 
 export function Field({ label, ...props }: { label: string } & InputHTMLAttributes<HTMLInputElement>) {
   return (
@@ -77,7 +77,7 @@ export function Button(props: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
       {...props}
-      className={`rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60 ${props.className ?? ""}`}
+      className={`rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60 ${props.className ?? ""}`}
     />
   );
 }

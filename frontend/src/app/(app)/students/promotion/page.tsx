@@ -112,7 +112,7 @@ export default function PromotionPage() {
   return (
     <div className="max-w-3xl space-y-4">
       <div>
-        <Link href="/students/" className="text-sm text-indigo-600 hover:underline">
+        <Link href="/students/" className="text-sm text-brand-600 hover:underline">
           ← Students
         </Link>
         <h1 className="mt-1 text-2xl font-semibold">Promote to next class</h1>
@@ -126,7 +126,7 @@ export default function PromotionPage() {
         {sessions.loaded && sessions.items.length < 2 ? (
           <p className="text-sm text-slate-500">
             First add the new session (e.g. 2027-28) in{" "}
-            <Link href="/academics/" className="text-indigo-600 hover:underline">
+            <Link href="/academics/" className="text-brand-600 hover:underline">
               Academic setup
             </Link>
             .
@@ -184,7 +184,7 @@ export default function PromotionPage() {
                 <button
                   type="button"
                   onClick={() => setActions(Object.fromEntries(plan.students.map((s) => [s.student, s.suggested])))}
-                  className="rounded-full border border-indigo-500 px-3 py-1 text-indigo-600"
+                  className="rounded-full border border-brand-500 px-3 py-1 text-brand-600"
                 >
                   Use suggestions
                 </button>

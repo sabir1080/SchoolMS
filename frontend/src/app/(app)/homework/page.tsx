@@ -56,7 +56,7 @@ export default function HomeworkPage() {
     <div className="max-w-3xl space-y-4">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Homework &amp; diary</h1>
-        <button onClick={() => window.print()} className="text-sm text-indigo-600 hover:underline print:hidden">
+        <button onClick={() => window.print()} className="text-sm text-brand-600 hover:underline print:hidden">
           Print
         </button>
       </div>
@@ -105,7 +105,7 @@ export default function HomeworkPage() {
               <p className="text-sm text-slate-500">{dayTitle(date)}</p>
             </div>
             {editing !== "new" && (
-              <button onClick={() => setEditing("new")} className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white print:hidden">
+              <button onClick={() => setEditing("new")} className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white print:hidden">
                 + Add homework
               </button>
             )}
@@ -141,7 +141,7 @@ export default function HomeworkPage() {
                   <li key={h.id} className="py-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        {h.subject_name && <p className="text-xs font-semibold tracking-wide text-indigo-600 uppercase">{h.subject_name}</p>}
+                        {h.subject_name && <p className="text-xs font-semibold tracking-wide text-brand-600 uppercase">{h.subject_name}</p>}
                         <p className="font-medium">{h.title}</p>
                         {h.details && <p className="mt-1 text-sm whitespace-pre-line text-slate-600 dark:text-slate-300">{h.details}</p>}
                         <p className="mt-1 text-xs text-slate-500">
@@ -151,7 +151,7 @@ export default function HomeworkPage() {
                       </div>
                       {h.can_edit && (
                         <span className="flex shrink-0 gap-3 text-xs print:hidden">
-                          <button onClick={() => setEditing(h)} className="text-indigo-600">
+                          <button onClick={() => setEditing(h)} className="text-brand-600">
                             Edit
                           </button>
                           <button onClick={() => remove(h)} className="text-red-600">

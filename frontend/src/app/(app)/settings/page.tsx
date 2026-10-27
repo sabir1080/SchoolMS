@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { BrandingSettings } from "@/components/BrandingSettings";
 import { PaymentSettings } from "@/components/payments/PaymentSettings";
 import { Button, Card, ErrorBox, Field } from "@/components/ui";
 import { api, type PasswordPolicy } from "@/lib/api";
@@ -84,7 +85,7 @@ export default function SettingsPage() {
                 value={form.address}
                 onChange={set("address")}
                 rows={2}
-                className="w-full rounded-lg border border-slate-300 bg-transparent px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-slate-700"
+                className="w-full rounded-lg border border-slate-300 bg-transparent px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-slate-700"
               />
             </label>
           </div>
@@ -126,7 +127,7 @@ export default function SettingsPage() {
                 key={option.value}
                 className={`flex cursor-pointer gap-3 rounded-xl border p-3 ${
                   form.password_policy === option.value
-                    ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950"
+                    ? "border-brand-500 bg-brand-50 dark:bg-brand-950"
                     : "border-slate-200 dark:border-slate-700"
                 }`}
               >
@@ -154,6 +155,7 @@ export default function SettingsPage() {
           {busy ? "Saving…" : "Save settings"}
         </Button>
       </form>
+      <BrandingSettings />
       <PaymentSettings />
     </div>
   );

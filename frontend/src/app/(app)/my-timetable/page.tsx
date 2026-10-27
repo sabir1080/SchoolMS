@@ -21,10 +21,10 @@ export default function MyTimetablePage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between print:hidden">
-        <Link href="/dashboard/" className="text-sm text-indigo-600 hover:underline">
+        <Link href="/dashboard/" className="text-sm text-brand-600 hover:underline">
           ← Dashboard
         </Link>
-        <button onClick={() => window.print()} className="text-sm text-indigo-600 hover:underline">
+        <button onClick={() => window.print()} className="text-sm text-brand-600 hover:underline">
           Print
         </button>
       </div>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { BrandLogo } from "@/components/BrandLogo";
 import { useAuth } from "@/lib/auth";
 import { ALWAYS_OPEN, NAV_BY_ROLE, ROLE_LABELS } from "@/lib/navigation";
 
@@ -42,7 +43,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen md:flex">
       <header className="flex items-center justify-between border-b print:hidden border-slate-200 bg-white px-4 py-3 md:hidden dark:border-slate-800 dark:bg-slate-900">
-        <span className="truncate font-semibold">{user.tenant?.name ?? "SchoolMS Platform"}</span>
+        <span className="flex min-w-0 items-center gap-2">
+          <BrandLogo src={user.tenant?.brand?.logo} className="h-8 w-8" />
+          <span className="truncate font-semibold">{user.tenant?.name ?? "SchoolMS Platform"}</span>
+        </span>
         <button
           onClick={() => setMenuOpen((open) => !open)}
           className="rounded-lg border border-slate-300 px-3 py-1 text-sm dark:border-slate-700"
@@ -55,9 +59,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <aside
         className={`${menuOpen ? "block" : "hidden"} print:hidden border-b border-slate-200 bg-white md:block md:min-h-screen md:w-60 md:shrink-0 md:border-r md:border-b-0 dark:border-slate-800 dark:bg-slate-900`}
       >
-        <div className="hidden px-5 py-5 md:block">
-          <p className="font-semibold">{user.tenant?.name ?? "SchoolMS Platform"}</p>
-          <p className="text-xs text-slate-500">{ROLE_LABELS[user.role]}</p>
+        <div className="hidden items-center gap-3 px-5 py-5 md:flex">
+          <BrandLogo src={user.tenant?.brand?.logo} className="h-10 w-10" />
+          <div className="min-w-0">
+            <p className="font-semibold">{user.tenant?.name ?? "SchoolMS Platform"}</p>
+            <p className="text-xs text-slate-500">{ROLE_LABELS[user.role]}</p>
+          </div>
         </div>
         <nav className="space-y-1 px-3 py-3 md:py-0">
           {nav.map((item) => (
@@ -67,7 +74,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               onClick={() => setMenuOpen(false)}
               className={`block rounded-lg px-3 py-2 text-sm ${
                 pathname.startsWith(item.href)
-                  ? "bg-indigo-50 font-medium text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+                  ? "bg-brand-50 font-medium text-brand-700 dark:bg-brand-950 dark:text-brand-300"
                   : "hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
             >

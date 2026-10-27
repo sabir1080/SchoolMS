@@ -153,7 +153,7 @@ function FeeHeads({ heads, onChanged }: { heads: FeeHead[]; onChanged: () => voi
                     </option>
                   ))}
                 </select>
-                <button onClick={() => update(h, { is_active: !h.is_active })} className="text-xs text-indigo-600 hover:underline">
+                <button onClick={() => update(h, { is_active: !h.is_active })} className="text-xs text-brand-600 hover:underline">
                   {h.is_active ? "Turn off" : "Turn on"}
                 </button>
               </span>

@@ -70,7 +70,7 @@ export default function FeesOverviewPage() {
           <ul className="divide-y divide-slate-200 text-sm dark:divide-slate-800">
             {summary.defaulters.map((d) => (
               <li key={d.student} className="flex items-center justify-between gap-3 py-2">
-                <Link href={`/fees/invoices/?student=${d.student}&status=due`} className="min-w-0 truncate text-indigo-600 hover:underline">
+                <Link href={`/fees/invoices/?student=${d.student}&status=due`} className="min-w-0 truncate text-brand-600 hover:underline">
                   {d.full_name} <span className="text-xs text-slate-500">#{d.admission_no}</span>
                 </Link>
                 <span className="shrink-0 font-medium text-red-600">

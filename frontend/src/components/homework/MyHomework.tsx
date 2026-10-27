@@ -33,7 +33,7 @@ export function MyHomework({ student }: { student?: number }) {
                 .filter((h) => h.date === d)
                 .map((h) => (
                   <li key={h.id} className="rounded-lg bg-slate-50 px-3 py-2 text-sm dark:bg-slate-800/60">
-                    {h.subject_name && <span className="mr-1 font-semibold text-indigo-600">{h.subject_name}:</span>}
+                    {h.subject_name && <span className="mr-1 font-semibold text-brand-600">{h.subject_name}:</span>}
                     <span className="font-medium">{h.title}</span>
                     {h.details && <span className="block text-xs whitespace-pre-line text-slate-600 dark:text-slate-300">{h.details}</span>}
                     {h.due_date && <span className={`block text-xs ${h.due_date <= data.today ? "text-amber-700 dark:text-amber-300" : "text-slate-500"}`}>Due {formatDate(h.due_date)}</span>}
@@ -44,7 +44,7 @@ export function MyHomework({ student }: { student?: number }) {
         ))}
       </div>
       {days.length > 3 && (
-        <button onClick={() => setAll(!all)} className="mt-2 text-sm text-indigo-600 hover:underline">
+        <button onClick={() => setAll(!all)} className="mt-2 text-sm text-brand-600 hover:underline">
           {all ? "Show less" : `Show all (${days.length} days)`}
         </button>
       )}

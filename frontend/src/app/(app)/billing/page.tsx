@@ -110,7 +110,7 @@ export default function BillingPage() {
             <Card key={plan.code}>
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">{plan.name}</h2>
-                {current && <span className="text-xs font-medium text-indigo-600">Current</span>}
+                {current && <span className="text-xs font-medium text-brand-600">Current</span>}
               </div>
               <p className="text-sm text-slate-500">{plan.description}</p>
               {monthly && (

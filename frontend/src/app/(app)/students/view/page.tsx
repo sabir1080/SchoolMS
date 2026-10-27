@@ -103,7 +103,7 @@ export default function StudentViewPage() {
 
   return (
     <div className="max-w-3xl space-y-4">
-      <Link href="/students" className="text-sm text-indigo-600 hover:underline">
+      <Link href="/students" className="text-sm text-brand-600 hover:underline">
         ← All students
       </Link>
       {isNew && (
@@ -122,7 +122,7 @@ export default function StudentViewPage() {
         <div className="flex items-center gap-3">
           <StatusBadge status={student.status} />
           {isAdmin && subscription?.plan.features.includes("certificates") && (
-            <Link href={`/certificates/?student=${student.id}`} className="text-sm font-medium text-indigo-600 hover:underline">
+            <Link href={`/certificates/?student=${student.id}`} className="text-sm font-medium text-brand-600 hover:underline">
               Certificate
             </Link>
           )}
@@ -153,7 +153,7 @@ export default function StudentViewPage() {
             {terms.program} &amp; {terms.section.toLowerCase()}
           </h2>
           {isAdmin && (
-            <button onClick={() => setChanging(!changing)} className="text-sm text-indigo-600 hover:underline">
+            <button onClick={() => setChanging(!changing)} className="text-sm text-brand-600 hover:underline">
               {changing ? "Cancel" : student.current_enrollment ? `Change ${terms.program.toLowerCase()}` : `Assign ${terms.program.toLowerCase()}`}
             </button>
           )}
@@ -205,7 +205,7 @@ export default function StudentViewPage() {
                 </p>
                 <p className="text-slate-500">
                   {g.phone ? (
-                    <a href={`tel:${g.phone}`} className="text-indigo-600 hover:underline">
+                    <a href={`tel:${g.phone}`} className="text-brand-600 hover:underline">
                       {g.phone}
                     </a>
                   ) : (
@@ -220,7 +220,7 @@ export default function StudentViewPage() {
                     {siblings.map((c, i) => (
                       <span key={c.id}>
                         {i > 0 && ", "}
-                        <Link href={`/students/view/?id=${c.id}`} onClick={() => setId(String(c.id))} className="text-indigo-600 hover:underline">
+                        <Link href={`/students/view/?id=${c.id}`} onClick={() => setId(String(c.id))} className="text-brand-600 hover:underline">
                           {c.full_name}
                         </Link>
                       </span>

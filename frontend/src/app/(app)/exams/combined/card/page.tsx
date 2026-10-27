@@ -31,21 +31,21 @@ export default function CombinedCardPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
-        <Link href={`/exams/combined/result/?id=${query.id}&section=${query.section}`} className="text-sm text-indigo-600 hover:underline">
+        <Link href={`/exams/combined/result/?id=${query.id}&section=${query.section}`} className="text-sm text-brand-600 hover:underline">
           ← {data.combined.name}
         </Link>
         <div className="flex items-center gap-3 text-sm">
           {index > 0 && (
-            <a href={link(index - 1)} className="text-indigo-600 hover:underline">
+            <a href={link(index - 1)} className="text-brand-600 hover:underline">
               ‹ Previous
             </a>
           )}
           {index < data.students.length - 1 && (
-            <a href={link(index + 1)} className="text-indigo-600 hover:underline">
+            <a href={link(index + 1)} className="text-brand-600 hover:underline">
               Next ›
             </a>
           )}
-          <button onClick={() => window.print()} className="rounded-lg bg-indigo-600 px-3 py-2 font-medium text-white">
+          <button onClick={() => window.print()} className="rounded-lg bg-brand-600 px-3 py-2 font-medium text-white">
             Print
           </button>
         </div>

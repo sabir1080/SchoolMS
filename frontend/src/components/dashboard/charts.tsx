@@ -18,7 +18,7 @@ export function compact(n: number) {
 
 function TableToggle({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   return (
-    <button type="button" onClick={onToggle} className="text-xs text-indigo-600 hover:underline">
+    <button type="button" onClick={onToggle} className="text-xs text-brand-600 hover:underline">
       {open ? "Show chart" : "Show as table"}
     </button>
   );

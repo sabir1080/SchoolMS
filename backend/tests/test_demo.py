@@ -17,6 +17,8 @@ TODAY = datetime.date(2026, 10, 27)
 def test_seed_demo_builds_a_complete_school(db, api):
     tenant = seed_demo(today=TODAY)
     assert tenant.subscription.is_usable and tenant.subscription.status == "active"
+    brand = api.get("/api/public/institutes/demo/").json()["brand"]
+    assert brand["color"] == "blue" and brand["logo"].startswith("data:image/png;base64,")
     assert Student.objects.filter(tenant=tenant).count() == 32
     assert set(User.objects.filter(tenant=tenant).values_list("username", flat=True)) >= {"admin", "sana", "rashid", "ahmed"}
     assert AttendanceRecord.objects.filter(tenant=tenant).count() > 1000

@@ -33,7 +33,7 @@ export function MyResultsCard({ student }: { student?: number }) {
                 <span className="block font-medium">
                   {name}
                   {annual && (
-                    <span className="ml-2 rounded-full bg-indigo-50 px-2 py-0.5 align-middle text-[10px] font-medium whitespace-nowrap text-indigo-700 dark:bg-indigo-950 dark:text-indigo-200">
+                    <span className="ml-2 rounded-full bg-brand-50 px-2 py-0.5 align-middle text-[10px] font-medium whitespace-nowrap text-brand-700 dark:bg-brand-950 dark:text-brand-200">
                       Annual
                     </span>
                   )}
@@ -45,7 +45,7 @@ export function MyResultsCard({ student }: { student?: number }) {
               </span>
               <span className="flex shrink-0 items-center gap-2 text-sm">
                 <span className={`font-medium ${RESULT_LABEL[row.result].tone}`}>{RESULT_LABEL[row.result].label}</span>
-                <span className="text-indigo-600">
+                <span className="text-brand-600">
                   <span className="hidden sm:inline">Report card </span>›
                 </span>
               </span>

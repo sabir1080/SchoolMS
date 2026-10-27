@@ -125,7 +125,7 @@ export default function UsersPage() {
                   {u.id !== me?.id && (
                     <button
                       onClick={() => setResetting(resetting === u.id ? null : u.id)}
-                      className="text-indigo-600 hover:underline"
+                      className="text-brand-600 hover:underline"
                     >
                       {resetting === u.id ? "Cancel" : "Reset password"}
                     </button>

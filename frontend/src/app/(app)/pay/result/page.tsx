@@ -59,7 +59,7 @@ export default function PaymentResultPage() {
             <dd className="tabular-nums">{payment.reference}</dd>
           </div>
         </dl>
-        <Link href={back} className="mt-5 block rounded-lg bg-indigo-600 py-2.5 text-center text-sm font-medium text-white">
+        <Link href={back} className="mt-5 block rounded-lg bg-brand-600 py-2.5 text-center text-sm font-medium text-white">
           {user?.role === "admin" ? "Back to the bill" : "Back to dashboard"}
         </Link>
       </Card>

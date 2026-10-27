@@ -26,7 +26,7 @@ export function CreateLogin({
 
   if (!open) {
     return (
-      <button onClick={() => setOpen(true)} className="text-sm text-indigo-600 hover:underline">
+      <button onClick={() => setOpen(true)} className="text-sm text-brand-600 hover:underline">
         Create login
       </button>
     );

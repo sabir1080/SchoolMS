@@ -30,7 +30,7 @@ export function RowActions({
 
   return (
     <div className="flex shrink-0 gap-3 text-sm">
-      <button onClick={onEdit} className="text-indigo-600 hover:underline">
+      <button onClick={onEdit} className="text-brand-600 hover:underline">
         {editing ? "Close" : "Edit"}
       </button>
       <button onClick={onDelete} className="text-red-600 hover:underline">

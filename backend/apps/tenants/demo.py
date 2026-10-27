@@ -5,8 +5,11 @@
 Random values come from a fixed seed, so every run gives the same school.
 """
 
+import base64
 import datetime
 import random
+import struct
+import zlib
 from decimal import ROUND_HALF_UP, Decimal
 
 from django.apps import apps
@@ -98,6 +101,32 @@ def half(value):
     return (Decimal(value) * 2).quantize(Decimal(1), rounding=ROUND_HALF_UP) / 2
 
 
+def demo_logo(size=128):
+    """A simple badge logo (blue disc, gold ring, white open book) as a PNG data URL."""
+    c, rows = size / 2, bytearray()
+    for y in range(size):
+        rows.append(0)
+        for x in range(size):
+            r = ((x - c) ** 2 + (y - c) ** 2) ** 0.5
+            dx, dy = abs(x - c) / size, (y - c) / size
+            page = 0.04 < dx < 0.30 and -0.18 + dx * 0.25 < dy < 0.16 + dx * 0.25
+            if r > c - 1:
+                rows += bytes((0, 0, 0, 0))
+            elif r > c - 8:
+                rows += bytes((234, 179, 8, 255))
+            elif page:
+                rows += bytes((255, 255, 255, 255))
+            else:
+                rows += bytes((29, 78, 216, 255))
+
+    def chunk(kind, data):
+        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
+
+    png = (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", size, size, 8, 6, 0, 0, 0))
+           + chunk(b"IDAT", zlib.compress(bytes(rows), 9)) + chunk(b"IEND", b""))
+    return "data:image/png;base64," + base64.b64encode(png).decode()
+
+
 @transaction.atomic
 def seed_demo(today=None):
     """Create the demo institute (replacing an existing one with the same code). Returns it."""
@@ -108,6 +137,7 @@ def seed_demo(today=None):
         name="Bright Future Academy", slug=DEMO_CODE, institute_type="school", country="PK", currency="PKR",
         timezone="Asia/Karachi", email="info@brightfuture-demo.pk", phone="042-35761234",
         address="12-B, Main Boulevard, Gulberg III, Lahore", password_policy="easy",
+        logo=demo_logo(), brand_color="blue",
     )
     now = timezone.now()
     Subscription.objects.create(

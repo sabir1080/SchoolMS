@@ -77,7 +77,7 @@ export function ExamForm({
           <button
             type="button"
             onClick={() => setForm({ ...form, programs: all ? [] : active.map((p) => p.id) })}
-            className="text-xs text-indigo-600 hover:underline"
+            className="text-xs text-brand-600 hover:underline"
           >
             {all ? "Clear" : "Select all"}
           </button>
@@ -87,7 +87,7 @@ export function ExamForm({
             <label
               key={p.id}
               className={`flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1 text-sm ${
-                form.programs.includes(p.id) ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950" : "border-slate-300 dark:border-slate-700"
+                form.programs.includes(p.id) ? "border-brand-500 bg-brand-50 dark:bg-brand-950" : "border-slate-300 dark:border-slate-700"
               }`}
             >
               <input type="checkbox" checked={form.programs.includes(p.id)} onChange={() => toggle(p.id)} />

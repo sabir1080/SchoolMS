@@ -68,7 +68,7 @@ export default function InvoicePage() {
             <p className="text-sm text-slate-500">{invoiceNo(invoice.number)}</p>
             <h2 className="text-xl font-semibold">{invoice.title}</h2>
             <p className="mt-1 text-sm">
-              <Link href={`/students/view/?id=${invoice.student.id}`} className="font-medium text-indigo-600 hover:underline print:text-black">
+              <Link href={`/students/view/?id=${invoice.student.id}`} className="font-medium text-brand-600 hover:underline print:text-black">
                 {invoice.student.full_name}
               </Link>{" "}
               · Adm #{invoice.student.admission_no}

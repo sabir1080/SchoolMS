@@ -1,3 +1,5 @@
+import type { Brand } from "./brand";
+
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
 
 const ACCESS_KEY = "sms_access";
@@ -18,6 +20,7 @@ export interface Tenant {
   program_label: string;
   section_label: string;
   working_days: string;
+  brand?: Brand;
 }
 
 export type PasswordPolicy = "easy" | "standard" | "strong";
@@ -69,6 +72,7 @@ export interface Subscription {
 export interface SavedInstitute {
   name: string;
   slug: string;
+  brand?: Brand;
 }
 
 export interface LoginResponse {

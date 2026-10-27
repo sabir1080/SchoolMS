@@ -62,7 +62,7 @@ export default function StudentsPage() {
         <h1 className="text-2xl font-semibold">Students</h1>
         {isAdmin && (
           <div className="flex items-center gap-3">
-            <Link href="/students/promotion" className="text-sm font-medium text-indigo-600 hover:underline">
+            <Link href="/students/promotion" className="text-sm font-medium text-brand-600 hover:underline">
               Promote to next class
             </Link>
             <Link href="/students/new">
@@ -153,10 +153,10 @@ export default function StudentsPage() {
           )}
           {(data.next || page > 1) && (
             <div className="mt-3 flex justify-between text-sm">
-              <button disabled={page === 1} onClick={() => setPage(page - 1)} className="text-indigo-600 disabled:opacity-30">
+              <button disabled={page === 1} onClick={() => setPage(page - 1)} className="text-brand-600 disabled:opacity-30">
                 ← Previous
               </button>
-              <button disabled={!data.next} onClick={() => setPage(page + 1)} className="text-indigo-600 disabled:opacity-30">
+              <button disabled={!data.next} onClick={() => setPage(page + 1)} className="text-brand-600 disabled:opacity-30">
                 Next →
               </button>
             </div>

@@ -51,7 +51,7 @@ export function BulkAdd({
           onChange={(e) => setText(e.target.value)}
           rows={5}
           placeholder={example.slice(0, 4).join("\n")}
-          className="w-full rounded-lg border border-slate-300 bg-transparent px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-slate-700"
+          className="w-full rounded-lg border border-slate-300 bg-transparent px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-slate-700"
         />
       </label>
       <p className="text-xs text-slate-500">One per line.</p>

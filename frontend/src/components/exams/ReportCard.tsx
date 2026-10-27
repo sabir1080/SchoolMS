@@ -1,6 +1,7 @@
 import { RESULT_LABEL, ordinal, type ExamResults, type ResultRow } from "@/lib/exams";
 import { termsFor } from "@/lib/terms";
 import type { Tenant } from "@/lib/api";
+import { BrandLogo } from "@/components/BrandLogo";
 
 /** One student's printable report card (A4 portrait). */
 export function ReportCard({ data, row, tenant }: { data: ExamResults; row: ResultRow; tenant: Tenant | null | undefined }) {
@@ -25,12 +26,13 @@ export function ReportCard({ data, row, tenant }: { data: ExamResults; row: Resu
 
   return (
     <article className="report-card mx-auto max-w-3xl rounded-2xl bg-white p-6 text-slate-900 shadow-sm print:max-w-none print:rounded-none print:p-0 print:shadow-none">
-      <header className="border-b-2 border-indigo-600 pb-3 text-center">
+      <header className="border-b-2 border-brand-600 pb-3 text-center">
+        <BrandLogo src={tenant?.brand?.logo} className="mx-auto mb-1 h-14 w-14" />
         <h2 className="text-2xl font-bold tracking-tight">{data.institute.name}</h2>
         {(data.institute.address || data.institute.phone) && (
           <p className="text-xs text-slate-600">{[data.institute.address, data.institute.phone].filter(Boolean).join(" · ")}</p>
         )}
-        <p className="mt-2 inline-block rounded-full bg-indigo-600 px-4 py-1 text-sm font-semibold text-white print:border print:border-indigo-600 print:bg-white print:text-indigo-700">
+        <p className="mt-2 inline-block rounded-full bg-brand-600 px-4 py-1 text-sm font-semibold text-white print:border print:border-brand-600 print:bg-white print:text-brand-700">
           Report card · {data.exam.name}
         </p>
       </header>

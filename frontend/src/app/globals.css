@@ -7,11 +7,21 @@
   --series-1: #2a78d6;
   --series-2: #eb6834;
   --chart-grid: #e5e7eb;
+  /* Institute theme colour (white-label); set at runtime from the institute's branding. */
+  --brand: #4f46e5;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand-50: color-mix(in oklab, var(--brand) 8%, white);
+  --color-brand-200: color-mix(in oklab, var(--brand) 30%, white);
+  --color-brand-300: color-mix(in oklab, var(--brand) 45%, white);
+  --color-brand-500: color-mix(in oklab, var(--brand) 82%, white);
+  --color-brand-600: var(--brand);
+  --color-brand-700: color-mix(in oklab, var(--brand) 82%, black);
+  --color-brand-800: color-mix(in oklab, var(--brand) 65%, black);
+  --color-brand-950: color-mix(in oklab, var(--brand) 28%, black);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,6 +33,16 @@
     --chart-grid: #273042;
     /* Native date/time pickers and scrollbars follow the dark theme. */
     color-scheme: dark;
+  }
+}
+
+/* Dark theme colours (e.g. slate) stay readable as text on the dark background.
+   Printed documents (<article>, always white) keep the real colour. */
+@media screen and (prefers-color-scheme: dark) {
+  .text-brand-600:not(article *),
+  .text-brand-700:not(article *),
+  .text-brand-800:not(article *) {
+    color: var(--color-brand-300);
   }
 }
 

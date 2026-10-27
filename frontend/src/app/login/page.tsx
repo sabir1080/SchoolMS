@@ -8,6 +8,7 @@ import { AuthCard } from "@/components/AuthCard";
 import { Button, ErrorBox, Field, PasswordField } from "@/components/ui";
 import { ApiError, api, savedInstitute, type SavedInstitute } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { applyBrand } from "@/lib/brand";
 
 export default function LoginPage() {
   const { user, login } = useAuth();
@@ -26,6 +27,11 @@ export default function LoginPage() {
   useEffect(() => {
     if (user) router.replace(user.role === "super_admin" ? "/platform/tenants" : "/dashboard");
   }, [user, router]);
+
+  // Show the institute's theme colour once its code is known.
+  useEffect(() => {
+    if (!user) applyBrand(institute?.brand?.hex);
+  }, [user, institute]);
 
   useEffect(() => {
     // A shared link like /login/?code=al-huda skips typing the code.
@@ -89,7 +95,7 @@ export default function LoginPage() {
 async function lookup(code: string): Promise<SavedInstitute> {
   const data = await api<SavedInstitute>(`/api/public/institutes/${encodeURIComponent(code.trim().toLowerCase())}/`);
   savedInstitute.set({ name: data.name, slug: data.slug });
-  return { name: data.name, slug: data.slug };
+  return { name: data.name, slug: data.slug, brand: data.brand };
 }
 
 function CodeStep({ notice, onFound }: { notice: string; onFound: (institute: SavedInstitute) => void }) {
@@ -131,7 +137,7 @@ function CodeStep({ notice, onFound }: { notice: string; onFound: (institute: Sa
       </form>
       <p className="text-center text-sm text-slate-500">
         New institute?{" "}
-        <Link href="/register" className="font-medium text-indigo-600 hover:underline">
+        <Link href="/register" className="font-medium text-brand-600 hover:underline">
           Register and start a free trial
         </Link>
       </p>
@@ -166,12 +172,12 @@ function CredentialsStep({
   }
 
   return (
-    <AuthCard title={institute.name} subtitle="Sign in to continue">
+    <AuthCard title={institute.name} subtitle="Sign in to continue" logo={institute.brand?.logo}>
       <div className="flex items-center justify-between gap-3 rounded-lg bg-slate-100 px-3 py-2 text-sm dark:bg-slate-800">
         <span>
           Institute code: <span className="font-semibold">{institute.slug}</span>
         </span>
-        <button type="button" onClick={onChange} className="font-medium text-indigo-600 hover:underline">
+        <button type="button" onClick={onChange} className="font-medium text-brand-600 hover:underline">
           Change
         </button>
       </div>
@@ -200,7 +206,7 @@ function CredentialsStep({
       <p className="text-center text-xs text-slate-500">
         Forgot your password? Ask your institute admin to reset it.
       </p>
-      <button onClick={onChange} className="w-full text-center text-sm text-indigo-600 hover:underline">
+      <button onClick={onChange} className="w-full text-center text-sm text-brand-600 hover:underline">
         Use a different institute code
       </button>
     </AuthCard>

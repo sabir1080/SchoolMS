@@ -37,14 +37,14 @@ export default function CertificatePage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
-        <Link href="/certificates/" className="text-sm text-indigo-600 hover:underline">
+        <Link href="/certificates/" className="text-sm text-brand-600 hover:underline">
           ← Certificates
         </Link>
         <div className="flex items-center gap-3">
           <button onClick={cancel} className="text-sm text-red-600 hover:underline">
             Cancel certificate
           </button>
-          <button onClick={() => window.print()} className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white">
+          <button onClick={() => window.print()} className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white">
             Print / Save PDF
           </button>
         </div>

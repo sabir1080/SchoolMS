@@ -190,7 +190,7 @@ function ProgramEdit({
                 key={s.id}
                 className={`flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1 text-sm ${
                   form.subjects.includes(s.id)
-                    ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950"
+                    ? "border-brand-500 bg-brand-50 dark:bg-brand-950"
                     : "border-slate-300 dark:border-slate-700"
                 }`}
               >

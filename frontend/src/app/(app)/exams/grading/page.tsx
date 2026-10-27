@@ -102,7 +102,7 @@ export default function GradingPage() {
             ))}
           </div>
           {isAdmin && (
-            <button type="button" onClick={() => setBands([...bands, { name: "", min_percentage: "", remark: "" }])} className="mt-3 text-sm text-indigo-600 hover:underline">
+            <button type="button" onClick={() => setBands([...bands, { name: "", min_percentage: "", remark: "" }])} className="mt-3 text-sm text-brand-600 hover:underline">
               + Add grade
             </button>
           )}

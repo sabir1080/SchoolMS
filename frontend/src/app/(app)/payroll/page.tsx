@@ -106,7 +106,7 @@ function Salaries({ onAddStaff }: { onAddStaff: () => void }) {
             {data.results.length === 0 ? (
               <p className="text-sm text-slate-500">
                 No salaries for {monthName(period)} yet. Press “Make salaries” to create a slip for every active staff member.{" "}
-                <button onClick={onAddStaff} className="text-indigo-600 hover:underline">
+                <button onClick={onAddStaff} className="text-brand-600 hover:underline">
                   Add staff first
                 </button>
               </p>
@@ -134,10 +134,10 @@ function Salaries({ onAddStaff }: { onAddStaff: () => void }) {
                     <div className="mt-2 flex flex-wrap gap-3 text-sm">
                       {s.status === "unpaid" ? (
                         <>
-                          <button onClick={() => setOpen({ id: s.id, mode: "pay" })} className="rounded-lg bg-indigo-600 px-3 py-1 font-medium text-white">
+                          <button onClick={() => setOpen({ id: s.id, mode: "pay" })} className="rounded-lg bg-brand-600 px-3 py-1 font-medium text-white">
                             Pay
                           </button>
-                          <button onClick={() => setOpen({ id: s.id, mode: "adjust" })} className="text-indigo-600 hover:underline">
+                          <button onClick={() => setOpen({ id: s.id, mode: "adjust" })} className="text-brand-600 hover:underline">
                             Bonus / deduction
                           </button>
                         </>
@@ -146,7 +146,7 @@ function Salaries({ onAddStaff }: { onAddStaff: () => void }) {
                           Undo payment
                         </button>
                       )}
-                      <Link href={`/payroll/slip/?id=${s.id}`} className="text-indigo-600 hover:underline">
+                      <Link href={`/payroll/slip/?id=${s.id}`} className="text-brand-600 hover:underline">
                         Salary slip
                       </Link>
                     </div>
@@ -273,7 +273,7 @@ function Staff() {
                   </div>
                   <div className="text-right text-sm">
                     <p className="font-medium">{money(Number(e.basic_salary) + Number(e.allowance), cur)}</p>
-                    <button onClick={() => setEditing(e)} className="text-xs text-indigo-600 hover:underline">
+                    <button onClick={() => setEditing(e)} className="text-xs text-brand-600 hover:underline">
                       Edit
                     </button>
                   </div>

@@ -23,10 +23,10 @@ export default function PayslipPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between print:hidden">
-        <Link href="/payroll/" className="text-sm text-indigo-600 hover:underline">
+        <Link href="/payroll/" className="text-sm text-brand-600 hover:underline">
           ← Payroll
         </Link>
-        <button onClick={() => window.print()} className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white">
+        <button onClick={() => window.print()} className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white">
           Print
         </button>
       </div>

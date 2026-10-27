@@ -70,7 +70,7 @@ export function CombinedForm({
         <div className="mb-1 flex items-center justify-between">
           <span className="text-sm font-medium">Exams and weightage</span>
           {chosen.length > 1 && (
-            <button type="button" onClick={split} className="text-xs text-indigo-600 hover:underline">
+            <button type="button" onClick={split} className="text-xs text-brand-600 hover:underline">
               Split equally
             </button>
           )}

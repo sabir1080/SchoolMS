@@ -103,7 +103,7 @@ export default function InvoicesPage() {
           <input type="month" value={filters.period} onChange={set("period")} aria-label="Bill month" className={input} />
         </div>
         {filters.student && (
-          <button onClick={() => setFilters({ ...filters, student: "" })} className="mt-2 text-xs text-indigo-600 hover:underline">
+          <button onClick={() => setFilters({ ...filters, student: "" })} className="mt-2 text-xs text-brand-600 hover:underline">
             Showing one student — show all
           </button>
         )}
@@ -142,10 +142,10 @@ export default function InvoicesPage() {
           )}
           {(data.next || page > 1) && (
             <div className="mt-3 flex justify-between text-sm">
-              <button disabled={page === 1} onClick={() => setPage(page - 1)} className="text-indigo-600 disabled:opacity-30">
+              <button disabled={page === 1} onClick={() => setPage(page - 1)} className="text-brand-600 disabled:opacity-30">
                 ← Previous
               </button>
-              <button disabled={!data.next} onClick={() => setPage(page + 1)} className="text-indigo-600 disabled:opacity-30">
+              <button disabled={!data.next} onClick={() => setPage(page + 1)} className="text-brand-600 disabled:opacity-30">
                 Next →
               </button>
             </div>

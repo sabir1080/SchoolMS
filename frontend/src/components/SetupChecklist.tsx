@@ -67,7 +67,7 @@ export function SetupChecklist() {
             {step.done ? (
               <span className="text-slate-500 line-through">{step.label}</span>
             ) : (
-              <Link href={step.href ?? `/academics/?tab=${step.tab}`} className="text-indigo-600 hover:underline">
+              <Link href={step.href ?? `/academics/?tab=${step.tab}`} className="text-brand-600 hover:underline">
                 {step.label}
               </Link>
             )}

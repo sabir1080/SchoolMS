@@ -79,7 +79,7 @@ export default function CertificatesPage() {
                   {student.status !== "active" && ` · ${student.status}`}
                 </p>
               </div>
-              <button type="button" onClick={() => setStudent(null)} className="text-sm text-indigo-600 hover:underline">
+              <button type="button" onClick={() => setStudent(null)} className="text-sm text-brand-600 hover:underline">
                 Change
               </button>
             </div>
@@ -115,7 +115,7 @@ export default function CertificatesPage() {
           <fieldset className="grid gap-2 sm:grid-cols-3">
             <legend className="mb-1 text-sm font-medium">Certificate</legend>
             {KINDS.map((k) => (
-              <label key={k.value} className={`cursor-pointer rounded-xl border p-3 text-sm ${kind === k.value ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950" : "border-slate-300 dark:border-slate-700"}`}>
+              <label key={k.value} className={`cursor-pointer rounded-xl border p-3 text-sm ${kind === k.value ? "border-brand-500 bg-brand-50 dark:bg-brand-950" : "border-slate-300 dark:border-slate-700"}`}>
                 <input type="radio" name="kind" className="sr-only" checked={kind === k.value} onChange={() => setKind(k.value)} />
                 <span className="block font-medium">{k.title}</span>
                 <span className="text-xs text-slate-500">{k.about}</span>

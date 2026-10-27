@@ -26,11 +26,11 @@ export function MarksProgressCard({ examId, status }: { examId: number; status: 
         <h2 className="font-medium">Marks entry</h2>
         {progress.sections.length > 0 && (
           <div className="flex gap-4 text-sm">
-            <Link href={`/exams/marks/?id=${examId}`} className="text-indigo-600 hover:underline">
+            <Link href={`/exams/marks/?id=${examId}`} className="text-brand-600 hover:underline">
               {progress.can_enter ? "Enter marks →" : "View marks →"}
             </Link>
             {progress.sections.some((s) => s.can_see_result) && (
-              <Link href={`/exams/results/?id=${examId}`} className="font-medium text-indigo-600 hover:underline">
+              <Link href={`/exams/results/?id=${examId}`} className="font-medium text-brand-600 hover:underline">
                 Result →
               </Link>
             )}

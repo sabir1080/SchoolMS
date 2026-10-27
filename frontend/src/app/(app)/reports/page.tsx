@@ -50,10 +50,10 @@ export default function ReportsPage() {
       {!chosen ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {available.map((r) => (
-            <button key={r.name} onClick={() => setChosen(r)} className="rounded-2xl bg-white p-4 text-left shadow-sm hover:ring-1 hover:ring-indigo-200 dark:bg-slate-900">
+            <button key={r.name} onClick={() => setChosen(r)} className="rounded-2xl bg-white p-4 text-left shadow-sm hover:ring-1 hover:ring-brand-200 dark:bg-slate-900">
               <p className="font-semibold">{r.title}</p>
               <p className="mt-1 text-sm text-slate-500">{r.about}</p>
-              <p className="mt-2 text-xs font-medium text-indigo-600">Excel · PDF</p>
+              <p className="mt-2 text-xs font-medium text-brand-600">Excel · PDF</p>
             </button>
           ))}
         </div>
@@ -129,7 +129,7 @@ function ReportRunner({ report, onBack }: { report: ReportDef; onBack: () => voi
   return (
     <div className="space-y-4">
       <div className="print:hidden">
-        <button onClick={onBack} className="text-sm text-indigo-600 hover:underline">
+        <button onClick={onBack} className="text-sm text-brand-600 hover:underline">
           ← All reports
         </button>
         <h2 className="mt-1 text-xl font-semibold">{report.title}</h2>

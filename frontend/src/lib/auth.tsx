@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
+import { applyBrand } from "./brand";
 import { api, savedInstitute, tokens, type LoginResponse, type Subscription, type User } from "./api";
 
 interface AuthState {
@@ -84,10 +85,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(await api<User>("/api/auth/me/"));
   }, []);
 
+  // Use the institute's theme colour while signed in.
+  useEffect(() => {
+    if (user) applyBrand(user.tenant?.brand?.hex);
+  }, [user]);
+
   const logout = useCallback(() => {
     tokens.clear();
     setUser(null);
     setSubscription(null);
+    applyBrand(null);
   }, []);
 
   return (

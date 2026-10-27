@@ -2,6 +2,7 @@ import { money } from "@/lib/fees";
 import { formatDate } from "@/lib/navigation";
 import { monthName, type Payslip } from "@/lib/payroll";
 import type { Tenant } from "@/lib/api";
+import { BrandLogo } from "@/components/BrandLogo";
 
 /** A printable salary slip. */
 export function PayslipView({ slip, tenant }: { slip: Payslip; tenant: Tenant | null | undefined }) {
@@ -15,9 +16,10 @@ export function PayslipView({ slip, tenant }: { slip: Payslip; tenant: Tenant | 
   ];
   return (
     <article className="mx-auto max-w-xl rounded-2xl bg-white p-6 text-slate-900 shadow-sm print:max-w-none print:rounded-none print:shadow-none">
-      <header className="border-b-2 border-indigo-600 pb-3 text-center">
+      <header className="border-b-2 border-brand-600 pb-3 text-center">
+        <BrandLogo src={tenant?.brand?.logo} className="mx-auto mb-1 h-12 w-12" />
         <h2 className="text-xl font-bold">{tenant?.name}</h2>
-        <p className="mt-1 text-sm font-semibold text-indigo-700">Salary slip · {monthName(slip.period)}</p>
+        <p className="mt-1 text-sm font-semibold text-brand-700">Salary slip · {monthName(slip.period)}</p>
       </header>
       <dl className="mt-4 grid grid-cols-2 gap-y-1 text-sm">
         <dt className="text-slate-500">Name</dt>
@@ -43,7 +45,7 @@ export function PayslipView({ slip, tenant }: { slip: Payslip; tenant: Tenant | 
               <td className="border border-slate-200 px-3 py-1.5 text-right">{money(value, cur)}</td>
             </tr>
           ))}
-          <tr className="bg-indigo-50 text-base font-bold">
+          <tr className="bg-brand-50 text-base font-bold">
             <td className="border border-slate-200 px-3 py-2">Net salary</td>
             <td className="border border-slate-200 px-3 py-2 text-right">{money(slip.net, cur)}</td>
           </tr>

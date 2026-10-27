@@ -19,7 +19,8 @@ def test_health_is_public(api, db):
 def test_institute_lookup_shows_name(api, school_a):
     res = api.get("/api/public/institutes/ALPHA/")
     assert res.status_code == 200
-    assert res.json() == {"name": "Alpha", "slug": "alpha", "institute_type": "school"}
+    assert res.json() == {"name": "Alpha", "slug": "alpha", "institute_type": "school",
+                          "brand": {"logo": "", "color": "indigo", "hex": "#4f46e5", "allowed": True}}
 
 
 def test_institute_lookup_unknown_and_suspended(api, school_a):

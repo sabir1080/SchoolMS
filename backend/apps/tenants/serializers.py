@@ -5,6 +5,7 @@ from apps.accounts.models import Role, User
 from apps.accounts.passwords import PasswordPolicy, check_password
 from apps.subscriptions.serializers import SubscriptionSerializer
 
+from .branding import BRAND_COLORS, LOGO_MAX_CHARS, LOGO_PATTERN, branding_allowed, effective_branding
 from .models import Tenant
 from .validators import normalize_code, validate_institute_code
 
@@ -79,26 +80,49 @@ class InstituteRegistrationSerializer(TenantSerializer):
         return data, admin
 
 
-class PublicInstituteSerializer(serializers.ModelSerializer):
-    """What the login screen may show about an institute before anyone logs in."""
+class BrandingFieldsMixin(serializers.Serializer):
+    """Read-only branding as it applies now (defaults when the plan lacks white-labeling)."""
+
+    brand = serializers.SerializerMethodField()
+
+    def get_brand(self, tenant):
+        logo, key, color = effective_branding(tenant)
+        return {"logo": logo, "color": key, "hex": color, "allowed": branding_allowed(tenant)}
+
+
+class PublicInstituteSerializer(BrandingFieldsMixin, serializers.ModelSerializer):
+    """What the login screen may show about an institute before anyone logs in (with its logo and colour)."""
 
     class Meta:
         model = Tenant
-        fields = ["name", "slug", "institute_type"]
+        fields = ["name", "slug", "institute_type", "brand"]
 
 
-class InstituteSettingsSerializer(serializers.ModelSerializer):
+class InstituteSettingsSerializer(BrandingFieldsMixin, serializers.ModelSerializer):
     """What an institute admin may change about their own institute."""
+
+    logo = serializers.CharField(required=False, allow_blank=True, write_only=True, trim_whitespace=False)
+    brand_color = serializers.ChoiceField(choices=list(BRAND_COLORS), required=False, write_only=True)
 
     class Meta:
         model = Tenant
         fields = [
             "name", "slug", "institute_type", "email", "phone", "address",
             "country", "currency", "timezone", "password_policy", "program_label", "section_label",
-            "pass_percentage", "show_position", "working_days",
+            "pass_percentage", "show_position", "working_days", "logo", "brand_color", "brand",
         ]
         read_only_fields = ["slug", "institute_type", "country", "currency", "timezone"]
         extra_kwargs = {"pass_percentage": {"min_value": 1, "max_value": 100}}
+
+    def validate_logo(self, value):
+        if value and (len(value) > LOGO_MAX_CHARS or not LOGO_PATTERN.match(value)):
+            raise serializers.ValidationError("Use a PNG, JPG or WebP image under 150 KB.")
+        return value
+
+    def validate(self, attrs):
+        if ("logo" in attrs or "brand_color" in attrs) and not branding_allowed(self.instance):
+            raise serializers.ValidationError("Your plan does not include a logo and theme colour. Upgrade to Pro or Enterprise.")
+        return attrs
 
     def validate_working_days(self, value):
         days = sorted({d.strip() for d in value.split(",") if d.strip()})

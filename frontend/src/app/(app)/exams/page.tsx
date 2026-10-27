@@ -36,7 +36,7 @@ export default function ExamsPage() {
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Exams</h1>
         {isAdmin && session && (
-          <button onClick={() => setAdding(!adding)} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white">
+          <button onClick={() => setAdding(!adding)} className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white">
             {adding ? "Close" : "+ New exam"}
           </button>
         )}
@@ -80,7 +80,7 @@ export default function ExamsPage() {
 
       <div className="grid gap-3 md:grid-cols-2">
         {exams.items.map((exam) => (
-          <Link key={exam.id} href={`/exams/exam/?id=${exam.id}`} className="block rounded-2xl bg-white p-4 shadow-sm hover:ring-1 hover:ring-indigo-200 dark:bg-slate-900">
+          <Link key={exam.id} href={`/exams/exam/?id=${exam.id}`} className="block rounded-2xl bg-white p-4 shadow-sm hover:ring-1 hover:ring-brand-200 dark:bg-slate-900">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="truncate font-semibold">{exam.name}</p>

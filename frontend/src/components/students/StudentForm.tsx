@@ -156,7 +156,7 @@ export function StudentForm({ student }: { student?: StudentDetail }) {
               value={form.address}
               onChange={set("address")}
               rows={2}
-              className="w-full rounded-lg border border-slate-300 bg-transparent px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-slate-700"
+              className="w-full rounded-lg border border-slate-300 bg-transparent px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-slate-700"
             />
           </label>
         </div>
@@ -249,7 +249,7 @@ export function StudentForm({ student }: { student?: StudentDetail }) {
           <button
             type="button"
             onClick={() => setGuardians([...guardians, { ...EMPTY_GUARDIAN, relation: "mother" }])}
-            className="mt-3 text-sm text-indigo-600 hover:underline"
+            className="mt-3 text-sm text-brand-600 hover:underline"
           >
             + Add another guardian
           </button>

@@ -58,7 +58,7 @@ export function SectionPicker({
     return (
       <p className="text-sm text-slate-500">
         No academic session yet.{" "}
-        <Link href="/academics/?tab=sessions" className="text-indigo-600 hover:underline">
+        <Link href="/academics/?tab=sessions" className="text-brand-600 hover:underline">
           Add one in Academic setup
         </Link>{" "}
         (you can assign the {terms.program.toLowerCase()} later).
@@ -69,7 +69,7 @@ export function SectionPicker({
     return (
       <p className="text-sm text-slate-500">
         No {terms.programs.toLowerCase()} yet.{" "}
-        <Link href="/academics/?tab=programs" className="text-indigo-600 hover:underline">
+        <Link href="/academics/?tab=programs" className="text-brand-600 hover:underline">
           Add them in Academic setup
         </Link>{" "}
         (you can assign the {terms.program.toLowerCase()} later).

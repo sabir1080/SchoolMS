@@ -5,6 +5,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.tenants.models import Tenant
+from apps.tenants.serializers import BrandingFieldsMixin
 from apps.tenants.validators import normalize_code
 
 from .models import Role, User
@@ -61,11 +62,11 @@ class PlatformLoginSerializer(serializers.Serializer):
         return issue_tokens(user)
 
 
-class TenantSummarySerializer(serializers.ModelSerializer):
+class TenantSummarySerializer(BrandingFieldsMixin, serializers.ModelSerializer):
     class Meta:
         model = Tenant
         fields = ["id", "name", "slug", "institute_type", "country", "currency", "timezone", "password_policy",
-            "program_label", "section_label", "working_days",
+            "program_label", "section_label", "working_days", "brand",
         ]
 
 

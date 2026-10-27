@@ -86,7 +86,7 @@ export default function NewInvoicePage() {
           {student ? (
             <p className="text-sm">
               Student: <span className="font-medium">{student.full_name}</span> (#{student.admission_no}){" "}
-              <button type="button" onClick={() => setStudent(null)} className="text-indigo-600 hover:underline">
+              <button type="button" onClick={() => setStudent(null)} className="text-brand-600 hover:underline">
                 change
               </button>
             </p>
@@ -123,7 +123,7 @@ export default function NewInvoicePage() {
               </div>
             ))}
           </div>
-          <button type="button" onClick={() => setLines([...lines, { description: "", amount: "", discount: "" }])} className="mt-3 text-sm text-indigo-600 hover:underline">
+          <button type="button" onClick={() => setLines([...lines, { description: "", amount: "", discount: "" }])} className="mt-3 text-sm text-brand-600 hover:underline">
             + Add item
           </button>
         </Card>

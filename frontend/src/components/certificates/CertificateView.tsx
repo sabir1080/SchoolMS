@@ -17,12 +17,12 @@ export function CertificateView({
   const p = pronouns(d.gender);
   const relation = d.father_name ? `${p.child} of ${d.father_name}` : "";
   const name = <strong className="font-semibold">{d.full_name}</strong>;
-  const logo = institute?.logo;
+  const logo = institute?.logo || tenant?.brand?.logo;
   const conduct = (d.conduct || "good").toLowerCase();
 
   return (
     <article className="mx-auto max-w-3xl bg-white p-3 text-slate-900 shadow-sm print:max-w-none print:shadow-none">
-      <div className="border-4 border-double border-indigo-700 p-8 print:p-10">
+      <div className="border-4 border-double border-brand-700 p-8 print:p-10">
         <header className="text-center">
           {/* The logo is a small data URL saved with the institute, so next/image is not needed. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -31,7 +31,7 @@ export function CertificateView({
           {(institute?.address || institute?.phone) && (
             <p className="text-xs text-slate-600">{[institute.address, institute.phone].filter(Boolean).join(" · ")}</p>
           )}
-          <p className="mt-4 inline-block border-b-2 border-indigo-700 pb-1 text-xl font-semibold tracking-wide text-indigo-800 uppercase">
+          <p className="mt-4 inline-block border-b-2 border-brand-700 pb-1 text-xl font-semibold tracking-wide text-brand-800 uppercase">
             {TITLES[certificate.kind]}
           </p>
         </header>

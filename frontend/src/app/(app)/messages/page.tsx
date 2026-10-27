@@ -172,7 +172,7 @@ function Actions({ onAct, automatic, pending }: { onAct: (p: string, b?: object,
         {automatic && pending > 0 && (
           <button
             onClick={() => onAct("/api/messages/send-pending/", undefined, (r) => `${r.sent} sent, ${r.failed} failed${r.left ? `, ${r.left} left — press again` : ""}.`)}
-            className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white"
+            className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white"
           >
             Send all waiting ({pending})
           </button>
@@ -267,7 +267,7 @@ function MessageSettings({ onSaved }: { onSaved: () => void }) {
     <Card>
       <button onClick={() => setOpen(!open)} className="flex w-full items-center justify-between text-left">
         <h2 className="font-medium">Message settings</h2>
-        <span className="text-sm text-indigo-600">{open ? "Close" : "Open"}</span>
+        <span className="text-sm text-brand-600">{open ? "Close" : "Open"}</span>
       </button>
       {open && settings && (
         <form onSubmit={save} className="mt-4 space-y-4">

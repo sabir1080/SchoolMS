@@ -29,6 +29,7 @@ and tuition centers). See README.md for stack, structure and API.
 - Academics names come from `src/lib/terms.ts` (`termsFor(tenant)`); never hard-code "Class"/"Section" in UI.
 - Use `apps.core.timeutils.tenant_today(tenant)` for "today" (server runs on UTC).
 - Aggregations over models with a default `ordering` must call `.order_by()` first (it splits GROUP BY).
+- UI accent colour is the `brand-*` palette (from `--brand`, set per institute); never use `indigo-*` directly.
 - Chart colours live in `globals.css` (`--series-1`, `--series-2`, `--chart-grid`); validate new ones.
 - Gateway hosts are blocked in cloud sessions: payment flows are tested with simulated gateways
   (Playwright `page.route`) and unit tests; never trust a gateway redirect without verification.
@@ -58,6 +59,9 @@ parent/student results ✅. Pass rule: `Tenant.pass_percentage` per subject (def
 
 Then (owner asked for all five together): timetable ✅ → homework & diary ✅ → SMS/WhatsApp alerts ✅
 (free wa.me links or Twilio) → staff & payroll ✅ → reports with Excel/PDF ✅.
+
+Then: promotion to next class/session ✅ → subject teacher marks entry (timetable teachers) ✅ →
+certificates ✅ → white-label logo + theme colour ✅ (`apps.tenants.branding`).
 
 - Menu items carry the plan `feature` they need (`src/lib/navigation.ts`); the layout hides the rest.
 - Parent alerts go through `apps.messaging.services.queue_and_send` (dedupe keys, plan check).

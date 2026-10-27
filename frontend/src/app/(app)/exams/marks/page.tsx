@@ -65,13 +65,13 @@ export default function MarksPage() {
   const section = progress.sections.find((s) => String(s.id) === sectionId);
   const chip = (active: boolean) =>
     `rounded-full border px-3 py-1 text-sm whitespace-nowrap ${
-      active ? "border-indigo-500 bg-indigo-50 font-medium text-indigo-700 dark:bg-indigo-950 dark:text-indigo-200" : "border-slate-300 dark:border-slate-700"
+      active ? "border-brand-500 bg-brand-50 font-medium text-brand-700 dark:bg-brand-950 dark:text-brand-200" : "border-slate-300 dark:border-slate-700"
     }`;
 
   return (
     <div className="max-w-3xl space-y-4">
       <div>
-        <Link href={`/exams/exam/?id=${examId}`} className="text-sm text-indigo-600 hover:underline">
+        <Link href={`/exams/exam/?id=${examId}`} className="text-sm text-brand-600 hover:underline">
           ← {progress.exam.name}
         </Link>
         <div className="mt-1 flex flex-wrap items-center justify-between gap-2">

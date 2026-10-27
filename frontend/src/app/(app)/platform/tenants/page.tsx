@@ -129,7 +129,7 @@ export default function TenantsPage() {
                   )}
                 </div>
                 <div className="flex shrink-0 gap-3 text-sm">
-                  <button onClick={() => setOpen(open === t.id ? null : t.id)} className="text-indigo-600 hover:underline">
+                  <button onClick={() => setOpen(open === t.id ? null : t.id)} className="text-brand-600 hover:underline">
                     {open === t.id ? "Close" : "Manage"}
                   </button>
                   <button onClick={() => toggleActive(t)} className="text-slate-600 hover:underline dark:text-slate-300">

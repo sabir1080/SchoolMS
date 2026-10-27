@@ -151,8 +151,9 @@ Shared database, every institute-owned row has a `tenant_id`.
   must start at 0%. Institute settings `pass_percentage` and `show_position` (position on report cards).
 - Teachers see exams and grading read-only. Parents and students see the date sheets of announced
   (non-draft) exams of the current session on their dashboard.
-- Marks entry (only while the exam is "marks entry open"): admins for every section, teachers for
-  sections they are class teacher of. Per section and subject: marks (halves allowed, up to the
+- Marks entry (only while the exam is "marks entry open"): admins for every section, class teachers
+  for every subject of their section, and subject teachers (from the timetable) for the subjects they
+  teach in a section. Per section and subject: marks (halves allowed, up to the
   paper's total) or Absent; empty means not entered yet. The exam page shows progress per section.
 - Once a subject has marks it cannot be removed, its total cannot go below the highest mark, and
   the exam/class cannot be deleted. Publishing the result locks the marks.
@@ -197,6 +198,28 @@ Shared database, every institute-owned row has a `tenant_id`.
   salary and allowance. Monthly salary slips made in one tap (salary copied at that time), bonus and
   deductions, mark paid (cash/bank/JazzCash/Easypaisa) or undo, printable slip. Teachers see their own.
 
+## Promotion to the next class / session
+
+- Students page -> "Promote to next class": pick a section of the current session and the new session.
+  Each student gets a suggestion from the latest published annual (or exam) result: passed -> next
+  class, failed -> repeat. Per student: promote, repeat, left, graduated (last class) or skip.
+  Sections with the same name are created in the new session; roll numbers are kept when free.
+  Students marked left/graduated lose portal access with their parents (if no other child studies).
+
+## Certificates
+
+- Plan feature `certificates` (all plans). Character, school leaving and bonafide certificates per
+  student, numbered `CERT-0001` per institute, printable on one A4 page with the logo. A leaving
+  certificate can mark the student as left. Details are saved with the certificate, so reprints match.
+
+## White-label (logo and theme colour)
+
+- Plan feature `white_label` (Pro, Enterprise). Institute settings -> "Logo and theme colour": upload
+  a PNG/JPG/WebP logo (shrunk to 256 px in the browser, saved as a small data URL, max ~150 KB) and
+  pick one of 8 theme colours (all readable with white text). Shown on the login page (after the code),
+  menu, report cards, certificates and salary slips. Without the feature the defaults are shown and
+  changes are refused. Frontend colours use the `brand-*` Tailwind palette derived from `--brand`.
+
 ## Reports
 
 - Plan feature `reports` (plus each report's module): student list, monthly attendance, fee dues,
@@ -208,7 +231,7 @@ Shared database, every institute-owned row has a `tenant_id`.
 for users `admin`, `sana` (teacher), `rashid` (parent of two), `ahmed` (student)) with 32 students,
 attendance since September, six months of fees, four exams (First Term published with marks), an
 annual result being prepared, a full timetable, a week of homework, staff salaries and parent messages
-waiting in the outbox. Running it again replaces
+waiting in the outbox, plus its own logo and blue theme. Running it again replaces
 the demo. `--wipe-all` first deletes **every** institute and its data (super admins and plans stay).
 
 ## Roles
@@ -270,6 +293,9 @@ the demo. `--wipe-all` first deletes **every** institute and its data (super adm
 | GET/DELETE | `/api/messages/` (`?status=&kind=`); POST `<id>/mark-sent/`, `send-pending/`, `fee-reminders/`, `notice/`, `test/` | institute admin |
 | CRUD | `/api/payroll/employees/`; `/api/payroll/payslips/` (`?period=`; POST `generate/`, `<id>/pay/`, `<id>/unpay/`) | institute admin |
 | GET | `/api/me/payslips/` | teacher / admin |
+| GET/POST | `/api/students/promotion/` (`?section=&to_session=`) | institute admin |
+| GET/POST/DELETE | `/api/certificates/` (`?student=`) | institute admin |
+| GET/PATCH | `/api/institute/settings/` (incl. `logo`, `brand_color`; read `brand`) | institute admin |
 | GET | `/api/reports/<students|attendance|fee-dues|fee-collection|exam-result|payroll>/` (`&download=xlsx`) | institute admin |
 | GET | `/api/me/exams/` (`?student=` for parents) | parent / student |
 | GET/PATCH | `/api/pay/settings/` | institute admin |
@@ -332,4 +358,5 @@ Phase 1 (MVP): ~~setup, tenants, roles, login~~ -> ~~institute code login, SaaS 
 
 Phase 2: ~~exams, date sheet, grading scale~~ -> ~~marks entry~~ -> ~~results, position & report cards~~
 -> ~~combined (weighted) annual result and parent/student results~~
--> ~~timetable~~ -> ~~homework & diary~~ -> ~~SMS/WhatsApp alerts~~ -> ~~staff & payroll~~ -> ~~reports (Excel/PDF)~~.
+-> ~~timetable~~ -> ~~homework & diary~~ -> ~~SMS/WhatsApp alerts~~ -> ~~staff & payroll~~ -> ~~reports (Excel/PDF)~~
+-> ~~promotion~~ -> ~~subject teacher marks entry~~ -> ~~certificates~~ -> ~~white-label (logo, colour)~~.

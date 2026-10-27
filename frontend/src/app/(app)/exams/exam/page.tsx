@@ -95,7 +95,7 @@ export default function ExamPage() {
                 {back.text}
               </button>
             )}
-            <button onClick={() => setEditing(!editing)} className="text-sm text-indigo-600 hover:underline">
+            <button onClick={() => setEditing(!editing)} className="text-sm text-brand-600 hover:underline">
               {editing ? "Close" : "Edit exam"}
             </button>
           </div>
@@ -212,7 +212,7 @@ function Papers({ exam, program, editable }: { exam: Exam; program: Program; edi
         <h2 className="font-medium">
           {program.name} · date sheet <span className="text-sm font-normal text-slate-500">({visible.length} {visible.length === 1 ? "paper" : "papers"})</span>
         </h2>
-        <button onClick={() => window.print()} className="text-sm text-indigo-600 hover:underline print:hidden">
+        <button onClick={() => window.print()} className="text-sm text-brand-600 hover:underline print:hidden">
           Print
         </button>
       </div>
@@ -308,7 +308,7 @@ function Papers({ exam, program, editable }: { exam: Exam; program: Program; edi
                 ))}
               </select>
               {adding && (
-                <button onClick={() => save([Number(adding)])} className="text-indigo-600 hover:underline">
+                <button onClick={() => save([Number(adding)])} className="text-brand-600 hover:underline">
                   Add
                 </button>
               )}

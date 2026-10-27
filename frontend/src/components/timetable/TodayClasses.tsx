@@ -24,7 +24,7 @@ export function TodayClasses({ student }: { student?: number }) {
     <Card>
       <div className="flex items-center justify-between gap-2">
         <h2 className="font-medium">Today&apos;s classes</h2>
-        <Link href={`/my-timetable/${query}`} className="text-sm text-indigo-600 hover:underline">
+        <Link href={`/my-timetable/${query}`} className="text-sm text-brand-600 hover:underline">
           Full timetable ›
         </Link>
       </div>

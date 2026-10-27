@@ -56,7 +56,7 @@ export default function CombinedResultPage() {
   if (!listing) return <ErrorBox error={error} />;
   const chip = (active: boolean) =>
     `rounded-full border px-3 py-1 text-sm whitespace-nowrap ${
-      active ? "border-indigo-500 bg-indigo-50 font-medium text-indigo-700 dark:bg-indigo-950 dark:text-indigo-200" : "border-slate-300 dark:border-slate-700"
+      active ? "border-brand-500 bg-brand-50 font-medium text-brand-700 dark:bg-brand-950 dark:text-brand-200" : "border-slate-300 dark:border-slate-700"
     }`;
   const cell = "border-b border-slate-200 px-2 py-2 dark:border-slate-800 print:border-slate-300";
 
@@ -64,7 +64,7 @@ export default function CombinedResultPage() {
     <div className="space-y-4">
       <style>{`@media print { @page { size: A4 ${printing === "sheet" ? "landscape" : "portrait"}; margin: 12mm; } }`}</style>
       <div className="print:hidden">
-        <Link href="/exams/combined/" className="text-sm text-indigo-600 hover:underline">
+        <Link href="/exams/combined/" className="text-sm text-brand-600 hover:underline">
           ← Annual results
         </Link>
         <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
@@ -110,7 +110,7 @@ export default function CombinedResultPage() {
               <button onClick={() => print("sheet")} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium dark:border-slate-700">
                 Print result sheet
               </button>
-              <button onClick={() => print("cards")} disabled={!data.students.length} className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-50">
+              <button onClick={() => print("cards")} disabled={!data.students.length} className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-50">
                 Print all report cards
               </button>
             </div>
@@ -157,7 +157,7 @@ export default function CombinedResultPage() {
                           {r.result === "fail" && <span className="block text-xs font-normal">{r.failed_subjects} subject(s)</span>}
                         </td>
                         <td className={`${cell} print:hidden`}>
-                          <Link href={`/exams/combined/card/?id=${id}&section=${sectionId}&student=${r.student}`} className="text-xs whitespace-nowrap text-indigo-600 hover:underline">
+                          <Link href={`/exams/combined/card/?id=${id}&section=${sectionId}&student=${r.student}`} className="text-xs whitespace-nowrap text-brand-600 hover:underline">
                             Report card
                           </Link>
                         </td>

@@ -58,7 +58,7 @@ export function StudentFeesCard({ studentId }: { studentId: number }) {
     <Card>
       <div className="flex items-center justify-between gap-3">
         <h2 className="font-medium">Fees</h2>
-        <Link href={`/fees/new/?student=${studentId}`} className="text-sm text-indigo-600 hover:underline">
+        <Link href={`/fees/new/?student=${studentId}`} className="text-sm text-brand-600 hover:underline">
           + One-off bill
         </Link>
       </div>
@@ -86,7 +86,7 @@ export function StudentFeesCard({ studentId }: { studentId: number }) {
         </ul>
       )}
       {invoices.length > 6 && (
-        <Link href={`/fees/invoices/?student=${studentId}`} className="text-sm text-indigo-600 hover:underline">
+        <Link href={`/fees/invoices/?student=${studentId}`} className="text-sm text-brand-600 hover:underline">
           All {invoices.length} bills
         </Link>
       )}
@@ -95,7 +95,7 @@ export function StudentFeesCard({ studentId }: { studentId: number }) {
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium">Discounts / concessions</h3>
           {!adding && heads.length > 0 && (
-            <button onClick={() => setAdding(true)} className="text-sm text-indigo-600 hover:underline">
+            <button onClick={() => setAdding(true)} className="text-sm text-brand-600 hover:underline">
               + Add discount
             </button>
           )}
