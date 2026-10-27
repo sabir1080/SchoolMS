@@ -36,6 +36,8 @@ class Tenant(TimeStampedModel):
     # Exams: a subject is passed at this percentage; show class position on report cards.
     pass_percentage = models.PositiveSmallIntegerField(default=33)
     show_position = models.BooleanField(default=True)
+    # School days for the timetable, as weekday numbers (0 = Monday): Monday to Friday by default.
+    working_days = models.CharField(max_length=20, default="0,1,2,3,4")
     password_policy = models.CharField(
         max_length=10, choices=PasswordPolicy.choices, default=PasswordPolicy.EASY
     )

@@ -6,6 +6,7 @@ import { StudentAttendanceCard } from "@/components/attendance/StudentAttendance
 import { MyDateSheets } from "@/components/exams/MyDateSheets";
 import { MyResultsCard } from "@/components/exams/MyResults";
 import { MyFeesCard } from "@/components/fees/MyFeesCard";
+import { TodayClasses } from "@/components/timetable/TodayClasses";
 import { Card } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -32,6 +33,7 @@ export function PortalCards() {
   const hasAttendance = subscription?.plan.features.includes("attendance");
   const hasFees = subscription?.plan.features.includes("fees");
   const hasExams = subscription?.plan.features.includes("exams");
+  const hasTimetable = subscription?.plan.features.includes("timetable");
 
   useEffect(() => {
     if (!enabled) return;
@@ -68,6 +70,7 @@ export function PortalCards() {
             {hasAttendance && (
               <StudentAttendanceCard url={role === "parent" ? `/api/me/attendance/?student=${c.id}` : "/api/me/attendance/"} />
             )}
+            {hasTimetable && <TodayClasses student={role === "parent" ? c.id : undefined} />}
             {hasExams && <MyResultsCard student={role === "parent" ? c.id : undefined} />}
             {hasExams && <MyDateSheets url={role === "parent" ? `/api/me/exams/?student=${c.id}` : "/api/me/exams/"} />}
             {hasFees && <MyFeesCard url={role === "parent" ? `/api/me/invoices/?student=${c.id}` : "/api/me/invoices/"} />}

@@ -28,9 +28,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return <div className="flex min-h-screen items-center justify-center text-slate-500">Loading…</div>;
   }
 
+  const features = subscription?.plan.features ?? [];
   const nav = locked
     ? NAV_BY_ROLE[user.role].filter((item) => ALWAYS_OPEN.includes(item.href))
-    : NAV_BY_ROLE[user.role];
+    : NAV_BY_ROLE[user.role].filter((item) => !item.feature || features.includes(item.feature));
 
   function onLogout() {
     const wasPlatform = user?.role === "super_admin";

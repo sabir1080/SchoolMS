@@ -3,6 +3,8 @@ import type { Role, SubscriptionStatus } from "./api";
 export interface NavItem {
   label: string;
   href: string;
+  /** Plan feature the page needs; the item is hidden when the institute's plan lacks it. */
+  feature?: string;
 }
 
 /** Menu per role. New feature modules add their entries here. */
@@ -12,11 +14,16 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   super_admin: [{ label: "Institutes", href: "/platform/tenants" }, ACCOUNT],
   admin: [
     { label: "Dashboard", href: "/dashboard" },
-    { label: "Students", href: "/students" },
-    { label: "Attendance", href: "/attendance" },
-    { label: "Exams", href: "/exams" },
-    { label: "Fees", href: "/fees" },
-    { label: "Academic setup", href: "/academics" },
+    { label: "Students", href: "/students", feature: "students" },
+    { label: "Attendance", href: "/attendance", feature: "attendance" },
+    { label: "Timetable", href: "/timetable", feature: "timetable" },
+    { label: "Homework", href: "/homework", feature: "homework" },
+    { label: "Exams", href: "/exams", feature: "exams" },
+    { label: "Fees", href: "/fees", feature: "fees" },
+    { label: "Staff & payroll", href: "/payroll", feature: "payroll" },
+    { label: "Messages", href: "/messages", feature: "sms_alerts" },
+    { label: "Reports", href: "/reports", feature: "reports" },
+    { label: "Academic setup", href: "/academics", feature: "academics" },
     { label: "Users", href: "/users" },
     { label: "Institute settings", href: "/settings" },
     { label: "Plan & Billing", href: "/billing" },
@@ -24,9 +31,11 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   ],
   teacher: [
     { label: "Dashboard", href: "/dashboard" },
-    { label: "Attendance", href: "/attendance" },
-    { label: "Exams", href: "/exams" },
-    { label: "Students", href: "/students" },
+    { label: "Attendance", href: "/attendance", feature: "attendance" },
+    { label: "Timetable", href: "/timetable", feature: "timetable" },
+    { label: "Homework", href: "/homework", feature: "homework" },
+    { label: "Exams", href: "/exams", feature: "exams" },
+    { label: "Students", href: "/students", feature: "students" },
     ACCOUNT,
   ],
   student: [{ label: "Dashboard", href: "/dashboard" }, ACCOUNT],

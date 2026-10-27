@@ -95,10 +95,16 @@ class InstituteSettingsSerializer(serializers.ModelSerializer):
         fields = [
             "name", "slug", "institute_type", "email", "phone", "address",
             "country", "currency", "timezone", "password_policy", "program_label", "section_label",
-            "pass_percentage", "show_position",
+            "pass_percentage", "show_position", "working_days",
         ]
         read_only_fields = ["slug", "institute_type", "country", "currency", "timezone"]
         extra_kwargs = {"pass_percentage": {"min_value": 1, "max_value": 100}}
+
+    def validate_working_days(self, value):
+        days = sorted({d.strip() for d in value.split(",") if d.strip()})
+        if not days or any(d not in "0123456" or len(d) != 1 for d in days):
+            raise serializers.ValidationError("Choose at least one day.")
+        return ",".join(days)
 
 
 class ResetAdminPasswordSerializer(serializers.Serializer):

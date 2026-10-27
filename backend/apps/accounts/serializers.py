@@ -65,7 +65,7 @@ class TenantSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Tenant
         fields = ["id", "name", "slug", "institute_type", "country", "currency", "timezone", "password_policy",
-            "program_label", "section_label",
+            "program_label", "section_label", "working_days",
         ]
 
 
