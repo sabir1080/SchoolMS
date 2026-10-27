@@ -166,6 +166,29 @@ export async function api<T = unknown>(path: string, init: RequestInit = {}, ret
   return body as T;
 }
 
+/** Download a file from the API (with the JWT) and save it on the device. */
+export async function downloadFile(path: string, fallbackName: string, retry = true): Promise<void> {
+  const headers = new Headers();
+  if (tokens.access) headers.set("Authorization", `Bearer ${tokens.access}`);
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, { headers });
+  } catch {
+    throw new ApiError(0, { detail: "Cannot reach the server. Check your internet connection and try again." });
+  }
+  if (res.status === 401 && retry && tokens.refresh && (await refreshAccessToken())) return downloadFile(path, fallbackName, false);
+  if (!res.ok) throw new ApiError(res.status, await res.json().catch(() => null));
+  const name = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") ?? "")?.[1] ?? fallbackName;
+  const url = URL.createObjectURL(await res.blob());
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
 export function formatMoney(amount: string | number, currency: string) {
   try {
     return new Intl.NumberFormat(undefined, { style: "currency", currency, maximumFractionDigits: 0 }).format(

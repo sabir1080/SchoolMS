@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "apps.homework",
     "apps.messaging",
     "apps.payroll",
+    "apps.reports",
 ]
 
 MIDDLEWARE = [
@@ -161,6 +162,8 @@ SIMPLE_JWT = {
 }
 
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", "http://localhost:3000")
+# Lets the browser read the file name of downloads (Excel reports).
+CORS_EXPOSE_HEADERS = ["Content-Disposition"]
 
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
