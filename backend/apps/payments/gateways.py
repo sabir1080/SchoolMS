@@ -145,3 +145,122 @@ def easypaisa_ipn_check(ipn, account, reference, expected_amount):
     if str(ipn.get("transaction_status", "")).upper() != "PAID":
         return False, f"Status: {ipn.get('transaction_status')}"
     return True, "Paid"
+
+
+# --- Stripe (cards, any currency) -----------------------------------------------------
+# Hosted Checkout: we create a Checkout Session with the institute's secret key and send the browser to
+# its URL. A payment counts only after we read the session back from Stripe (on return) or receive a
+# webhook whose signature checks out with the institute's webhook signing secret.
+
+ZERO_DECIMAL = {"BIF", "CLP", "DJF", "GNF", "JPY", "KMF", "KRW", "MGA", "PYG", "RWF", "UGX", "VND", "VUV", "XAF", "XOF", "XPF"}
+STRIPE_TOLERANCE = 300  # seconds a webhook signature stays valid
+
+
+def stripe_base():
+    from django.conf import settings
+
+    return getattr(settings, "STRIPE_API_BASE", "https://api.stripe.com").rstrip("/")
+
+
+def minor_units(amount, currency):
+    factor = 1 if currency.upper() in ZERO_DECIMAL else 100
+    return int((Decimal(amount) * factor).quantize(Decimal(1)))
+
+
+def stripe_call(secret_key, path, data=None):
+    import json
+    import urllib.parse
+    import urllib.request
+
+    request = urllib.request.Request(
+        f"{stripe_base()}{path}",
+        data=urllib.parse.urlencode(data).encode() if data is not None else None,
+        method="POST" if data is not None else "GET",
+        headers={"Authorization": "Basic " + base64.b64encode(f"{secret_key}:".encode()).decode(),
+                 "Content-Type": "application/x-www-form-urlencoded"},
+    )
+    with urllib.request.urlopen(request, timeout=20) as response:  # noqa: S310 - fixed Stripe host
+        return json.loads(response.read().decode())
+
+
+def stripe_create_session(account, reference, amount, currency, description, return_url, cancel_url):
+    return stripe_call(account.secret, "/v1/checkout/sessions", {
+        "mode": "payment",
+        "client_reference_id": reference,
+        "metadata[reference]": reference,
+        "line_items[0][quantity]": 1,
+        "line_items[0][price_data][currency]": currency.lower(),
+        "line_items[0][price_data][unit_amount]": minor_units(amount, currency),
+        "line_items[0][price_data][product_data][name]": description[:120],
+        "success_url": return_url,
+        "cancel_url": cancel_url,
+    })
+
+
+def stripe_session_check(session, reference, expected_amount, currency):
+    """(ok, message) for a Checkout Session read from Stripe or sent in a verified webhook."""
+    if session.get("client_reference_id") != reference:
+        return False, "Session is for a different payment."
+    if str(session.get("currency", "")).upper() != currency.upper():
+        return False, "The currency does not match."
+    if session.get("amount_total") != minor_units(expected_amount, currency):
+        return False, "The paid amount does not match."
+    if session.get("payment_status") != "paid":
+        return False, f"Status: {session.get('payment_status')}"
+    return True, "Paid by card"
+
+
+def stripe_verify_signature(payload, header, secret, now=None):
+    """Check a ``Stripe-Signature`` header (t=..., v1=...) against the raw request body."""
+    import time
+
+    parts = {}
+    for item in (header or "").split(","):
+        key, _, value = item.strip().partition("=")
+        parts.setdefault(key, []).append(value)
+    try:
+        timestamp = int(parts.get("t", [""])[0])
+    except ValueError:
+        return False
+    if abs((now or time.time()) - timestamp) > STRIPE_TOLERANCE:
+        return False
+    expected = hmac.new(secret.encode(), f"{timestamp}.".encode() + payload, hashlib.sha256).hexdigest()
+    return any(hmac.compare_digest(expected, sig) for sig in parts.get("v1", []))
+
+
+# --- Safepay (Pakistan: cards, wallets, bank accounts) --------------------------------
+# Hosted checkout: create a tracker with the API key, send the browser to the checkout page; Safepay
+# sends the browser back with the tracker and ``sig`` = HMAC-SHA256(secret key, tracker), which we check.
+
+SAFEPAY_URLS = {True: "https://sandbox.api.getsafepay.com", False: "https://api.getsafepay.com"}
+
+
+def safepay_base(test_mode):
+    from django.conf import settings
+
+    return (getattr(settings, "SAFEPAY_API_BASE", "") or SAFEPAY_URLS[test_mode]).rstrip("/")
+
+
+def safepay_create_tracker(account, amount):
+    import json
+    import urllib.request
+
+    body = json.dumps({"client": account.merchant_id, "amount": float(Decimal(amount)), "currency": "PKR",
+                       "environment": "sandbox" if account.test_mode else "production"}).encode()
+    request = urllib.request.Request(f"{safepay_base(account.test_mode)}/order/v1/init", data=body, method="POST",
+                                     headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(request, timeout=20) as response:  # noqa: S310 - fixed Safepay host
+        return json.loads(response.read().decode())["data"]["token"]
+
+
+def safepay_checkout_url(account, tracker, reference, return_url, cancel_url):
+    from urllib.parse import urlencode
+
+    query = urlencode({"env": "sandbox" if account.test_mode else "production", "beacon": tracker, "source": "custom",
+                       "order_id": reference, "redirect_url": return_url, "cancel_url": cancel_url})
+    return f"{safepay_base(account.test_mode)}/components?{query}"
+
+
+def safepay_signature_ok(account, tracker, signature):
+    expected = hmac.new(account.secret.encode(), tracker.encode(), hashlib.sha256).hexdigest()
+    return bool(signature) and hmac.compare_digest(expected, signature)

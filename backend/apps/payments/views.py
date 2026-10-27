@@ -23,7 +23,7 @@ from apps.subscriptions.features import Feature
 from apps.subscriptions.gating import ActiveSubscription, RequiresFeature
 
 from . import gateways
-from .models import REAL_PROVIDERS, GatewayAccount, OnlinePayment, OnlinePaymentStatus, Provider
+from .models import PKR_ONLY, REAL_PROVIDERS, GatewayAccount, OnlinePayment, OnlinePaymentStatus, Provider
 from .services import complete, fail, invoice_is_open, new_reference
 
 logger = logging.getLogger(__name__)
@@ -75,8 +75,16 @@ class AccountUpdateSerializer(serializers.Serializer):
     secret = serializers.CharField(max_length=100, required=False, allow_blank=True, trim_whitespace=False)
 
     def validate_secret(self, value):
-        if value and self.initial_data.get("provider") == Provider.EASYPAISA and len(value.encode()) != 16:
+        provider = self.initial_data.get("provider")
+        if value and provider == Provider.EASYPAISA and len(value.encode()) != 16:
             raise serializers.ValidationError("The Easypaisa hash key must be exactly 16 characters.")
+        if value and provider == Provider.STRIPE and not value.startswith(("sk_test_", "sk_live_", "rk_test_", "rk_live_")):
+            raise serializers.ValidationError("Use the Stripe secret key that starts with sk_test_ or sk_live_.")
+        return value
+
+    def validate_password(self, value):
+        if value and self.initial_data.get("provider") == Provider.STRIPE and not value.startswith("whsec_"):
+            raise serializers.ValidationError("The Stripe webhook signing secret starts with whsec_.")
         return value
 
 
@@ -90,6 +98,7 @@ class PaymentSettingsView(TenantPaymentsView):
     def data(self):
         build = self.request.build_absolute_uri
         return {
+            "currency": self.tenant.currency,
             "currency_supported": self.tenant.currency == "PKR",
             "accounts": [
                 {
@@ -101,6 +110,7 @@ class PaymentSettingsView(TenantPaymentsView):
                     "has_password": bool(a.password),
                     "has_secret": bool(a.secret),
                     "is_ready": a.is_ready,
+                    "currency_ok": a.provider not in PKR_ONLY or self.tenant.currency == "PKR",
                 }
                 for a in self.accounts()
             ],
@@ -109,6 +119,7 @@ class PaymentSettingsView(TenantPaymentsView):
                 "jazzcash_return": build(reverse("pay-jazzcash-return")),
                 "easypaisa_postback": build(reverse("pay-easypaisa-postback")),
                 "easypaisa_ipn": build(reverse("pay-easypaisa-ipn")),
+                "stripe_webhook": build(reverse("pay-stripe-webhook", args=[self.tenant.slug])),
             },
         }
 
@@ -125,11 +136,13 @@ class PaymentSettingsView(TenantPaymentsView):
                 values.pop(field, None)
         for field, value in values.items():
             setattr(account, field, value.strip() if field == "merchant_id" else value)
+        if account.provider == Provider.STRIPE and account.secret:
+            account.test_mode = "_test_" in account.secret  # Stripe keys say whether they are test keys
         if account.is_enabled:
             if not account.is_ready:
                 raise ValidationError("Fill in all the account details before turning it on.")
-            if self.tenant.currency != "PKR":
-                raise ValidationError("JazzCash and Easypaisa only accept payments in PKR.")
+            if account.provider in PKR_ONLY and self.tenant.currency != "PKR":
+                raise ValidationError(f"{account.get_provider_display()} only accepts payments in PKR.")
         account.save()
         return Response(self.data())
 
@@ -199,10 +212,32 @@ class StartPaymentView(TenantPaymentsView):
                 account, op.reference, op.amount, f"{invoice.title} - {invoice.student.full_name}",
                 f"INV{invoice.number}", request.build_absolute_uri(reverse("pay-jazzcash-return")), now,
             )
-        else:
+        elif provider == Provider.EASYPAISA:
             postback = request.build_absolute_uri(reverse("pay-easypaisa-postback")) + "?" + urlencode({"ref": op.reference})
             redirect = gateways.easypaisa_request(account, op.reference, op.amount, postback, now)
+        else:
+            redirect = self.hosted_checkout(request, account, op, invoice)
         return Response({"payment": payment_data(op), **redirect})
+
+    def hosted_checkout(self, request, account, op, invoice):
+        """Stripe and Safepay: ask the gateway for a checkout page and send the browser there."""
+        name = "pay-stripe-return" if op.provider == Provider.STRIPE else "pay-safepay-return"
+        back = request.build_absolute_uri(reverse(name))
+        return_url, cancel_url = f"{back}?{urlencode({'ref': op.reference})}", f"{back}?{urlencode({'ref': op.reference, 'cancel': 1})}"
+        try:
+            if op.provider == Provider.STRIPE:
+                session = gateways.stripe_create_session(account, op.reference, op.amount, self.tenant.currency,
+                                                         f"{invoice.title} - {invoice.student.full_name}", return_url, cancel_url)
+                op.gateway_reference, url = session["id"], session["url"]
+            else:
+                op.gateway_reference = gateways.safepay_create_tracker(account, op.amount)
+                url = gateways.safepay_checkout_url(account, op.gateway_reference, op.reference, return_url, cancel_url)
+        except Exception as exc:  # network, bad keys or an unexpected reply
+            logger.warning("%s checkout could not start: %s", op.provider, exc)
+            fail(op, "Could not open the payment page.")
+            raise ValidationError(f"{op.get_provider_display()} could not open the payment page. Please try again later.")
+        op.save(update_fields=["gateway_reference", "updated_at"])
+        return {"redirect_url": url}
 
 
 class PaymentStatusView(TenantPaymentsView):
@@ -336,6 +371,80 @@ class EasypaisaIPNView(GatewayCallbackView):
         elif str(ipn.get("transaction_status", "")).upper() in ("FAILED", "EXPIRED", "REVERSED"):
             fail(op, message, ipn)
         return HttpResponse("OK")
+
+    post = get
+
+
+class StripeReturnView(GatewayCallbackView):
+    """The browser comes back from Stripe Checkout. We read the session from Stripe before marking it paid."""
+
+    def get(self, request):
+        data = self.params(request)
+        op = OnlinePayment.objects.filter(provider=Provider.STRIPE, reference=data.get("ref", "")).select_related("tenant").first()
+        if op is None:
+            return HttpResponse("Unknown transaction.", status=404)
+        account = GatewayAccount.objects.filter(tenant=op.tenant, provider=Provider.STRIPE).first()
+        if op.status == OnlinePaymentStatus.PENDING and account and op.gateway_reference:
+            try:
+                session = gateways.stripe_call(account.secret, f"/v1/checkout/sessions/{op.gateway_reference}")
+            except Exception as exc:
+                logger.warning("Stripe session check failed: %s", exc)
+                session = None
+            if session is not None:
+                ok, message = gateways.stripe_session_check(session, op.reference, op.amount, op.tenant.currency)
+                if ok:
+                    complete(op, message, str(session.get("payment_intent") or session.get("id")), session)
+                elif data.get("cancel"):
+                    fail(op, "Cancelled", session)
+            elif data.get("cancel"):
+                fail(op, "Cancelled")
+        return frontend_result(op.reference)
+
+
+class StripeWebhookView(GatewayCallbackView):
+    """Stripe tells us about finished checkouts (also when the parent closed the browser before returning)."""
+
+    def post(self, request, code):
+        account = GatewayAccount.objects.filter(tenant__slug=code, provider=Provider.STRIPE).first()
+        payload = request.body
+        if account is None or not account.password or not gateways.stripe_verify_signature(
+            payload, request.headers.get("Stripe-Signature", ""), account.password
+        ):
+            return HttpResponse("Bad signature.", status=400)
+        event = json.loads(payload.decode() or "{}")
+        session = (event.get("data") or {}).get("object") or {}
+        op = OnlinePayment.objects.filter(tenant=account.tenant, provider=Provider.STRIPE,
+                                          reference=str(session.get("client_reference_id", ""))).first()
+        if op is None:
+            return HttpResponse("OK")  # not one of ours (e.g. another product on the same Stripe account)
+        if event.get("type") in ("checkout.session.completed", "checkout.session.async_payment_succeeded"):
+            ok, message = gateways.stripe_session_check(session, op.reference, op.amount, account.tenant.currency)
+            if ok:
+                complete(op, message, str(session.get("payment_intent") or session.get("id")), session)
+        elif event.get("type") in ("checkout.session.expired", "checkout.session.async_payment_failed"):
+            fail(op, "Payment was not completed.", session)
+        return HttpResponse("OK")
+
+
+class SafepayReturnView(GatewayCallbackView):
+    """The browser comes back from Safepay with the tracker and a signature made with the institute's secret key."""
+
+    def get(self, request):
+        data = self.params(request)
+        op = OnlinePayment.objects.filter(provider=Provider.SAFEPAY, reference=data.get("ref", "")).first()
+        if op is None:
+            return HttpResponse("Unknown transaction.", status=404)
+        account = GatewayAccount.objects.filter(tenant=op.tenant, provider=Provider.SAFEPAY).first()
+        if op.status == OnlinePaymentStatus.PENDING:
+            tracker = str(data.get("tracker", ""))
+            if data.get("cancel"):
+                fail(op, "Cancelled", data)
+            elif account and tracker and tracker == op.gateway_reference and gateways.safepay_signature_ok(account, tracker, str(data.get("sig", ""))):
+                complete(op, "Paid with Safepay", str(data.get("reference") or tracker), data)
+            else:
+                op.message = "The payment could not be verified."
+                op.save(update_fields=["message", "updated_at"])
+        return frontend_result(op.reference)
 
     post = get
 

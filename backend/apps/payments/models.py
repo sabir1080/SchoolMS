@@ -7,10 +7,14 @@ from apps.core.models import TenantScopedModel
 class Provider(models.TextChoices):
     JAZZCASH = "jazzcash", "JazzCash"
     EASYPAISA = "easypaisa", "Easypaisa"
+    SAFEPAY = "safepay", "Safepay"
+    STRIPE = "stripe", "Card (Stripe)"
     DEMO = "demo", "Demo (testing only)"
 
 
-REAL_PROVIDERS = (Provider.JAZZCASH, Provider.EASYPAISA)
+REAL_PROVIDERS = (Provider.JAZZCASH, Provider.EASYPAISA, Provider.SAFEPAY, Provider.STRIPE)
+# Gateways that only take Pakistani rupees; Stripe takes the institute's own currency.
+PKR_ONLY = (Provider.JAZZCASH, Provider.EASYPAISA, Provider.SAFEPAY)
 
 
 class GatewayAccount(TenantScopedModel):
@@ -18,6 +22,8 @@ class GatewayAccount(TenantScopedModel):
 
     JazzCash: merchant_id = Merchant ID, password = Password, secret = Integrity Salt.
     Easypaisa: merchant_id = Store ID, secret = Hash Key (password unused).
+    Safepay: merchant_id = API key, secret = Secret key (signs the return), password unused.
+    Stripe: secret = Secret key (sk_...), password = Webhook signing secret (whsec_..., optional), merchant_id unused.
     Secrets are never sent back by the API.
     """
 
@@ -35,6 +41,8 @@ class GatewayAccount(TenantScopedModel):
     def is_ready(self):
         if self.provider == Provider.JAZZCASH:
             return bool(self.merchant_id and self.password and self.secret)
+        if self.provider == Provider.STRIPE:
+            return bool(self.secret)
         return bool(self.merchant_id and self.secret)
 
 

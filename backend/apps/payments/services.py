@@ -14,7 +14,8 @@ from .models import OnlinePayment, OnlinePaymentStatus, Provider
 
 logger = logging.getLogger(__name__)
 
-METHOD_FOR_PROVIDER = {Provider.JAZZCASH: "jazzcash", Provider.EASYPAISA: "easypaisa", Provider.DEMO: "other"}
+METHOD_FOR_PROVIDER = {Provider.JAZZCASH: "jazzcash", Provider.EASYPAISA: "easypaisa", Provider.SAFEPAY: "card",
+                       Provider.STRIPE: "card", Provider.DEMO: "other"}
 
 
 def new_reference():

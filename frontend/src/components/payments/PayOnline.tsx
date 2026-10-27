@@ -11,10 +11,12 @@ import { startPayment, type PayOption } from "@/lib/payments";
 const STYLES: Record<string, string> = {
   jazzcash: "bg-red-600 hover:bg-red-700 text-white",
   easypaisa: "bg-emerald-600 hover:bg-emerald-700 text-white",
+  safepay: "bg-sky-700 hover:bg-sky-800 text-white",
+  stripe: "bg-violet-700 hover:bg-violet-800 text-white",
   demo: "border border-slate-300 dark:border-slate-600",
 };
 
-/** "Pay with JazzCash / Easypaisa" buttons for one open bill. */
+/** "Pay with JazzCash / Easypaisa / Safepay / card" buttons for one open bill. */
 export function PayOnline({ invoiceId, compact = false }: { invoiceId: number; compact?: boolean }) {
   const { subscription } = useAuth();
   const router = useRouter();
@@ -51,7 +53,7 @@ export function PayOnline({ invoiceId, compact = false }: { invoiceId: number; c
             disabled={busy !== null}
             className={`rounded-lg px-3 py-2 text-sm font-medium disabled:opacity-60 ${STYLES[o.provider]}`}
           >
-            {busy === o.provider ? "Opening…" : o.provider === "demo" ? "Demo payment" : `Pay with ${o.label}`}
+            {busy === o.provider ? "Opening…" : o.provider === "demo" ? "Demo payment" : o.provider === "stripe" ? "Pay by card" : `Pay with ${o.label}`}
             {o.test_mode && o.provider !== "demo" && <span className="ml-1 text-xs opacity-80">(test)</span>}
           </button>
         ))}

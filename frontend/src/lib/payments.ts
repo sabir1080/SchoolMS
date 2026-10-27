@@ -1,7 +1,7 @@
 import { api } from "./api";
 
 export interface PayOption {
-  provider: "jazzcash" | "easypaisa" | "demo";
+  provider: "jazzcash" | "easypaisa" | "safepay" | "stripe" | "demo";
   label: string;
   test_mode: boolean;
 }
@@ -23,6 +23,8 @@ export interface OnlinePayment {
 interface StartResponse {
   payment: OnlinePayment;
   redirect?: string;
+  /** Hosted checkout page (Stripe, Safepay) on the gateway's site. */
+  redirect_url?: string;
   method?: "POST";
   action?: string;
   fields?: Record<string, string>;
@@ -36,6 +38,10 @@ export async function startPayment(invoice: number, provider: string, go: (path:
   });
   if (res.redirect) {
     go(res.redirect);
+    return;
+  }
+  if (res.redirect_url) {
+    window.location.assign(res.redirect_url);
     return;
   }
   // The gateways expect a normal form POST from the customer's browser.

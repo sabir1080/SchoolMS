@@ -131,6 +131,10 @@ VAPID_SUBJECT = os.environ.get("VAPID_SUBJECT", "mailto:support@schoolms.app")
 # Extra push hosts allowed besides the real push services (only for local testing).
 PUSH_EXTRA_HOSTS = [h for h in os.environ.get("PUSH_EXTRA_HOSTS", "").split(",") if h.strip()]
 PUSH_SYNC = False
+
+# Only for local testing of the Stripe and Safepay flows against a stand-in server.
+STRIPE_API_BASE = os.environ.get("STRIPE_API_BASE", "https://api.stripe.com")
+SAFEPAY_API_BASE = os.environ.get("SAFEPAY_API_BASE", "")
 USE_I18N = True
 USE_TZ = True
 

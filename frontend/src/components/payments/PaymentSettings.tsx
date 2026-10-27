@@ -7,7 +7,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
 interface Account {
-  provider: "jazzcash" | "easypaisa";
+  provider: "jazzcash" | "easypaisa" | "safepay" | "stripe";
   label: string;
   is_enabled: boolean;
   test_mode: boolean;
@@ -15,17 +15,21 @@ interface Account {
   has_password: boolean;
   has_secret: boolean;
   is_ready: boolean;
+  currency_ok: boolean;
 }
 
 interface Settings {
   currency_supported: boolean;
   accounts: Account[];
-  urls: { jazzcash_return: string; easypaisa_postback: string; easypaisa_ipn: string };
+  currency: string;
+  urls: { jazzcash_return: string; easypaisa_postback: string; easypaisa_ipn: string; stripe_webhook: string };
 }
 
 const TEXT = {
   jazzcash: { id: "Merchant ID", secret: "Integrity Salt", password: "Password" },
   easypaisa: { id: "Store ID", secret: "Hash Key (16 characters)", password: "" },
+  safepay: { id: "API key", secret: "Secret key", password: "" },
+  stripe: { id: "", secret: "Secret key (sk_live_… or sk_test_…)", password: "Webhook signing secret (whsec_…, recommended)" },
 };
 
 /** Institute settings: JazzCash and Easypaisa merchant accounts for online fee payments. */
@@ -53,11 +57,14 @@ export function PaymentSettings() {
     <Card>
       <h2 className="font-medium">Online fee payments</h2>
       <p className="mb-3 text-sm text-slate-500">
-        Let parents pay bills with JazzCash or Easypaisa. You need a merchant account from each; they give you the
-        details below. Keep &quot;Test mode&quot; on until the gateway tells you your account is live.
+        Let parents pay bills with JazzCash, Easypaisa, Safepay (cards, wallets and bank accounts) or by card through Stripe.
+        You need a merchant account with each one you use; they give you the details below. Keep &quot;Test mode&quot; on
+        until the gateway tells you your account is live.
       </p>
       {!settings.currency_supported && (
-        <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">JazzCash and Easypaisa only accept PKR.</p>
+        <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          JazzCash, Easypaisa and Safepay only accept PKR. Stripe can take {settings.currency}.
+        </p>
       )}
       <div className="space-y-4">
         {settings.accounts.map((a) => (
@@ -99,8 +106,11 @@ function AccountForm({ account, urls, onSaved }: { account: Account; urls: Setti
           {account.is_enabled ? (account.test_mode ? "On (test mode)" : "On") : "Off"}
         </span>
       </div>
+      {!account.currency_ok && <p className="text-xs text-amber-700">Needs an institute that bills in PKR.</p>}
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label={text.id} value={form.merchant_id} onChange={(e) => setForm({ ...form, merchant_id: e.target.value })} autoComplete="off" />
+        {text.id && (
+          <Field label={text.id} value={form.merchant_id} onChange={(e) => setForm({ ...form, merchant_id: e.target.value })} autoComplete="off" />
+        )}
         {text.password && (
           <PasswordField
             label={text.password}
@@ -119,10 +129,14 @@ function AccountForm({ account, urls, onSaved }: { account: Account; urls: Setti
         />
       </div>
       <div className="flex flex-wrap gap-4 text-sm">
-        <label className="flex items-center gap-2">
-          <input type="checkbox" checked={form.test_mode} onChange={(e) => setForm({ ...form, test_mode: e.target.checked })} />
-          Test mode (sandbox)
-        </label>
+        {account.provider === "stripe" ? (
+          <span className="text-xs text-slate-500">Test or live follows your secret key (sk_test_ / sk_live_).</span>
+        ) : (
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={form.test_mode} onChange={(e) => setForm({ ...form, test_mode: e.target.checked })} />
+            Test mode (sandbox)
+          </label>
+        )}
         <label className="flex items-center gap-2">
           <input type="checkbox" checked={form.is_enabled} onChange={(e) => setForm({ ...form, is_enabled: e.target.checked })} />
           Show to parents
@@ -130,13 +144,18 @@ function AccountForm({ account, urls, onSaved }: { account: Account; urls: Setti
       </div>
       <details className="text-xs text-slate-500">
         <summary className="cursor-pointer">Addresses to give {account.label}</summary>
-        {account.provider === "jazzcash" ? (
-          <p className="mt-1 break-all">Return URL: {urls.jazzcash_return}</p>
-        ) : (
+        {account.provider === "jazzcash" && <p className="mt-1 break-all">Return URL: {urls.jazzcash_return}</p>}
+        {account.provider === "easypaisa" && (
           <>
             <p className="mt-1 break-all">Postback URL: {urls.easypaisa_postback}</p>
             <p className="break-all">IPN URL (needed to confirm payments): {urls.easypaisa_ipn}</p>
           </>
+        )}
+        {account.provider === "safepay" && <p className="mt-1">Nothing to set: the return address is sent with each payment.</p>}
+        {account.provider === "stripe" && (
+          <p className="mt-1 break-all">
+            Webhook endpoint (Stripe Dashboard → Developers → Webhooks, event checkout.session.completed): {urls.stripe_webhook}
+          </p>
         )}
       </details>
       <ErrorBox error={error} />
