@@ -23,6 +23,7 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { label: "Staff & payroll", href: "/payroll", feature: "payroll" },
     { label: "Messages", href: "/messages", feature: "sms_alerts" },
     { label: "Reports", href: "/reports", feature: "reports" },
+    { label: "Certificates", href: "/certificates", feature: "certificates" },
     { label: "Academic setup", href: "/academics", feature: "academics" },
     { label: "Users", href: "/users" },
     { label: "Institute settings", href: "/settings" },

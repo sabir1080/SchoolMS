@@ -158,7 +158,7 @@ def test_feature_gating(rf, admin_a, school_a):
     request.user = admin_a
 
     class View:
-        required_feature = "white_label"
+        required_feature = "some_future_module"
 
     with pytest.raises(Exception) as exc:
         RequiresFeature().has_permission(request, View())

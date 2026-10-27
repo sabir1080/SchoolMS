@@ -121,6 +121,11 @@ export default function StudentViewPage() {
         </div>
         <div className="flex items-center gap-3">
           <StatusBadge status={student.status} />
+          {isAdmin && subscription?.plan.features.includes("certificates") && (
+            <Link href={`/certificates/?student=${student.id}`} className="text-sm font-medium text-indigo-600 hover:underline">
+              Certificate
+            </Link>
+          )}
           {isAdmin && (
             <Link href={`/students/edit/?id=${student.id}`}>
               <Button>Edit</Button>

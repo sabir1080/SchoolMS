@@ -13,6 +13,7 @@ class Feature(models.TextChoices):
     TIMETABLE = "timetable", "Timetable"
     HOMEWORK = "homework", "Homework & diary"
     PAYROLL = "payroll", "Staff & payroll"
+    CERTIFICATES = "certificates", "Certificates"
     REPORTS = "reports", "Reports & analytics"
     SMS_ALERTS = "sms_alerts", "SMS / WhatsApp / Email alerts"
     WHITE_LABEL = "white_label", "White-labeling"
