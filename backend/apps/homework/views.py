@@ -68,7 +68,10 @@ class HomeworkViewSet(TenantScopedViewSetMixin, viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         self.check_section(serializer.validated_data["section"])
-        serializer.save(tenant=self.get_tenant(), created_by=self.request.user)
+        homework = serializer.save(tenant=self.get_tenant(), created_by=self.request.user)
+        from apps.messaging.alerts import homework_alerts
+
+        homework_alerts(homework, self.request.user)
 
     def perform_update(self, serializer):
         self.check_owner(serializer.instance)

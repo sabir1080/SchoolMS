@@ -159,6 +159,9 @@ class SheetView(AttendanceView):
                         "marked_by": request.user,
                     },
                 )
+        from apps.messaging.alerts import absent_alerts
+
+        absent_alerts(self.tenant, section, date, records, request.user)
         return Response(self.sheet(section, date))
 
 

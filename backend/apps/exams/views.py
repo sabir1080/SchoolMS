@@ -56,6 +56,15 @@ class ExamViewSet(TenantScopedViewSetMixin, viewsets.ModelViewSet):
             sync_papers(exam)
 
     def perform_update(self, serializer):
+        was_published = serializer.instance.status == ExamStatus.PUBLISHED
+        self.save_exam(serializer)
+        exam = serializer.instance
+        if exam.status == ExamStatus.PUBLISHED and not was_published:
+            from apps.messaging.alerts import result_alerts
+
+            result_alerts(exam, self.request.user)
+
+    def save_exam(self, serializer):
         with transaction.atomic():
             before = set(serializer.instance.programs.values_list("id", flat=True))
             exam = serializer.save()

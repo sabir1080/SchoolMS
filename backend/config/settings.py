@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "apps.exams",
     "apps.timetable",
     "apps.homework",
+    "apps.messaging",
 ]
 
 MIDDLEWARE = [
