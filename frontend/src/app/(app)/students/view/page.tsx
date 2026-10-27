@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import { StudentAttendanceCard } from "@/components/attendance/StudentAttendanceCard";
+import { StudentFeesCard } from "@/components/fees/StudentFeesCard";
 import { CreateLogin, usernameFrom } from "@/components/students/CreateLogin";
 import { SectionPicker, type SectionChoice } from "@/components/students/SectionPicker";
 import { StatusBadge } from "@/components/students/StatusBadge";
@@ -20,6 +21,7 @@ export default function StudentViewPage() {
   const router = useRouter();
   const terms = termsFor(user?.tenant);
   const hasAttendance = subscription?.plan.features.includes("attendance");
+  const hasFees = subscription?.plan.features.includes("fees");
   const [id, setId] = useState<string | null>(null);
   const [student, setStudent] = useState<StudentDetail | null>(null);
   const [isNew, setIsNew] = useState(false);
@@ -182,6 +184,7 @@ export default function StudentViewPage() {
       </Card>
 
       {hasAttendance && <StudentAttendanceCard url={`/api/attendance/students/${student.id}/`} />}
+      {hasFees && isAdmin && <StudentFeesCard studentId={student.id} />}
 
       <Card>
         <h2 className="mb-2 font-medium">Parents / guardians</h2>

@@ -40,7 +40,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen md:flex">
-      <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 md:hidden dark:border-slate-800 dark:bg-slate-900">
+      <header className="flex items-center justify-between border-b print:hidden border-slate-200 bg-white px-4 py-3 md:hidden dark:border-slate-800 dark:bg-slate-900">
         <span className="truncate font-semibold">{user.tenant?.name ?? "SchoolMS Platform"}</span>
         <button
           onClick={() => setMenuOpen((open) => !open)}
@@ -52,7 +52,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </header>
 
       <aside
-        className={`${menuOpen ? "block" : "hidden"} border-b border-slate-200 bg-white md:block md:min-h-screen md:w-60 md:shrink-0 md:border-r md:border-b-0 dark:border-slate-800 dark:bg-slate-900`}
+        className={`${menuOpen ? "block" : "hidden"} print:hidden border-b border-slate-200 bg-white md:block md:min-h-screen md:w-60 md:shrink-0 md:border-r md:border-b-0 dark:border-slate-800 dark:bg-slate-900`}
       >
         <div className="hidden px-5 py-5 md:block">
           <p className="font-semibold">{user.tenant?.name ?? "SchoolMS Platform"}</p>

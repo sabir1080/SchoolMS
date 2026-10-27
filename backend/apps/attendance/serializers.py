@@ -1,5 +1,3 @@
-import datetime
-
 from rest_framework import serializers
 
 from apps.academics.models import Section
@@ -33,13 +31,3 @@ class SheetInputSerializer(serializers.Serializer):
         if len(ids) != len(set(ids)):
             raise serializers.ValidationError({"records": ["Each student can appear only once."]})
         return attrs
-
-
-def parse_month(value, today):
-    """'2026-10' -> (first day, last day); defaults to the month of ``today``."""
-    try:
-        first = datetime.date.fromisoformat(f"{value}-01") if value else today.replace(day=1)
-    except ValueError:
-        raise serializers.ValidationError({"month": ["Use the format YYYY-MM."]})
-    next_month = (first.replace(day=28) + datetime.timedelta(days=4)).replace(day=1)
-    return first, next_month - datetime.timedelta(days=1)

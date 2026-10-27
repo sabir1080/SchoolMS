@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { StudentAttendanceCard } from "@/components/attendance/StudentAttendanceCard";
+import { MyFeesCard } from "@/components/fees/MyFeesCard";
 import { Card } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -27,6 +28,7 @@ export function PortalCards() {
   const role = user?.role;
   const enabled = (role === "parent" || role === "student") && subscription?.is_usable;
   const hasAttendance = subscription?.plan.features.includes("attendance");
+  const hasFees = subscription?.plan.features.includes("fees");
 
   useEffect(() => {
     if (!enabled) return;
@@ -63,6 +65,7 @@ export function PortalCards() {
             {hasAttendance && (
               <StudentAttendanceCard url={role === "parent" ? `/api/me/attendance/?student=${c.id}` : "/api/me/attendance/"} />
             )}
+            {hasFees && <MyFeesCard url={role === "parent" ? `/api/me/invoices/?student=${c.id}` : "/api/me/invoices/"} />}
           </div>
         ))}
       </div>

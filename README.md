@@ -24,6 +24,7 @@ backend/
   apps/academics/      Sessions, programs (class/course), sections (section/batch), subjects
   apps/students/       Students, guardians (shared by siblings), enrollments, student/parent portals
   apps/attendance/     Daily attendance per section, monthly reports, today summary
+  apps/fees/           Fee types, class fees per session, discounts, invoices, payments, summary
   tests/
 frontend/
   src/lib/             API client, auth context, navigation, regions
@@ -99,6 +100,19 @@ Shared database, every institute-owned row has a `tenant_id`.
 - Dashboard: today's summary and sections not yet marked (admin/teacher); parents and students see
   today's status and monthly/session percentages. Students with attendance cannot be deleted.
 
+## Fees
+
+- Fee types are monthly or once per session (e.g. admission). Each class gets an amount per fee
+  type for a session; 0 removes a fee.
+- Student discounts (fixed amount or percent) per fee type, applied when bills are made.
+- "Create bills" makes one invoice per active student for a month: monthly fees plus once-per-session
+  fees not billed yet. Re-running skips students who already have that month's bill. One-off bills
+  (trip, books, fine) can be created for a single student.
+- Payments can be partial; amounts above the balance are refused. Invoice and receipt numbers count
+  up per institute. Bills with payments cannot be cancelled until the payments are deleted.
+- Overview: billed and received this month, total due, overdue students. Bills print cleanly.
+- Admins only. Parents and students see their bills. Students with bills cannot be deleted.
+
 ## Roles
 
 | Role | Tenant | Can do (so far) |
@@ -133,6 +147,12 @@ Shared database, every institute-owned row has a `tenant_id`.
 | GET/POST | `/api/attendance/sheet/` (`?section=&date=`; POST `section`, `date`, `records`) | admin / class teacher |
 | GET | `/api/attendance/report/?section=&month=YYYY-MM`, `/api/attendance/students/<id>/` | admin / teacher |
 | GET | `/api/me/attendance/` (`?student=` for parents) | parent / student |
+| CRUD | `/api/fees/heads/` (+ `bulk-create/`), `/api/fees/discounts/` (`?student=`) | institute admin |
+| GET/POST | `/api/fees/rates/` (`?session=`; POST `session`, `program`, `rates`) | institute admin |
+| GET/POST | `/api/fees/invoices/` (`?status=due|overdue|paid|…`, `period`, `program`, `section`, `student`, `search`) | institute admin |
+| POST | `/api/fees/invoices/generate/`, `<id>/payments/`, `<id>/cancel/`; DELETE `/api/fees/payments/<id>/` | institute admin |
+| GET | `/api/fees/summary/?month=YYYY-MM` | institute admin |
+| GET | `/api/me/invoices/` (`?student=` for parents) | parent / student |
 | POST | `/api/users/<id>/set-password/` | institute admin |
 | GET/POST/PATCH/DELETE | `/api/users/` | institute admin (DELETE deactivates) |
 | GET/POST/PATCH | `/api/platform/tenants/` | super admin |
@@ -184,5 +204,5 @@ before onboarding real institutes.
 ## Roadmap
 
 Phase 1 (MVP): ~~setup, tenants, roles, login~~ -> ~~institute code login, SaaS subscriptions~~ -> ~~passwords~~ -> ~~academic setup~~ -> ~~student admission & enrollment~~
--> ~~attendance~~ -> fees & invoices -> dashboard
+-> ~~attendance~~ -> ~~fees & invoices~~ -> dashboard
 -> payment gateways (JazzCash, Easypaisa, Safepay, Stripe).

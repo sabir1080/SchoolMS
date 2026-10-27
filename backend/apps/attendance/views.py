@@ -9,14 +9,14 @@ from rest_framework.views import APIView
 from apps.academics.models import Section
 from apps.accounts.models import Role
 from apps.core.permissions import HasRole
-from apps.core.timeutils import tenant_today
+from apps.core.timeutils import parse_month, tenant_today
 from apps.students.models import Enrollment, Student, StudentStatus
 from apps.students.services import current_session
 from apps.subscriptions.features import Feature
 from apps.subscriptions.gating import ActiveSubscription, RequiresFeature
 
 from .models import AttendanceRecord, summarize
-from .serializers import SheetInputSerializer, parse_month
+from .serializers import SheetInputSerializer
 
 
 def roll_sort_key(enrollment):
