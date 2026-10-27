@@ -9,6 +9,7 @@ class Feature(models.TextChoices):
     ATTENDANCE = "attendance", "Attendance"
     FEES = "fees", "Fees & invoices"
     ONLINE_PAYMENTS = "online_payments", "Online fee payments"
+    EXAMS = "exams", "Exams, marks & report cards"
     REPORTS = "reports", "Reports & analytics"
     SMS_ALERTS = "sms_alerts", "SMS / WhatsApp / Email alerts"
     WHITE_LABEL = "white_label", "White-labeling"

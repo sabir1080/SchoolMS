@@ -14,6 +14,7 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { label: "Dashboard", href: "/dashboard" },
     { label: "Students", href: "/students" },
     { label: "Attendance", href: "/attendance" },
+    { label: "Exams", href: "/exams" },
     { label: "Fees", href: "/fees" },
     { label: "Academic setup", href: "/academics" },
     { label: "Users", href: "/users" },
@@ -24,6 +25,7 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   teacher: [
     { label: "Dashboard", href: "/dashboard" },
     { label: "Attendance", href: "/attendance" },
+    { label: "Exams", href: "/exams" },
     { label: "Students", href: "/students" },
     ACCOUNT,
   ],

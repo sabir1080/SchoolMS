@@ -33,6 +33,9 @@ class Tenant(TimeStampedModel):
     # Blank means the default for the institute type.
     program_label = models.CharField(max_length=30, blank=True)
     section_label = models.CharField(max_length=30, blank=True)
+    # Exams: a subject is passed at this percentage; show class position on report cards.
+    pass_percentage = models.PositiveSmallIntegerField(default=33)
+    show_position = models.BooleanField(default=True)
     password_policy = models.CharField(
         max_length=10, choices=PasswordPolicy.choices, default=PasswordPolicy.EASY
     )

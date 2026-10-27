@@ -21,6 +21,8 @@
     --series-1: #3987e5;
     --series-2: #d95926;
     --chart-grid: #273042;
+    /* Native date/time pickers and scrollbars follow the dark theme. */
+    color-scheme: dark;
   }
 }
 

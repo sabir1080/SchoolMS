@@ -140,6 +140,18 @@ Shared database, every institute-owned row has a `tenant_id`.
 - Demo gateway (admins only) to try the flow without a merchant account.
 - `FRONTEND_URL` (defaults to the first CORS origin) is where customers are sent back to.
 
+## Exams (Phase 2)
+
+- Plan feature `exams`. Many exams per session (monthly tests, first term, mid-term, final), each
+  for chosen classes. Status: being prepared (`draft`) -> marks entry open -> result published.
+- Creating an exam adds a paper for every active subject of each class (100 marks; pass marks from
+  the institute's pass percentage, default 33%). Admins edit marks, date and time per paper, remove
+  or add subjects, and print the date sheet per class.
+- Grading scale per institute (default A+ 90, A 80, B 70, C 60, D 50, E 33, F 0); the lowest grade
+  must start at 0%. Institute settings `pass_percentage` and `show_position` (position on report cards).
+- Teachers see exams and grading read-only. Parents and students see the date sheets of announced
+  (non-draft) exams of the current session on their dashboard.
+
 ## Roles
 
 | Role | Tenant | Can do (so far) |
@@ -181,6 +193,11 @@ Shared database, every institute-owned row has a `tenant_id`.
 | GET | `/api/fees/summary/?month=YYYY-MM` | institute admin |
 | GET | `/api/me/invoices/` (`?student=` for parents) | parent / student |
 | GET | `/api/dashboard/` | admin / teacher |
+| CRUD | `/api/exams/` (`?session=`, default current session) | admin; teachers read |
+| GET/PUT | `/api/exams/<id>/papers/` (`?program=`; PUT `program`, `papers`, `remove`, `add`) | admin; teachers read |
+| GET | `/api/exams/<id>/datesheet/?program=` | admin / teacher |
+| GET/PUT | `/api/exams/grading/` (PUT `bands`) | admin; teachers read |
+| GET | `/api/me/exams/` (`?student=` for parents) | parent / student |
 | GET/PATCH | `/api/pay/settings/` | institute admin |
 | GET | `/api/pay/options/`, `/api/pay/status/?ref=`; POST `/api/pay/start/` (`invoice`, `provider`) | admin / parent / student |
 | GET | `/api/pay/attempts/?invoice=`; POST `/api/pay/demo/complete/` | institute admin |
@@ -238,3 +255,6 @@ before onboarding real institutes.
 Phase 1 (MVP): ~~setup, tenants, roles, login~~ -> ~~institute code login, SaaS subscriptions~~ -> ~~passwords~~ -> ~~academic setup~~ -> ~~student admission & enrollment~~
 -> ~~attendance~~ -> ~~fees & invoices~~ -> ~~dashboard~~
 -> ~~payment gateways (JazzCash, Easypaisa)~~ -> later: Safepay, Stripe.
+
+Phase 2: ~~exams, date sheet, grading scale~~ -> marks entry -> results, position & report cards
+-> combined (weighted) annual result and parent/student results.

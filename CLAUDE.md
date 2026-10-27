@@ -48,3 +48,7 @@ and tuition centers). See README.md for stack, structure and API.
 Phase 1: setup/roles/login ✅ → institute code login + SaaS subscriptions ✅ → passwords ✅ →
 academic setup ✅ → student admission + enrollment ✅ → attendance ✅ → fees & invoices ✅ →
 dashboard ✅ → payment gateways JazzCash + Easypaisa ✅ (Safepay/Stripe later).
+
+Phase 2: exams + date sheet + grading scale ✅ → marks entry → per-exam results, position (per
+`Tenant.show_position`) & report card print → combined annual result (weightage set per school) +
+parent/student results. Pass rule: `Tenant.pass_percentage` per subject (default 33).

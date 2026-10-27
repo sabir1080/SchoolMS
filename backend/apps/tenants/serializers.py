@@ -95,8 +95,10 @@ class InstituteSettingsSerializer(serializers.ModelSerializer):
         fields = [
             "name", "slug", "institute_type", "email", "phone", "address",
             "country", "currency", "timezone", "password_policy", "program_label", "section_label",
+            "pass_percentage", "show_position",
         ]
         read_only_fields = ["slug", "institute_type", "country", "currency", "timezone"]
+        extra_kwargs = {"pass_percentage": {"min_value": 1, "max_value": 100}}
 
 
 class ResetAdminPasswordSerializer(serializers.Serializer):
