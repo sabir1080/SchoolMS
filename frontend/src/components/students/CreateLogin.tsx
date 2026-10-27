@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { Button, ErrorBox, Field } from "@/components/ui";
+import { Button, ErrorBox, Field, PasswordField } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { policyHint } from "@/lib/passwords";
@@ -49,7 +49,7 @@ export function CreateLogin({
     <form onSubmit={onSubmit} className="mt-2 space-y-2 rounded-xl bg-slate-50 p-3 dark:bg-slate-800">
       <div className="grid gap-2 sm:grid-cols-2">
         <Field label="Username" value={username} onChange={(e) => setUsername(e.target.value)} autoCapitalize="none" required />
-        <Field label="Password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="off" required />
+        <PasswordField label="Password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="off" required />
       </div>
       <p className="text-xs text-slate-500">
         {policyHint(user?.tenant?.password_policy)} They log in with institute code{" "}

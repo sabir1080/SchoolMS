@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { Button, Card, ErrorBox, Field, SelectField } from "@/components/ui";
+import { Button, Card, ErrorBox, Field, PasswordField, SelectField } from "@/components/ui";
 import { api, formatMoney, type Plan, type Subscription, type Tenant } from "@/lib/api";
 import { formatDate, STATUS_LABELS } from "@/lib/navigation";
 import { COUNTRIES, suggestCode } from "@/lib/regions";
@@ -301,7 +301,7 @@ function CreateInstitute({ onCreated }: { onCreated: () => void }) {
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Admin username" value={form.admin_username} onChange={set("admin_username")} autoCapitalize="none" required />
           <Field label="Admin email" type="email" value={form.admin_email} onChange={set("admin_email")} required />
-          <Field label="Admin password" type="password" value={form.admin_password} onChange={set("admin_password")} required />
+          <PasswordField label="Admin password" value={form.admin_password} onChange={set("admin_password")} required />
         </div>
         <ErrorBox error={error} />
         <Button type="submit" disabled={saving}>
@@ -350,7 +350,7 @@ function ResetAdminPassword({ tenant }: { tenant: PlatformTenant }) {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />
-        <Field
+        <PasswordField
           label="New admin password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}

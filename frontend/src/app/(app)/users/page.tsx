@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { Button, Card, ErrorBox, Field, SelectField } from "@/components/ui";
+import { Button, Card, ErrorBox, Field, PasswordField, SelectField } from "@/components/ui";
 import { api, type Role, type User } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { ROLE_LABELS } from "@/lib/navigation";
@@ -80,7 +80,7 @@ export default function UsersPage() {
             <Field label="Email (optional)" type="email" value={form.email} onChange={set("email")} />
             <Field label="Phone (optional)" value={form.phone} onChange={set("phone")} />
             <div>
-              <Field label="Password" type="password" value={form.password} onChange={set("password")} required />
+              <PasswordField label="Password" value={form.password} onChange={set("password")} required />
               <p className="mt-1 text-xs text-slate-500">{policyHint(me?.tenant?.password_policy)}</p>
             </div>
           </div>
@@ -180,7 +180,7 @@ function ResetPassword({ user, hint, onDone }: { user: ManagedUser; hint: string
 
   return (
     <form onSubmit={onSubmit} className="mt-3 space-y-2 rounded-xl bg-slate-50 p-3 dark:bg-slate-800">
-      <Field
+      <PasswordField
         label={`New password for ${user.username}`}
         value={password}
         onChange={(e) => setPassword(e.target.value)}

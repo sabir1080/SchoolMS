@@ -1,4 +1,6 @@
-import type { InputHTMLAttributes, SelectHTMLAttributes } from "react";
+"use client";
+
+import { useState, type InputHTMLAttributes, type SelectHTMLAttributes } from "react";
 
 import { ApiError } from "@/lib/api";
 
@@ -10,6 +12,40 @@ export function Field({ label, ...props }: { label: string } & InputHTMLAttribut
     <label className="block space-y-1">
       <span className="text-sm font-medium">{label}</span>
       <input className={fieldClass} {...props} />
+    </label>
+  );
+}
+
+/** A password (or secret key) box with an eye button that shows or hides what was typed. */
+export function PasswordField({ label, ...props }: { label: string } & Omit<InputHTMLAttributes<HTMLInputElement>, "type">) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <label className="block space-y-1">
+      <span className="text-sm font-medium">{label}</span>
+      <span className="relative block">
+        <input className={`${fieldClass} pr-11`} type={visible ? "text" : "password"} {...props} />
+        <button
+          type="button"
+          onClick={() => setVisible(!visible)}
+          aria-label={visible ? `Hide ${label}` : `Show ${label}`}
+          aria-pressed={visible}
+          title={visible ? "Hide" : "Show"}
+          className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+        >
+          {visible ? (
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M3 3l18 18" />
+              <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+              <path d="M9.9 5.1A10.4 10.4 0 0 1 12 5c6.5 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6A17.4 17.4 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          )}
+        </button>
+      </span>
     </label>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { Button, Card, ErrorBox, Field } from "@/components/ui";
+import { Button, Card, ErrorBox, Field, PasswordField } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
@@ -102,18 +102,18 @@ function AccountForm({ account, urls, onSaved }: { account: Account; urls: Setti
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label={text.id} value={form.merchant_id} onChange={(e) => setForm({ ...form, merchant_id: e.target.value })} autoComplete="off" />
         {text.password && (
-          <Field
+          <PasswordField
             label={text.password}
-            type="password"
+           
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
             placeholder={account.has_password ? "Saved — type to replace" : ""}
             autoComplete="new-password"
           />
         )}
-        <Field
+        <PasswordField
           label={text.secret}
-          type="password"
+         
           value={form.secret}
           onChange={(e) => setForm({ ...form, secret: e.target.value })}
           placeholder={account.has_secret ? "Saved — type to replace" : ""}

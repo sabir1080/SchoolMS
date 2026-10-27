@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { Button, Card, ErrorBox, Field } from "@/components/ui";
+import { Button, Card, ErrorBox, PasswordField } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { ROLE_LABELS } from "@/lib/navigation";
@@ -58,18 +58,18 @@ export default function AccountPage() {
       </div>
       <Card>
         <form onSubmit={onSubmit} className="space-y-4">
-          <Field
+          <PasswordField
             label="Current password"
-            type="password"
+           
             value={form.current_password}
             onChange={set("current_password")}
             autoComplete="current-password"
             required
           />
           <div>
-            <Field
+            <PasswordField
               label="New password"
-              type="password"
+             
               value={form.new_password}
               onChange={set("new_password")}
               autoComplete="new-password"
@@ -77,9 +77,9 @@ export default function AccountPage() {
             />
             {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
           </div>
-          <Field
+          <PasswordField
             label="Confirm new password"
-            type="password"
+           
             value={form.confirm}
             onChange={set("confirm")}
             autoComplete="new-password"

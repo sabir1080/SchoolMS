@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { AuthCard } from "@/components/AuthCard";
-import { Button, ErrorBox, Field } from "@/components/ui";
+import { Button, ErrorBox, Field, PasswordField } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
 
 export default function PlatformLoginPage() {
@@ -42,9 +42,9 @@ export default function PlatformLoginPage() {
           autoCapitalize="none"
           required
         />
-        <Field
+        <PasswordField
           label="Password"
-          type="password"
+         
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           autoComplete="current-password"

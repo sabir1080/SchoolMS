@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import type { AcademicSession, Section } from "@/components/academics/types";
 import { useList } from "@/components/academics/useList";
-import { Button, Card, ErrorBox, Field, SelectField } from "@/components/ui";
+import { Button, Card, ErrorBox, Field, PasswordField, SelectField } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { termsFor } from "@/lib/terms";
@@ -291,7 +291,7 @@ function MessageSettings({ onSaved }: { onSaved: () => void }) {
           {twilio && (
             <div className="grid gap-3 sm:grid-cols-3">
               <Field label="Twilio Account SID" value={settings.twilio_account_sid} onChange={(e) => setSettings({ ...settings, twilio_account_sid: e.target.value })} />
-              <Field label="Auth Token" type="password" value={token} placeholder={settings.has_token ? "Saved — leave empty to keep" : ""} onChange={(e) => setToken(e.target.value)} autoComplete="off" />
+              <PasswordField label="Auth Token" value={token} placeholder={settings.has_token ? "Saved — leave empty to keep" : ""} onChange={(e) => setToken(e.target.value)} autoComplete="off" />
               <Field label="Sender number" placeholder="+14155238886" value={settings.twilio_from} onChange={(e) => setSettings({ ...settings, twilio_from: e.target.value })} />
             </div>
           )}

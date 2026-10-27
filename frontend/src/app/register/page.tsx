@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { Button, Card, ErrorBox, Field, SelectField } from "@/components/ui";
+import { Button, Card, ErrorBox, Field, PasswordField, SelectField } from "@/components/ui";
 import { api, type LoginResponse } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { browserTimezone, COUNTRIES, suggestCode } from "@/lib/regions";
@@ -122,9 +122,9 @@ export default function RegisterPage() {
               required
             />
             <Field label="Email" type="email" value={form.admin_email} onChange={set("admin_email")} required />
-            <Field
+            <PasswordField
               label="Password"
-              type="password"
+             
               value={form.admin_password}
               onChange={set("admin_password")}
               autoComplete="new-password"
