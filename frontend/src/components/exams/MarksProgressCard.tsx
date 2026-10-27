@@ -29,16 +29,18 @@ export function MarksProgressCard({ examId, status }: { examId: number; status: 
             <Link href={`/exams/marks/?id=${examId}`} className="text-indigo-600 hover:underline">
               {progress.can_enter ? "Enter marks →" : "View marks →"}
             </Link>
-            <Link href={`/exams/results/?id=${examId}`} className="font-medium text-indigo-600 hover:underline">
-              Result →
-            </Link>
+            {progress.sections.some((s) => s.can_see_result) && (
+              <Link href={`/exams/results/?id=${examId}`} className="font-medium text-indigo-600 hover:underline">
+                Result →
+              </Link>
+            )}
           </div>
         )}
       </div>
       {progress.sections.length === 0 ? (
         <p className="text-sm text-slate-500">
           {user?.role === "teacher"
-            ? `You are not the class teacher of a ${terms.section.toLowerCase()} in this exam.`
+            ? `You don't teach a ${terms.section.toLowerCase()} in this exam (as class teacher or in the timetable).`
             : `No ${terms.sections.toLowerCase()} in these ${terms.programs.toLowerCase()} yet.`}
         </p>
       ) : (

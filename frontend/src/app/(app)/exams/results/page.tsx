@@ -27,7 +27,9 @@ export default function ResultsPage() {
     const id = params.get("id") ?? "";
     setExamId(id);
     setSectionId(params.get("section") ?? "");
-    api<MarksProgress>(`/api/exams/${id}/marks/progress/`).then(setProgress).catch(setError);
+    api<MarksProgress>(`/api/exams/${id}/marks/progress/`)
+      .then((p) => setProgress({ ...p, sections: p.sections.filter((s) => s.can_see_result) }))
+      .catch(setError);
   }, []);
 
   useEffect(() => {

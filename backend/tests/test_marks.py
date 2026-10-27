@@ -134,3 +134,28 @@ def test_marks_isolation_and_roles(api, admin_b, make_user, setup, school_a):
     assert auth(api, admin_b).get(url(s, "progress/")).status_code == 404
     parent = make_user("p", Role.PARENT, school_a)
     assert auth(api, parent).get(url(s, "progress/")).status_code == 403
+
+
+def test_subject_teacher_enters_only_own_subjects(api, admin_a, make_user, setup, school, school_a):  # noqa: F811
+    from apps.timetable.models import Period, TimetableEntry
+
+    s = setup
+    omar = make_user("omar", Role.TEACHER, school_a)
+    period = Period.objects.create(tenant=school_a, name="P1", start_time="08:00", end_time="08:40")
+    TimetableEntry.objects.create(tenant=school_a, section=s["b"], day=0, period=period, subject=school["maths"], teacher=omar)
+    english_b = ExamSubject.objects.get(exam_id=s["exam"]["id"], program=school["c5"], subject=school["eng"])
+    api = auth(api, omar)
+    progress = api.get(url(s, "progress/")).json()
+    assert [(sec["name"], [p["subject_name"] for p in sec["papers"]], sec["can_see_result"]) for sec in progress["sections"]] == [
+        ("B", ["Mathematics"], False)
+    ]
+    assert put(api, s, [{"student": s["other"].pk, "marks": 77}], section=s["b"]).status_code == 200
+    res = put(api, s, [{"student": s["other"].pk, "marks": 50}], section=s["b"], paper=english_b)
+    assert res.status_code == 403 and "subjects you teach" in str(res.json())
+    assert api.get(url(s) + f"?section={s['b'].pk}&paper={english_b.pk}").status_code == 403
+    assert put(api, s, [{"student": s["kids"][0].pk, "marks": 50}]).status_code == 403  # section A: not his
+    assert api.get(f"/api/exams/{s['exam']['id']}/results/?section={s['b'].pk}").status_code == 403
+    # the class teacher still sees every subject and the result
+    api = auth(api, s["teacher"])
+    sec_a = api.get(url(s, "progress/")).json()["sections"][0]
+    assert sec_a["can_see_result"] is True and len(sec_a["papers"]) == 2

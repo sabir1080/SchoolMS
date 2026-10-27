@@ -1,6 +1,6 @@
 from django.db import transaction
 from django.db.models import ProtectedError
-from django.db.models import Count, Max, Prefetch
+from django.db.models import Count, Max, Prefetch, Q
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
@@ -16,6 +16,7 @@ from apps.students.models import Enrollment, Student, StudentStatus
 from apps.students.serializers import current_enrollment
 from apps.students.services import current_session
 from apps.subscriptions.features import Feature
+from apps.timetable.models import TimetableEntry
 from apps.subscriptions.gating import ActiveSubscription, RequiresFeature
 
 from .models import CombinedResult, CombinedStatus, Exam, ExamStatus, ExamSubject, GradeBand, Mark, grading_scale
@@ -156,7 +157,8 @@ def decimal_text(value):
 
 
 class MarksView(APIView):
-    """Base for marks entry: admins for every section, teachers for sections they are class teacher of."""
+    """Base for marks entry: admins for every section; class teachers for all subjects of their section;
+    subject teachers for the subjects they teach a section in the timetable."""
 
     required_feature = Feature.EXAMS
 
@@ -175,14 +177,21 @@ class MarksView(APIView):
             tenant=exam.tenant, session=exam.session, program__in=exam.programs.all()
         ).select_related("program", "session", "class_teacher")
         if self.request.user.role == Role.TEACHER:
-            sections = sections.filter(class_teacher=self.request.user)
+            sections = sections.filter(Q(class_teacher=self.request.user) | Q(timetable__teacher=self.request.user)).distinct()
         return sorted(sections, key=lambda s: (s.program.sort_order, s.program.name, s.name))
+
+    def taught_subjects(self, section):
+        """None when the user may enter every subject of the section, else the subject ids they teach there."""
+        user = self.request.user
+        if user.role != Role.TEACHER or section.class_teacher_id == user.pk:
+            return None
+        return set(TimetableEntry.objects.filter(section=section, teacher=user).values_list("subject_id", flat=True))
 
     def get_section(self, exam, section_id):
         section = next((s for s in self.sections(exam) if str(s.id) == str(section_id)), None)
         if section is None:
             if self.request.user.role == Role.TEACHER and Section.objects.filter(tenant=exam.tenant, pk=section_id or 0).exists():
-                raise PermissionDenied("Only the class teacher or an admin can enter marks for this section.")
+                raise PermissionDenied("Only the class teacher, a teacher of this section or an admin can enter marks here.")
             raise ValidationError({"section": ["Choose a section that takes this exam."]})
         return section
 
@@ -190,6 +199,9 @@ class MarksView(APIView):
         paper = ExamSubject.objects.filter(exam=exam, program=section.program, pk=paper_id or 0).select_related("subject").first()
         if paper is None:
             raise ValidationError({"paper": ["Choose a subject of this class in this exam."]})
+        taught = self.taught_subjects(section)
+        if taught is not None and paper.subject_id not in taught:
+            raise PermissionDenied("You can enter marks only for the subjects you teach in this section.")
         return paper
 
     def enrollments(self, section):
@@ -203,6 +215,7 @@ class MarksProgressView(MarksView):
     def get(self, request, exam_id):
         exam = self.get_exam(exam_id)
         sections = self.sections(exam)
+        taught = {s.id: self.taught_subjects(s) for s in sections}
         papers = list(ExamSubject.objects.filter(exam=exam).select_related("subject"))
         students = dict(
             Enrollment.objects.filter(section__in=sections, student__status=StudentStatus.ACTIVE)
@@ -222,6 +235,8 @@ class MarksProgressView(MarksView):
                         **section_label(s),
                         "program": s.program_id,
                         "student_count": students.get(s.id, 0),
+                        # Results (all subjects together) are for admins and the class teacher.
+                        "can_see_result": request.user.role == Role.ADMIN or s.class_teacher_id == request.user.pk,
                         "papers": [
                             {
                                 "id": p.id,
@@ -230,7 +245,7 @@ class MarksProgressView(MarksView):
                                 "entered": entered.get((s.id, p.id), 0),
                             }
                             for p in papers
-                            if p.program_id == s.program_id
+                            if p.program_id == s.program_id and (taught[s.id] is None or p.subject_id in taught[s.id])
                         ],
                     }
                     for s in sections
@@ -309,7 +324,14 @@ class MarksSheetView(MarksView):
 
 
 class ResultsView(MarksView):
-    """GET ?section=: the exam result of one section (totals, grades, pass/fail, positions)."""
+    """GET ?section=: the exam result of one section (totals, grades, pass/fail, positions).
+    Admins and the section's class teacher only (subject teachers see their own subjects in marks entry)."""
+
+    def sections(self, exam):
+        sections = super().sections(exam)
+        if self.request.user.role == Role.TEACHER:
+            sections = [s for s in sections if s.class_teacher_id == self.request.user.pk]
+        return sections
 
     def get(self, request, exam_id):
         exam = self.get_exam(exam_id)

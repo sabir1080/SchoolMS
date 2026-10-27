@@ -76,6 +76,7 @@ export interface ProgressSection {
   name: string;
   session_name: string;
   student_count: number;
+  can_see_result: boolean;
   papers: { id: number; subject_name: string; total_marks: string; entered: number }[];
 }
 

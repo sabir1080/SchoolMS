@@ -92,7 +92,7 @@ export default function MarksPage() {
         <Card>
           <p className="text-sm text-slate-500">
             {user?.role === "teacher"
-              ? `You are not the class teacher of a ${terms.section.toLowerCase()} in this exam. Ask your admin to assign you.`
+              ? `You don't teach a ${terms.section.toLowerCase()} in this exam. Marks are entered by the class teacher or by the teacher of that subject in the timetable.`
               : `No ${terms.sections.toLowerCase()} in these ${terms.programs.toLowerCase()} yet. Add them in Academic setup.`}
           </p>
         </Card>
