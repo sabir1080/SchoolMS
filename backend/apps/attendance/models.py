@@ -35,10 +35,14 @@ class AttendanceRecord(TenantScopedModel):
 
 
 def summarize(statuses):
-    """Counts per status and the attendance percentage for an iterable of status strings."""
+    """Counts per status and the attendance percentage for an iterable of status strings.
+
+    Leave days are left out of the percentage: (present + late) / (days - leave days).
+    """
     counts = {s: 0 for s in AttendanceStatus.values}
     for status in statuses:
         counts[status] += 1
     total = sum(counts.values())
     attended = sum(counts[s] for s in ATTENDED)
-    return {**counts, "total": total, "percentage": round(attended * 100 / total, 1) if total else None}
+    counted = total - counts[AttendanceStatus.LEAVE]
+    return {**counts, "total": total, "percentage": round(attended * 100 / counted, 1) if counted else None}

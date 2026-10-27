@@ -156,7 +156,7 @@ export default function AttendanceReportPage() {
                 </table>
               </div>
               <p className="mt-3 text-xs text-slate-500">
-                P = Present, A = Absent, L = Leave, Lt = Late. Percentage counts Present and Late as attended.
+                P = Present, A = Absent, L = Leave, Lt = Late. Percentage = (Present + Late) ÷ days taken, not counting Leave days.
               </p>
             </Card>
           )}

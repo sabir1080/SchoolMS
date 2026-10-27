@@ -95,7 +95,7 @@ Shared database, every institute-owned row has a `tenant_id`.
   a date updates it. No future dates; the date must be inside the section's session.
 - Admins can take attendance for every section; teachers only for sections where they are the
   class teacher. "Today" uses the institute's timezone.
-- Percentage = (Present + Late) / days taken. Monthly report per section with a day-by-day grid.
+- Percentage = (Present + Late) / (days taken − Leave days); leave does not lower it. Monthly report per section with a day-by-day grid.
 - Dashboard: today's summary and sections not yet marked (admin/teacher); parents and students see
   today's status and monthly/session percentages. Students with attendance cannot be deleted.
 

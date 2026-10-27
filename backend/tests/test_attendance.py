@@ -48,10 +48,13 @@ def save(api, section, records, date=None):
     )
 
 
-def test_summarize():
+def test_summarize_leaves_out_leave_days():
     assert summarize(["present", "late", "absent", "leave"]) == {
-        "present": 1, "absent": 1, "leave": 1, "late": 1, "total": 4, "percentage": 50.0,
+        "present": 1, "absent": 1, "leave": 1, "late": 1, "total": 4, "percentage": 66.7,
     }
+    assert summarize(["present", "leave"])["percentage"] == 100.0
+    assert summarize(["present", "absent", "leave"])["percentage"] == 50.0
+    assert summarize(["leave", "leave"])["percentage"] is None
     assert summarize([])["percentage"] is None
 
 
