@@ -1,31 +1,53 @@
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db import transaction
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 
-from apps.accounts.models import Role, User
+from apps.accounts.serializers import check_password_strength
+from apps.subscriptions.serializers import SubscriptionSerializer
 
 from .models import Tenant
+from .validators import normalize_code, validate_institute_code
+
+
+class InstituteCodeField(serializers.CharField):
+    """Institute code, lower-cased and trimmed before it is validated."""
+
+    def to_internal_value(self, data):
+        return normalize_code(super().to_internal_value(data))
 
 
 class TenantSerializer(serializers.ModelSerializer):
+    subscription = SubscriptionSerializer(read_only=True)
+    slug = InstituteCodeField(
+        max_length=30,
+        validators=[
+            validate_institute_code,
+            UniqueValidator(queryset=Tenant.objects.all(), message="This institute code is already taken."),
+        ],
+    )
+
     class Meta:
         model = Tenant
         fields = [
             "id", "name", "slug", "institute_type", "email", "phone", "address",
-            "country", "currency", "timezone", "is_active", "created_at",
+            "country", "currency", "timezone", "is_active", "created_at", "subscription",
         ]
         read_only_fields = ["id", "created_at"]
 
+    def validate_country(self, value):
+        return value.upper()
 
-class TenantCreateSerializer(TenantSerializer):
-    """Create an institute together with its first admin account."""
+    def validate_currency(self, value):
+        return value.upper()
 
-    admin_username = serializers.CharField(write_only=True)
+
+class InstituteRegistrationSerializer(TenantSerializer):
+    """Create an institute together with its first admin account (and free trial)."""
+
+    admin_username = serializers.CharField(write_only=True, max_length=150)
     admin_email = serializers.EmailField(write_only=True)
-    admin_password = serializers.CharField(write_only=True, style={"input_type": "password"})
-    admin_first_name = serializers.CharField(write_only=True, required=False, default="")
-    admin_last_name = serializers.CharField(write_only=True, required=False, default="")
+    admin_password = serializers.CharField(write_only=True, style={"input_type": "password"}, trim_whitespace=False)
+    admin_first_name = serializers.CharField(write_only=True, required=False, allow_blank=True, default="", max_length=150)
+    admin_last_name = serializers.CharField(write_only=True, required=False, allow_blank=True, default="", max_length=150)
 
     class Meta(TenantSerializer.Meta):
         fields = TenantSerializer.Meta.fields + [
@@ -33,32 +55,29 @@ class TenantCreateSerializer(TenantSerializer):
         ]
 
     def validate_admin_username(self, value):
-        if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError("This username is already taken.")
-        return value
+        return value.strip()
 
     def validate_admin_email(self, value):
-        value = value.strip().lower()
-        if User.objects.filter(email__iexact=value).exists():
-            raise serializers.ValidationError("A user with this email already exists.")
-        return value
+        return value.strip().lower()
 
     def validate(self, attrs):
-        candidate = User(username=attrs["admin_username"], email=attrs["admin_email"])
-        try:
-            validate_password(attrs["admin_password"], candidate)
-        except DjangoValidationError as exc:
-            raise serializers.ValidationError({"admin_password": list(exc.messages)})
+        check_password_strength(
+            attrs["admin_password"],
+            {"username": attrs["admin_username"], "email": attrs["admin_email"]},
+            "admin_password",
+        )
         return attrs
 
-    @transaction.atomic
-    def create(self, validated_data):
-        admin_fields = {
-            key.removeprefix("admin_"): validated_data.pop(key)
-            for key in list(validated_data)
-            if key.startswith("admin_")
-        }
-        tenant = Tenant.objects.create(**validated_data)
-        password = admin_fields.pop("password")
-        User.objects.create_user(**admin_fields, password=password, role=Role.ADMIN, tenant=tenant)
-        return tenant
+    def split(self):
+        """Return (tenant_fields, admin_fields) from the validated data."""
+        data = dict(self.validated_data)
+        admin = {key.removeprefix("admin_"): data.pop(key) for key in list(data) if key.startswith("admin_")}
+        return data, admin
+
+
+class PublicInstituteSerializer(serializers.ModelSerializer):
+    """What the login screen may show about an institute before anyone logs in."""
+
+    class Meta:
+        model = Tenant
+        fields = ["name", "slug", "institute_type"]

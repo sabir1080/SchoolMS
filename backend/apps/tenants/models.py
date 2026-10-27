@@ -2,6 +2,8 @@ from django.db import models
 
 from apps.core.models import TimeStampedModel
 
+from .validators import validate_institute_code
+
 
 class InstituteType(models.TextChoices):
     SCHOOL = "school", "School"
@@ -15,7 +17,8 @@ class Tenant(TimeStampedModel):
     """An institute using the platform. All institute data hangs off a tenant."""
 
     name = models.CharField(max_length=200)
-    slug = models.SlugField(max_length=60, unique=True)
+    # The "institute code" users type on the login screen.
+    slug = models.SlugField(max_length=30, unique=True, validators=[validate_institute_code])
     institute_type = models.CharField(max_length=20, choices=InstituteType.choices)
     email = models.EmailField(blank=True)
     phone = models.CharField(max_length=30, blank=True)

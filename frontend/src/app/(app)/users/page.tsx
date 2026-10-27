@@ -17,7 +17,7 @@ const ROLE_OPTIONS: [string, string][] = (["teacher", "student", "parent", "admi
 const EMPTY_FORM = { username: "", email: "", first_name: "", last_name: "", phone: "", role: "teacher", password: "" };
 
 export default function UsersPage() {
-  const { user: me } = useAuth();
+  const { user: me, refreshSubscription } = useAuth();
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [roleFilter, setRoleFilter] = useState("");
   const [form, setForm] = useState(EMPTY_FORM);
@@ -41,6 +41,7 @@ export default function UsersPage() {
       await api("/api/users/", { method: "POST", body: JSON.stringify(form) });
       setForm(EMPTY_FORM);
       load();
+      refreshSubscription();
     } catch (err) {
       setError(err);
     } finally {
@@ -53,6 +54,7 @@ export default function UsersPage() {
     try {
       await api(`/api/users/${user.id}/`, { method: "DELETE" });
       load();
+      refreshSubscription();
     } catch (err) {
       setError(err);
     }

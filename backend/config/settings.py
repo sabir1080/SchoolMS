@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.tenants",
     "apps.accounts",
+    "apps.subscriptions",
 ]
 
 MIDDLEWARE = [
@@ -87,10 +88,16 @@ DATABASES = {
     "default": dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600,
+        conn_health_checks=True,
     )
 }
 
 AUTH_USER_MODEL = "accounts.User"
+AUTHENTICATION_BACKENDS = ["apps.accounts.backends.TenantModelBackend"]
+SILENCED_SYSTEM_CHECKS = [
+    # Usernames are unique per institute (enforced by a constraint), not globally.
+    "auth.W004",
+]
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -128,6 +135,12 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 25,
+    "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.ScopedRateThrottle"],
+    "DEFAULT_THROTTLE_RATES": {
+        "login": "10/min",
+        "lookup": "30/min",
+        "register": "5/hour",
+    },
 }
 
 SIMPLE_JWT = {
@@ -145,3 +158,7 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     # Render's health checks call the service directly over plain HTTP.
     SECURE_REDIRECT_EXEMPT = [r"^api/health/$"]
+
+# SaaS subscriptions
+TRIAL_PLAN_CODE = os.environ.get("TRIAL_PLAN_CODE", "pro")
+TRIAL_DAYS = int(os.environ.get("TRIAL_DAYS", "14"))

@@ -1,5 +1,6 @@
 "use client";
 
+import { SubscriptionBanner } from "@/components/SubscriptionBanner";
 import { useAuth } from "@/lib/auth";
 import { ROLE_LABELS } from "@/lib/navigation";
 
@@ -11,6 +12,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      <SubscriptionBanner />
       <div>
         <h1 className="text-2xl font-semibold">Welcome, {name}</h1>
         <p className="text-sm text-slate-500">

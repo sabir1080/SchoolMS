@@ -1,80 +1,167 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { AuthCard } from "@/components/AuthCard";
+import { Button, ErrorBox, Field } from "@/components/ui";
+import { api, savedInstitute, type SavedInstitute } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
 export default function LoginPage() {
   const { user, login } = useAuth();
   const router = useRouter();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [institute, setInstitute] = useState<SavedInstitute | null>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (user) router.replace("/dashboard");
+    if (user) router.replace(user.role === "super_admin" ? "/platform/tenants" : "/dashboard");
   }, [user, router]);
+
+  useEffect(() => {
+    // A shared link like /login/?code=al-huda skips typing the code.
+    const code = new URLSearchParams(window.location.search).get("code");
+    if (code) {
+      lookup(code)
+        .then(setInstitute)
+        .catch(() => setInstitute(null))
+        .finally(() => setReady(true));
+    } else {
+      setInstitute(savedInstitute.get());
+      setReady(true);
+    }
+  }, []);
+
+  if (!ready) return null;
+
+  return institute ? (
+    <CredentialsStep
+      institute={institute}
+      onChange={() => {
+        savedInstitute.clear();
+        setInstitute(null);
+      }}
+      onLogin={async (username, password) => {
+        await login(institute.slug, username, password);
+      }}
+    />
+  ) : (
+    <CodeStep
+      onFound={(found) => {
+        savedInstitute.set(found);
+        setInstitute(found);
+      }}
+    />
+  );
+}
+
+async function lookup(code: string): Promise<SavedInstitute> {
+  const data = await api<SavedInstitute>(`/api/public/institutes/${encodeURIComponent(code.trim().toLowerCase())}/`);
+  savedInstitute.set({ name: data.name, slug: data.slug });
+  return { name: data.name, slug: data.slug };
+}
+
+function CodeStep({ onFound }: { onFound: (institute: SavedInstitute) => void }) {
+  const [code, setCode] = useState("");
+  const [error, setError] = useState<unknown>(null);
+  const [busy, setBusy] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
-    setSubmitting(true);
+    setBusy(true);
+    setError(null);
     try {
-      await login(username, password);
-      router.replace("/dashboard");
+      onFound(await lookup(code));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(err);
     } finally {
-      setSubmitting(false);
+      setBusy(false);
     }
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4">
-      <form
-        onSubmit={onSubmit}
-        className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-900"
-      >
-        <div>
-          <h1 className="text-2xl font-semibold">SchoolMS</h1>
-          <p className="text-sm text-slate-500">Sign in to your institute</p>
-        </div>
-
-        <label className="block space-y-1">
-          <span className="text-sm font-medium">Username or email</span>
-          <input
-            className="w-full rounded-lg border border-slate-300 bg-transparent px-3 py-2 outline-none focus:border-indigo-500 dark:border-slate-700"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            autoComplete="username"
-            required
-          />
-        </label>
-
-        <label className="block space-y-1">
-          <span className="text-sm font-medium">Password</span>
-          <input
-            type="password"
-            className="w-full rounded-lg border border-slate-300 bg-transparent px-3 py-2 outline-none focus:border-indigo-500 dark:border-slate-700"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-            required
-          />
-        </label>
-
-        {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full rounded-lg bg-indigo-600 py-2.5 font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
-        >
-          {submitting ? "Signing in…" : "Sign in"}
-        </button>
+    <AuthCard title="SchoolMS" subtitle="Enter your institute code to continue">
+      <form onSubmit={onSubmit} className="space-y-4">
+        <Field
+          label="Institute code"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          placeholder="e.g. al-huda"
+          autoCapitalize="none"
+          autoCorrect="off"
+          autoFocus
+          required
+        />
+        <ErrorBox error={error} />
+        <Button type="submit" disabled={busy} className="w-full py-2.5">
+          {busy ? "Checking…" : "Continue"}
+        </Button>
       </form>
-    </main>
+      <p className="text-center text-sm text-slate-500">
+        New institute?{" "}
+        <Link href="/register" className="font-medium text-indigo-600 hover:underline">
+          Register and start a free trial
+        </Link>
+      </p>
+    </AuthCard>
+  );
+}
+
+function CredentialsStep({
+  institute,
+  onChange,
+  onLogin,
+}: {
+  institute: SavedInstitute;
+  onChange: () => void;
+  onLogin: (username: string, password: string) => Promise<void>;
+}) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<unknown>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      await onLogin(username, password);
+    } catch (err) {
+      setError(err);
+      setBusy(false);
+    }
+  }
+
+  return (
+    <AuthCard title={institute.name} subtitle={`Institute code: ${institute.slug}`}>
+      <form onSubmit={onSubmit} className="space-y-4">
+        <Field
+          label="Username or email"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          autoComplete="username"
+          autoCapitalize="none"
+          autoCorrect="off"
+          required
+        />
+        <Field
+          label="Password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
+          required
+        />
+        <ErrorBox error={error} />
+        <Button type="submit" disabled={busy} className="w-full py-2.5">
+          {busy ? "Signing in…" : "Sign in"}
+        </Button>
+      </form>
+      <button onClick={onChange} className="w-full text-center text-sm text-indigo-600 hover:underline">
+        Change institute
+      </button>
+    </AuthCard>
   );
 }

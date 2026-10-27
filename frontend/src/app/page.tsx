@@ -10,7 +10,9 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading) router.replace(user ? "/dashboard" : "/login");
+    if (loading) return;
+    if (!user) router.replace("/login");
+    else router.replace(user.role === "super_admin" ? "/platform/tenants" : "/dashboard");
   }, [user, loading, router]);
 
   return null;

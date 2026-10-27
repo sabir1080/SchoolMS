@@ -46,12 +46,25 @@ export function Button(props: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   );
 }
 
+const FIELD_LABELS: Record<string, string> = {
+  slug: "Institute code",
+  name: "Institute name",
+  admin_username: "Username",
+  admin_email: "Email",
+  admin_password: "Password",
+  institute_code: "Institute code",
+};
+
+function fieldLabel(field: string) {
+  return FIELD_LABELS[field] ?? field.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
+}
+
 /** Turn a DRF error response into readable lines. */
 export function errorLines(err: unknown): string[] {
   if (err instanceof ApiError && err.body && typeof err.body === "object") {
     return Object.entries(err.body as Record<string, unknown>).map(([field, msgs]) => {
       const text = Array.isArray(msgs) ? msgs.join(" ") : String(msgs);
-      return field === "detail" || field === "non_field_errors" ? text : `${field}: ${text}`;
+      return field === "detail" || field === "non_field_errors" ? text : `${fieldLabel(field)}: ${text}`;
     });
   }
   return [err instanceof Error ? err.message : "Something went wrong"];

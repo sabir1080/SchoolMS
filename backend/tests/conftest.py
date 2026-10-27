@@ -1,10 +1,17 @@
 import pytest
+from django.core.cache import cache
 from rest_framework.test import APIClient
 
 from apps.accounts.models import Role, User
+from apps.subscriptions.services import start_trial
 from apps.tenants.models import Tenant
 
 PASSWORD = "Str0ng-pass-123"
+
+
+@pytest.fixture(autouse=True)
+def clear_cache():
+    cache.clear()
 
 
 @pytest.fixture
@@ -15,7 +22,9 @@ def api():
 @pytest.fixture
 def make_tenant(db):
     def _make(slug, **kwargs):
-        return Tenant.objects.create(name=slug.title(), slug=slug, institute_type="school", **kwargs)
+        tenant = Tenant.objects.create(name=slug.title(), slug=slug, institute_type="school", **kwargs)
+        start_trial(tenant)
+        return tenant
 
     return _make
 

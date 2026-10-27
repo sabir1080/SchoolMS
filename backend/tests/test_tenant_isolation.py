@@ -75,6 +75,17 @@ def test_super_admin_creates_institute_with_first_admin(api, super_admin):
     assert admin.tenant.slug == "city-coaching"
     assert admin.email == "admin@city.test"
     assert "admin_password" not in res.json()
+    assert res.json()["subscription"]["status"] == "trialing"
+
+
+def test_same_username_allowed_in_other_institute_but_not_own(api, admin_a, make_user, school_b):
+    make_user("ali", Role.TEACHER, school_b)
+    api = auth(api, admin_a)
+    payload = {"username": "ali", "password": "Str0ng-pass-123", "role": "teacher"}
+    assert api.post("/api/users/", payload, format="json").status_code == 201
+    res = api.post("/api/users/", payload, format="json")
+    assert res.status_code == 400
+    assert "username" in res.json()
 
 
 def test_institute_admin_cannot_access_platform_api(api, admin_a):

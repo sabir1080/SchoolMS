@@ -1,18 +1,10 @@
-# Render Blueprint: Dashboard -> New -> Blueprint -> pick this repo.
-# The free plans are fine for testing. Before real institutes use the system,
-# upgrade: free web services sleep when idle and the free database expires
-# after 30 days.
-databases:
-  - name: schoolms-db
-    plan: free
-    databaseName: schoolms
-    user: schoolms
-
+# Render Blueprint. Database is hosted on Neon (free), so only the API costs money
+# once it is moved off the free plan. The frontend is a free Static Site.
 services:
   - type: web
     name: schoolms-api
     runtime: python
-    plan: free
+    plan: free  # change to "starter" (~$7/month) before real institutes use it
     rootDir: backend
     buildCommand: ./build.sh
     startCommand: gunicorn config.wsgi:application
@@ -20,10 +12,9 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.13.1
+      # Neon connection string (postgresql://...?sslmode=require)
       - key: DATABASE_URL
-        fromDatabase:
-          name: schoolms-db
-          property: connectionString
+        sync: false
       - key: SECRET_KEY
         generateValue: true
       - key: DEBUG
@@ -40,14 +31,13 @@ services:
 
   - type: web
     name: schoolms-web
-    runtime: node
-    plan: free
+    runtime: static
     rootDir: frontend
     buildCommand: npm ci && npm run build
-    startCommand: npm start
+    staticPublishPath: out
     envVars:
-      - key: NODE_VERSION
-        value: "22"
       # Backend URL, e.g. https://schoolms-api.onrender.com
       - key: NEXT_PUBLIC_API_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPPORT_CONTACT
         sync: false
