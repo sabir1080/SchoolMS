@@ -124,7 +124,6 @@ export default function RegisterPage() {
             <Field label="Email" type="email" value={form.admin_email} onChange={set("admin_email")} required />
             <PasswordField
               label="Password"
-             
               value={form.admin_password}
               onChange={set("admin_password")}
               autoComplete="new-password"

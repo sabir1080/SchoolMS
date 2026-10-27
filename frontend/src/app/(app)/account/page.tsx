@@ -60,7 +60,6 @@ export default function AccountPage() {
         <form onSubmit={onSubmit} className="space-y-4">
           <PasswordField
             label="Current password"
-           
             value={form.current_password}
             onChange={set("current_password")}
             autoComplete="current-password"
@@ -69,7 +68,6 @@ export default function AccountPage() {
           <div>
             <PasswordField
               label="New password"
-             
               value={form.new_password}
               onChange={set("new_password")}
               autoComplete="new-password"
@@ -79,7 +77,6 @@ export default function AccountPage() {
           </div>
           <PasswordField
             label="Confirm new password"
-           
             value={form.confirm}
             onChange={set("confirm")}
             autoComplete="new-password"

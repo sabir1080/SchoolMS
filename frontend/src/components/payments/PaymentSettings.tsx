@@ -104,7 +104,6 @@ function AccountForm({ account, urls, onSaved }: { account: Account; urls: Setti
         {text.password && (
           <PasswordField
             label={text.password}
-           
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
             placeholder={account.has_password ? "Saved — type to replace" : ""}
@@ -113,7 +112,6 @@ function AccountForm({ account, urls, onSaved }: { account: Account; urls: Setti
         )}
         <PasswordField
           label={text.secret}
-         
           value={form.secret}
           onChange={(e) => setForm({ ...form, secret: e.target.value })}
           placeholder={account.has_secret ? "Saved — type to replace" : ""}

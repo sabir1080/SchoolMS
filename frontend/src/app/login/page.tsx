@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 import { AuthCard } from "@/components/AuthCard";
 import { Button, ErrorBox, Field, PasswordField } from "@/components/ui";
-import { api, savedInstitute, type SavedInstitute } from "@/lib/api";
+import { ApiError, api, savedInstitute, type SavedInstitute } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
 export default function LoginPage() {
@@ -14,6 +14,14 @@ export default function LoginPage() {
   const router = useRouter();
   const [institute, setInstitute] = useState<SavedInstitute | null>(null);
   const [ready, setReady] = useState(false);
+  // Shown on the code step when a remembered institute no longer exists (e.g. it was deleted).
+  const [notice, setNotice] = useState("");
+
+  function forget(message = "") {
+    savedInstitute.clear();
+    setInstitute(null);
+    setNotice(message);
+  }
 
   useEffect(() => {
     if (user) router.replace(user.role === "super_admin" ? "/platform/tenants" : "/dashboard");
@@ -28,8 +36,23 @@ export default function LoginPage() {
         .catch(() => setInstitute(null))
         .finally(() => setReady(true));
     } else {
-      setInstitute(savedInstitute.get());
-      setReady(true);
+      const saved = savedInstitute.get();
+      if (!saved) {
+        setReady(true);
+        return;
+      }
+      // Check the remembered institute still exists before asking for a username.
+      lookup(saved.slug)
+        .then(setInstitute)
+        .catch((err) => {
+          if (err instanceof ApiError && (err.status === 404 || err.status === 403)) {
+            savedInstitute.clear();
+            setNotice(`The institute code “${saved.slug}” saved on this device was not found. Please enter your institute code.`);
+          } else {
+            setInstitute(saved); // offline or server waking up: keep it and let sign-in report problems
+          }
+        })
+        .finally(() => setReady(true));
     }
   }, []);
 
@@ -38,18 +61,25 @@ export default function LoginPage() {
   return institute ? (
     <CredentialsStep
       institute={institute}
-      onChange={() => {
-        savedInstitute.clear();
-        setInstitute(null);
-      }}
+      onChange={() => forget()}
       onLogin={async (username, password) => {
-        await login(institute.slug, username, password);
+        try {
+          await login(institute.slug, username, password);
+        } catch (err) {
+          if (err instanceof ApiError && /institute code not found/i.test(JSON.stringify(err.body))) {
+            forget(`The institute code “${institute.slug}” was not found. Please enter your institute code.`);
+            return;
+          }
+          throw err;
+        }
       }}
     />
   ) : (
     <CodeStep
+      notice={notice}
       onFound={(found) => {
         savedInstitute.set(found);
+        setNotice("");
         setInstitute(found);
       }}
     />
@@ -62,7 +92,7 @@ async function lookup(code: string): Promise<SavedInstitute> {
   return { name: data.name, slug: data.slug };
 }
 
-function CodeStep({ onFound }: { onFound: (institute: SavedInstitute) => void }) {
+function CodeStep({ notice, onFound }: { notice: string; onFound: (institute: SavedInstitute) => void }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
@@ -82,6 +112,7 @@ function CodeStep({ onFound }: { onFound: (institute: SavedInstitute) => void })
 
   return (
     <AuthCard title="SchoolMS" subtitle="Enter your institute code to continue">
+      {notice && <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-200">{notice}</p>}
       <form onSubmit={onSubmit} className="space-y-4">
         <Field
           label="Institute code"
@@ -135,7 +166,15 @@ function CredentialsStep({
   }
 
   return (
-    <AuthCard title={institute.name} subtitle={`Institute code: ${institute.slug}`}>
+    <AuthCard title={institute.name} subtitle="Sign in to continue">
+      <div className="flex items-center justify-between gap-3 rounded-lg bg-slate-100 px-3 py-2 text-sm dark:bg-slate-800">
+        <span>
+          Institute code: <span className="font-semibold">{institute.slug}</span>
+        </span>
+        <button type="button" onClick={onChange} className="font-medium text-indigo-600 hover:underline">
+          Change
+        </button>
+      </div>
       <form onSubmit={onSubmit} className="space-y-4">
         <Field
           label="Username or email"
@@ -148,7 +187,6 @@ function CredentialsStep({
         />
         <PasswordField
           label="Password"
-         
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           autoComplete="current-password"
@@ -163,7 +201,7 @@ function CredentialsStep({
         Forgot your password? Ask your institute admin to reset it.
       </p>
       <button onClick={onChange} className="w-full text-center text-sm text-indigo-600 hover:underline">
-        Change institute
+        Use a different institute code
       </button>
     </AuthCard>
   );
