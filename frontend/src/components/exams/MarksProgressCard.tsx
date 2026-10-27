@@ -25,9 +25,14 @@ export function MarksProgressCard({ examId, status }: { examId: number; status: 
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="font-medium">Marks entry</h2>
         {progress.sections.length > 0 && (
-          <Link href={`/exams/marks/?id=${examId}`} className="text-sm text-indigo-600 hover:underline">
-            {progress.can_enter ? "Enter marks →" : "View marks →"}
-          </Link>
+          <div className="flex gap-4 text-sm">
+            <Link href={`/exams/marks/?id=${examId}`} className="text-indigo-600 hover:underline">
+              {progress.can_enter ? "Enter marks →" : "View marks →"}
+            </Link>
+            <Link href={`/exams/results/?id=${examId}`} className="font-medium text-indigo-600 hover:underline">
+              Result →
+            </Link>
+          </div>
         )}
       </div>
       {progress.sections.length === 0 ? (

@@ -26,6 +26,7 @@ from .serializers import (
     PaperSerializer,
     PapersInputSerializer,
 )
+from .results import attendance_until, section_results
 from .services import default_pass_marks, sync_papers
 
 
@@ -158,7 +159,7 @@ class MarksView(APIView):
         """Sections of the exam's session and classes this user may enter marks for."""
         sections = Section.objects.filter(
             tenant=exam.tenant, session=exam.session, program__in=exam.programs.all()
-        ).select_related("program", "session")
+        ).select_related("program", "session", "class_teacher")
         if self.request.user.role == Role.TEACHER:
             sections = sections.filter(class_teacher=self.request.user)
         return sorted(sections, key=lambda s: (s.program.sort_order, s.program.name, s.name))
@@ -291,6 +292,36 @@ class MarksSheetView(MarksView):
                     },
                 )
         return Response(self.sheet(exam, section, paper))
+
+
+class ResultsView(MarksView):
+    """GET ?section=: the exam result of one section (totals, grades, pass/fail, positions)."""
+
+    def get(self, request, exam_id):
+        exam = self.get_exam(exam_id)
+        section = self.get_section(exam, request.query_params.get("section"))
+        tenant = exam.tenant
+        data = section_results(exam, section)
+        if request.query_params.get("attendance"):
+            end = exam.end_date or exam.session.end_date
+            for row in data["students"]:
+                row["attendance"] = attendance_until(row["student"], exam.session, end)
+        return Response(
+            {
+                "exam": {
+                    "id": exam.id, "name": exam.name, "status": exam.status, "exam_type": exam.exam_type,
+                    "session_name": exam.session.name, "start_date": exam.start_date, "end_date": exam.end_date,
+                },
+                "institute": {"name": tenant.name, "address": tenant.address, "phone": tenant.phone, "email": tenant.email},
+                "section": {
+                    **section_label(section),
+                    "class_teacher_name": section.class_teacher and (section.class_teacher.get_full_name() or section.class_teacher.username),
+                },
+                "show_position": tenant.show_position,
+                "pass_percentage": tenant.pass_percentage,
+                **data,
+            }
+        )
 
 
 class GradingView(APIView):

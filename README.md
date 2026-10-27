@@ -156,6 +156,11 @@ Shared database, every institute-owned row has a `tenant_id`.
   paper's total) or Absent; empty means not entered yet. The exam page shows progress per section.
 - Once a subject has marks it cannot be removed, its total cannot go below the highest mark, and
   the exam/class cannot be deleted. Publishing the result locks the marks.
+- Results per section: total, percentage, grade and remark (grading scale), pass/fail (a student
+  fails if any subject is below its pass marks or absent; missing marks = "Incomplete"), and position
+  (1, 2, 2, 4 among students who passed; hidden when `show_position` is off). Summary: pass rate,
+  average, highest. Printable result sheet (landscape) and report cards (one A4 page per student,
+  with attendance up to the exam's last day). Admins see all sections, class teachers their own.
 
 ## Demo institute
 
@@ -211,6 +216,7 @@ the demo. `--wipe-all` first deletes **every** institute and its data (super adm
 | GET/PUT | `/api/exams/grading/` (PUT `bands`) | admin; teachers read |
 | GET/PUT | `/api/exams/<id>/marks/` (`?section=&paper=`; PUT `section`, `paper`, `entries`) | admin / class teacher |
 | GET | `/api/exams/<id>/marks/progress/` | admin / class teacher |
+| GET | `/api/exams/<id>/results/?section=` (`&attendance=1` adds attendance) | admin / class teacher |
 | GET | `/api/me/exams/` (`?student=` for parents) | parent / student |
 | GET/PATCH | `/api/pay/settings/` | institute admin |
 | GET | `/api/pay/options/`, `/api/pay/status/?ref=`; POST `/api/pay/start/` (`invoice`, `provider`) | admin / parent / student |
@@ -270,5 +276,5 @@ Phase 1 (MVP): ~~setup, tenants, roles, login~~ -> ~~institute code login, SaaS 
 -> ~~attendance~~ -> ~~fees & invoices~~ -> ~~dashboard~~
 -> ~~payment gateways (JazzCash, Easypaisa)~~ -> later: Safepay, Stripe.
 
-Phase 2: ~~exams, date sheet, grading scale~~ -> ~~marks entry~~ -> results, position & report cards
+Phase 2: ~~exams, date sheet, grading scale~~ -> ~~marks entry~~ -> ~~results, position & report cards~~
 -> combined (weighted) annual result and parent/student results.

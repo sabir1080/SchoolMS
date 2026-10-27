@@ -101,3 +101,48 @@ export interface MarksSheet {
   paper: Paper;
   students: MarksRow[];
 }
+
+export type ResultStatus = "pass" | "fail" | "incomplete";
+
+export interface ResultRow {
+  student: number;
+  full_name: string;
+  admission_no: string;
+  roll_number: string;
+  father_name: string;
+  subjects: { paper: number; marks: string | null; absent: boolean; grade: string | null; passed: boolean | null }[];
+  obtained: string;
+  total: string;
+  percentage: string | null;
+  grade: string | null;
+  remark: string;
+  result: ResultStatus;
+  failed_subjects: number;
+  position: number | null;
+  attendance?: { total: number; present: number; late: number; absent: number; leave: number; percentage: number | null };
+}
+
+export interface ExamResults {
+  exam: { id: number; name: string; status: ExamStatus; exam_type: string; session_name: string; start_date: string | null; end_date: string | null };
+  institute: { name: string; address: string; phone: string; email: string };
+  section: { id: number; program_name: string; name: string; session_name: string; class_teacher_name: string | null };
+  show_position: boolean;
+  pass_percentage: number;
+  papers: { id: number; subject_name: string; total_marks: string; pass_marks: string }[];
+  students: ResultRow[];
+  summary: { students: number; passed: number; failed: number; incomplete: number; pass_rate: string | null; average: string | null; highest: string | null };
+  grading: { name: string; min_percentage: string; remark: string }[];
+}
+
+export const RESULT_LABEL: Record<ResultStatus, { label: string; tone: string }> = {
+  pass: { label: "Pass", tone: "text-emerald-700 dark:text-emerald-400" },
+  fail: { label: "Fail", tone: "text-red-600 dark:text-red-400" },
+  incomplete: { label: "Incomplete", tone: "text-slate-500" },
+};
+
+/** 1 -> "1st", 2 -> "2nd", 11 -> "11th", 22 -> "22nd". */
+export function ordinal(n: number) {
+  const teen = n % 100 >= 11 && n % 100 <= 13;
+  const suffix = teen ? "th" : ({ 1: "st", 2: "nd", 3: "rd" } as Record<number, string>)[n % 10] ?? "th";
+  return `${n}${suffix}`;
+}
