@@ -35,7 +35,7 @@ def test_admin_cannot_create_super_admin(api, admin_a):
     assert res.status_code == 400
 
 
-def test_weak_password_is_rejected(api, admin_a):
+def test_too_short_password_is_rejected(api, admin_a):
     res = auth(api, admin_a).post("/api/users/", {"username": "x", "password": "123", "role": "student"}, format="json")
     assert res.status_code == 400
     assert "password" in res.json()

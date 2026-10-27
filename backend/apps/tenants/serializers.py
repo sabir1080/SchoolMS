@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from apps.accounts.serializers import check_password_strength
+from apps.accounts.models import Role, User
+from apps.accounts.passwords import PasswordPolicy, check_password
 from apps.subscriptions.serializers import SubscriptionSerializer
 
 from .models import Tenant
@@ -17,6 +18,7 @@ class InstituteCodeField(serializers.CharField):
 
 class TenantSerializer(serializers.ModelSerializer):
     subscription = SubscriptionSerializer(read_only=True)
+    admin_usernames = serializers.SerializerMethodField()
     slug = InstituteCodeField(
         max_length=30,
         validators=[
@@ -29,9 +31,13 @@ class TenantSerializer(serializers.ModelSerializer):
         model = Tenant
         fields = [
             "id", "name", "slug", "institute_type", "email", "phone", "address",
-            "country", "currency", "timezone", "is_active", "created_at", "subscription",
+            "country", "currency", "timezone", "password_policy", "is_active", "created_at",
+            "subscription", "admin_usernames",
         ]
         read_only_fields = ["id", "created_at"]
+
+    def get_admin_usernames(self, tenant):
+        return [u.username for u in tenant.users.all() if u.role == Role.ADMIN]
 
     def validate_country(self, value):
         return value.upper()
@@ -61,11 +67,9 @@ class InstituteRegistrationSerializer(TenantSerializer):
         return value.strip().lower()
 
     def validate(self, attrs):
-        check_password_strength(
-            attrs["admin_password"],
-            {"username": attrs["admin_username"], "email": attrs["admin_email"]},
-            "admin_password",
-        )
+        candidate = User(username=attrs["admin_username"], email=attrs["admin_email"])
+        policy = attrs.get("password_policy", PasswordPolicy.EASY)
+        check_password(attrs["admin_password"], policy, "admin_password", user=candidate)
         return attrs
 
     def split(self):
@@ -81,3 +85,20 @@ class PublicInstituteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tenant
         fields = ["name", "slug", "institute_type"]
+
+
+class InstituteSettingsSerializer(serializers.ModelSerializer):
+    """What an institute admin may change about their own institute."""
+
+    class Meta:
+        model = Tenant
+        fields = [
+            "name", "slug", "institute_type", "email", "phone", "address",
+            "country", "currency", "timezone", "password_policy",
+        ]
+        read_only_fields = ["slug", "institute_type", "country", "currency", "timezone"]
+
+
+class ResetAdminPasswordSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    new_password = serializers.CharField(trim_whitespace=False)

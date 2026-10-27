@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/lib/auth";
-import { NAV_BY_ROLE, ROLE_LABELS } from "@/lib/navigation";
+import { ALWAYS_OPEN, NAV_BY_ROLE, ROLE_LABELS } from "@/lib/navigation";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, subscription, loading, logout } = useAuth();
@@ -20,15 +20,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [user, loading, router]);
 
   useEffect(() => {
-    // An expired institute can only see the billing page.
-    if (locked && !pathname.startsWith("/billing")) router.replace("/billing");
+    // An expired institute can only see the billing and account pages.
+    if (locked && !ALWAYS_OPEN.some((path) => pathname.startsWith(path))) router.replace("/billing");
   }, [locked, pathname, router]);
 
   if (!user) {
     return <div className="flex min-h-screen items-center justify-center text-slate-500">Loading…</div>;
   }
 
-  const nav = locked ? NAV_BY_ROLE[user.role].filter((item) => item.href === "/billing") : NAV_BY_ROLE[user.role];
+  const nav = locked
+    ? NAV_BY_ROLE[user.role].filter((item) => ALWAYS_OPEN.includes(item.href))
+    : NAV_BY_ROLE[user.role];
 
   function onLogout() {
     const wasPlatform = user?.role === "super_admin";

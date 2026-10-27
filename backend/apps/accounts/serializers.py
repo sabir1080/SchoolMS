@@ -1,7 +1,5 @@
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -10,6 +8,7 @@ from apps.tenants.models import Tenant
 from apps.tenants.validators import normalize_code
 
 from .models import Role, User
+from .passwords import check_password, policy_for
 
 INVALID_LOGIN = "Incorrect username or password."
 
@@ -21,13 +20,6 @@ def issue_tokens(user):
     refresh["tenant"] = user.tenant.slug if user.tenant_id else None
     update_last_login(None, user)
     return {"access": str(refresh.access_token), "refresh": str(refresh), "user": MeSerializer(user).data}
-
-
-def check_password_strength(password, user_fields, field_name):
-    try:
-        validate_password(password, User(**user_fields))
-    except DjangoValidationError as exc:
-        raise serializers.ValidationError({field_name: list(exc.messages)})
 
 
 class InstituteLoginSerializer(serializers.Serializer):
@@ -72,7 +64,7 @@ class PlatformLoginSerializer(serializers.Serializer):
 class TenantSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Tenant
-        fields = ["id", "name", "slug", "institute_type", "country", "currency", "timezone"]
+        fields = ["id", "name", "slug", "institute_type", "country", "currency", "timezone", "password_policy"]
 
 
 class MeSerializer(serializers.ModelSerializer):
@@ -124,8 +116,15 @@ class UserSerializer(serializers.ModelSerializer):
         if self.instance is None and not attrs.get("password"):
             raise serializers.ValidationError({"password": "This field is required."})
         if attrs.get("password"):
-            check_password_strength(attrs["password"], {k: v for k, v in attrs.items() if k != "password"}, "password")
+            fields = {k: v for k, v in attrs.items() if k != "password"}
+            candidate = User(**{**self._current_fields(), **fields})
+            check_password(attrs["password"], policy_for(self.tenant), user=candidate)
         return attrs
+
+    def _current_fields(self):
+        if self.instance is None:
+            return {}
+        return {f: getattr(self.instance, f) for f in ("username", "email", "first_name", "last_name")}
 
     def create(self, validated_data):
         password = validated_data.pop("password")
@@ -142,3 +141,40 @@ class UserSerializer(serializers.ModelSerializer):
             instance.set_password(password)
         instance.save()
         return instance
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    """A logged-in user changes their own password."""
+
+    current_password = serializers.CharField(trim_whitespace=False)
+    new_password = serializers.CharField(trim_whitespace=False)
+
+    def validate(self, attrs):
+        user = self.context["request"].user
+        if not user.check_password(attrs["current_password"]):
+            raise serializers.ValidationError({"current_password": ["Current password is incorrect."]})
+        check_password(attrs["new_password"], policy_for(user.tenant), "new_password", user=user)
+        return attrs
+
+    def save(self):
+        user = self.context["request"].user
+        user.set_password(self.validated_data["new_password"])
+        user.save(update_fields=["password"])
+        return user
+
+
+class SetPasswordSerializer(serializers.Serializer):
+    """An admin sets a new password for someone else (``context["user"]``)."""
+
+    new_password = serializers.CharField(trim_whitespace=False)
+
+    def validate(self, attrs):
+        user = self.context["user"]
+        check_password(attrs["new_password"], policy_for(user.tenant), "new_password", user=user)
+        return attrs
+
+    def save(self):
+        user = self.context["user"]
+        user.set_password(self.validated_data["new_password"])
+        user.save(update_fields=["password"])
+        return user

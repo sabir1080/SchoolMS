@@ -6,17 +6,24 @@ export interface NavItem {
 }
 
 /** Menu per role. New feature modules add their entries here. */
+const ACCOUNT: NavItem = { label: "Change password", href: "/account" };
+
 export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
-  super_admin: [{ label: "Institutes", href: "/platform/tenants" }],
+  super_admin: [{ label: "Institutes", href: "/platform/tenants" }, ACCOUNT],
   admin: [
     { label: "Dashboard", href: "/dashboard" },
     { label: "Users", href: "/users" },
+    { label: "Institute settings", href: "/settings" },
     { label: "Plan & Billing", href: "/billing" },
+    ACCOUNT,
   ],
-  teacher: [{ label: "Dashboard", href: "/dashboard" }],
-  student: [{ label: "Dashboard", href: "/dashboard" }],
-  parent: [{ label: "Dashboard", href: "/dashboard" }],
+  teacher: [{ label: "Dashboard", href: "/dashboard" }, ACCOUNT],
+  student: [{ label: "Dashboard", href: "/dashboard" }, ACCOUNT],
+  parent: [{ label: "Dashboard", href: "/dashboard" }, ACCOUNT],
 };
+
+/** Pages that stay open after an institute's subscription expires. */
+export const ALWAYS_OPEN = ["/billing", "/account"];
 
 export const ROLE_LABELS: Record<Role, string> = {
   super_admin: "Super Admin",

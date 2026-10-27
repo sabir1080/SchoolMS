@@ -13,6 +13,8 @@ interface AuthState {
   /** Store tokens from a response that already logged the user in (e.g. registration). */
   acceptLogin: (data: LoginResponse) => Promise<User>;
   refreshSubscription: () => Promise<void>;
+  /** Reload the profile (e.g. after the institute's settings change). */
+  refreshUser: () => Promise<void>;
   logout: () => void;
 }
 
@@ -78,6 +80,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSubscription(await fetchSubscription(user));
   }, [user]);
 
+  const refreshUser = useCallback(async () => {
+    setUser(await api<User>("/api/auth/me/"));
+  }, []);
+
   const logout = useCallback(() => {
     tokens.clear();
     setUser(null);
@@ -86,7 +92,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, subscription, loading, login, platformLogin, acceptLogin, refreshSubscription, logout }}
+      value={{
+        user,
+        subscription,
+        loading,
+        login,
+        platformLogin,
+        acceptLogin,
+        refreshSubscription,
+        refreshUser,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>

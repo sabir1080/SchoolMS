@@ -162,3 +162,7 @@ if not DEBUG:
 # SaaS subscriptions
 TRIAL_PLAN_CODE = os.environ.get("TRIAL_PLAN_CODE", "pro")
 TRIAL_DAYS = int(os.environ.get("TRIAL_DAYS", "14"))
+
+# Password rules for platform super admins ("easy", "standard" or "strong").
+# Each institute chooses its own rule in its settings (default "easy").
+PLATFORM_PASSWORD_POLICY = os.environ.get("PLATFORM_PASSWORD_POLICY", "standard")

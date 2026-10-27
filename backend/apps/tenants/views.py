@@ -1,13 +1,15 @@
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, PermissionDenied
-from rest_framework.generics import RetrieveAPIView
+from rest_framework.generics import RetrieveAPIView, RetrieveUpdateAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.serializers import issue_tokens
-from apps.core.permissions import IsSuperAdmin
+from apps.accounts.models import Role
+from apps.accounts.serializers import SetPasswordSerializer, issue_tokens
+from apps.core.permissions import IsInstituteAdmin, IsSuperAdmin
+from apps.subscriptions.gating import ActiveSubscription
 from apps.subscriptions.serializers import (
     RecordPaymentSerializer,
     SubscriptionPaymentSerializer,
@@ -16,7 +18,13 @@ from apps.subscriptions.serializers import (
 from apps.subscriptions.services import record_payment
 
 from .models import Tenant
-from .serializers import InstituteRegistrationSerializer, PublicInstituteSerializer, TenantSerializer
+from .serializers import (
+    InstituteRegistrationSerializer,
+    InstituteSettingsSerializer,
+    PublicInstituteSerializer,
+    ResetAdminPasswordSerializer,
+    TenantSerializer,
+)
 from .services import create_institute
 from .validators import normalize_code
 
@@ -24,7 +32,9 @@ from .validators import normalize_code
 class TenantViewSet(viewsets.ModelViewSet):
     """Platform owner (super admin) manages institutes and their subscriptions here."""
 
-    queryset = Tenant.objects.select_related("subscription__plan").prefetch_related("subscription__plan__prices")
+    queryset = Tenant.objects.select_related("subscription__plan").prefetch_related(
+        "subscription__plan__prices", "users"
+    )
     permission_classes = [IsSuperAdmin]
     http_method_names = ["get", "post", "patch", "head", "options"]
 
@@ -53,6 +63,20 @@ class TenantViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         record_payment(tenant.subscription, recorded_by=request.user, **serializer.validated_data)
         return Response(TenantSerializer(self.get_object()).data)
+
+    @action(detail=True, methods=["post"], url_path="reset-admin-password")
+    def reset_admin_password(self, request, pk=None):
+        """Set a new password for one of the institute's admins (e.g. when they forgot it)."""
+        tenant = self.get_object()
+        data = ResetAdminPasswordSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        admin = tenant.users.filter(role=Role.ADMIN, username=data.validated_data["username"]).first()
+        if admin is None:
+            raise NotFound("No admin with this username in this institute.")
+        serializer = SetPasswordSerializer(data={"new_password": data.validated_data["new_password"]}, context={"user": admin})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"detail": "Password updated."})
 
     @action(detail=True, methods=["get"])
     def payments(self, request, pk=None):
@@ -91,3 +115,14 @@ class InstituteRegistrationView(APIView):
         tenant_fields.pop("is_active", None)
         _, user = create_institute(admin=admin, **tenant_fields)
         return Response(issue_tokens(user), status=status.HTTP_201_CREATED)
+
+
+class InstituteSettingsView(RetrieveUpdateAPIView):
+    """Institute admin views and edits their institute's details and password policy."""
+
+    serializer_class = InstituteSettingsSerializer
+    permission_classes = [IsInstituteAdmin, ActiveSubscription]
+    http_method_names = ["get", "patch", "head", "options"]
+
+    def get_object(self):
+        return self.request.user.tenant

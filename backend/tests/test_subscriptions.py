@@ -81,8 +81,8 @@ def test_registration_rejects_taken_reserved_and_bad_codes(api, school_a):
         assert "slug" in res.json()
 
 
-def test_registration_rejects_weak_password(api, db):
-    res = api.post("/api/public/register/", {**REGISTRATION, "admin_password": "12345678"}, format="json")
+def test_registration_rejects_too_short_password(api, db):
+    res = api.post("/api/public/register/", {**REGISTRATION, "admin_password": "123"}, format="json")
     assert res.status_code == 400
     assert "admin_password" in res.json()
     assert not Tenant.objects.exists()

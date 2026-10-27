@@ -8,7 +8,8 @@ and tuition centers). See README.md for stack, structure and API.
 1. The owner works from a mobile phone and does nothing technical. Claude builds,
    deploys and verifies everything.
 2. Every change must be **tested and verified** before it is reported:
-   - backend: `cd backend && pytest` (also against PostgreSQL),
+   - backend: `cd backend && pytest`, and again with `TEST_DATABASE_URL` pointing at a local
+     throwaway PostgreSQL. Tests never use `DATABASE_URL` (in cloud sessions that is production Neon),
    - frontend: `npm run lint`, `npx tsc --noEmit`, `npm run build`,
    - a real browser run (Playwright) of the changed flows on mobile and desktop sizes.
 3. Find and fix errors and bugs before reporting. Never hand over half-working code.
@@ -27,8 +28,17 @@ and tuition centers). See README.md for stack, structure and API.
   per institute. Super admins log in at `/platform/login` (no institute).
 - Frontend is a static export (no server code, no dynamic route segments; use query params).
 
+## Deployment (Render + Neon)
+
+- Render services (workspace "My Workspace", region Singapore), auto-deploy from branch `ccr-3b156a9c-h1tcsc`:
+  `schoolms-api` (srv-dbg4dul9fdbs73cobqt0) https://schoolms-api-viji.onrender.com and
+  `schoolms-web` static site (srv-dbg4e2i9lscs7390imrg) https://schoolms-web-vzpe.onrender.com
+- Do not touch other services in the workspace (e.g. `tradeflow_demo`).
+- `RENDER_API_KEY` and `DATABASE_URL` (Neon) come from the environment; never print them.
+- After pushing, wait for the deploy via the Render API and check the service logs for errors.
+
 ## Roadmap
 
-Phase 1: setup/roles/login ✅ → institute code login + SaaS subscriptions ✅ →
+Phase 1: setup/roles/login ✅ → institute code login + SaaS subscriptions ✅ → passwords ✅ →
 academic setup → student admission → enrollment → attendance → fees & invoices →
 dashboard → payment gateways (JazzCash, Easypaisa, Safepay, Stripe).

@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 
-from .views import InstituteLookupView, InstituteRegistrationView, TenantViewSet
+from .views import InstituteLookupView, InstituteRegistrationView, InstituteSettingsView, TenantViewSet
 
 router = DefaultRouter()
 router.register("platform/tenants", TenantViewSet, basename="tenant")
@@ -9,5 +9,6 @@ router.register("platform/tenants", TenantViewSet, basename="tenant")
 urlpatterns = [
     path("public/institutes/<str:code>/", InstituteLookupView.as_view(), name="institute-lookup"),
     path("public/register/", InstituteRegistrationView.as_view(), name="institute-register"),
+    path("institute/settings/", InstituteSettingsView.as_view(), name="institute-settings"),
     *router.urls,
 ]

@@ -7,7 +7,12 @@ import { api, formatMoney, type Plan, type Subscription, type Tenant } from "@/l
 import { formatDate, STATUS_LABELS } from "@/lib/navigation";
 import { COUNTRIES, suggestCode } from "@/lib/regions";
 
-type PlatformTenant = Tenant & { is_active: boolean; email: string; subscription: Subscription | null };
+type PlatformTenant = Tenant & {
+  is_active: boolean;
+  email: string;
+  subscription: Subscription | null;
+  admin_usernames: string[];
+};
 
 interface Payment {
   id: number;
@@ -132,7 +137,12 @@ export default function TenantsPage() {
                   </button>
                 </div>
               </div>
-              {open === t.id && sub && <ManageSubscription tenant={t} plans={plans} onSaved={load} />}
+              {open === t.id && sub && (
+                <>
+                  <ManageSubscription tenant={t} plans={plans} onSaved={load} />
+                  <ResetAdminPassword tenant={t} />
+                </>
+              )}
             </Card>
           );
         })}
@@ -299,5 +309,60 @@ function CreateInstitute({ onCreated }: { onCreated: () => void }) {
         </Button>
       </form>
     </Card>
+  );
+}
+
+function ResetAdminPassword({ tenant }: { tenant: PlatformTenant }) {
+  const [username, setUsername] = useState(tenant.admin_usernames[0] ?? "");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<unknown>(null);
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  if (tenant.admin_usernames.length === 0) return null;
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    setMessage("");
+    try {
+      await api(`/api/platform/tenants/${tenant.id}/reset-admin-password/`, {
+        method: "POST",
+        body: JSON.stringify({ username, new_password: password }),
+      });
+      setMessage(`New password set for ${username}.`);
+      setPassword("");
+    } catch (err) {
+      setError(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="mt-4 space-y-4 border-t border-slate-200 pt-4 dark:border-slate-800">
+      <h3 className="text-sm font-medium">Reset admin password</h3>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <SelectField
+          label="Admin"
+          options={tenant.admin_usernames.map((u) => [u, u])}
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
+        <Field
+          label="New admin password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          autoComplete="off"
+          required
+        />
+      </div>
+      <ErrorBox error={error} />
+      {message && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</p>}
+      <Button type="submit" disabled={busy}>
+        {busy ? "Saving…" : "Reset password"}
+      </Button>
+    </form>
   );
 }

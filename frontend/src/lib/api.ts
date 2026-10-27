@@ -14,7 +14,10 @@ export interface Tenant {
   country: string;
   currency: string;
   timezone: string;
+  password_policy: PasswordPolicy;
 }
+
+export type PasswordPolicy = "easy" | "standard" | "strong";
 
 export interface User {
   id: number;

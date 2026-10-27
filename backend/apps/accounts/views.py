@@ -1,4 +1,5 @@
 from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import GenericAPIView, RetrieveAPIView
 from rest_framework.permissions import AllowAny
@@ -9,7 +10,14 @@ from apps.core.permissions import IsInstituteAdmin
 from apps.subscriptions.gating import check_limit
 
 from .models import STAFF_ROLES, Role, User
-from .serializers import InstituteLoginSerializer, MeSerializer, PlatformLoginSerializer, UserSerializer
+from .serializers import (
+    ChangePasswordSerializer,
+    InstituteLoginSerializer,
+    MeSerializer,
+    PlatformLoginSerializer,
+    SetPasswordSerializer,
+    UserSerializer,
+)
 
 
 class LoginView(GenericAPIView):
@@ -40,6 +48,18 @@ class MeView(RetrieveAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class ChangePasswordView(GenericAPIView):
+    """Any logged-in user (including super admins) changes their own password."""
+
+    serializer_class = ChangePasswordSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"detail": "Password changed."})
 
 
 # Which plan limit applies to each role.
@@ -82,6 +102,13 @@ class UserViewSet(TenantScopedViewSetMixin, viewsets.ModelViewSet):
         if is_active and not counted_before:
             self.check_plan_limit(role, exclude=instance)
         serializer.save()
+
+    @action(detail=True, methods=["post"], url_path="set-password")
+    def set_password(self, request, pk=None):
+        serializer = SetPasswordSerializer(data=request.data, context={"user": self.get_object()})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"detail": "Password updated."})
 
     def perform_destroy(self, instance):
         # Deactivate instead of deleting so attendance, fees etc. keep their history.

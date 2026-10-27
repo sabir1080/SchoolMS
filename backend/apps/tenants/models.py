@@ -2,6 +2,8 @@ from django.db import models
 
 from apps.core.models import TimeStampedModel
 
+from apps.accounts.passwords import PasswordPolicy
+
 from .validators import validate_institute_code
 
 
@@ -27,6 +29,9 @@ class Tenant(TimeStampedModel):
     currency = models.CharField(max_length=3, default="PKR", help_text="ISO 4217 code")
     timezone = models.CharField(max_length=50, default="Asia/Karachi")
     is_active = models.BooleanField(default=True)
+    password_policy = models.CharField(
+        max_length=10, choices=PasswordPolicy.choices, default=PasswordPolicy.EASY
+    )
 
     class Meta:
         ordering = ["name"]

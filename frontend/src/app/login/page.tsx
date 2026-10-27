@@ -159,6 +159,9 @@ function CredentialsStep({
           {busy ? "Signing in…" : "Sign in"}
         </Button>
       </form>
+      <p className="text-center text-xs text-slate-500">
+        Forgot your password? Ask your institute admin to reset it.
+      </p>
       <button onClick={onChange} className="w-full text-center text-sm text-indigo-600 hover:underline">
         Change institute
       </button>

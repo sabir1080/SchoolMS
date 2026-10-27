@@ -56,6 +56,14 @@ Shared database, every institute-owned row has a `tenant_id`.
 - The super admin records manual payments (bank, JazzCash, Easypaisa, cash...) which extend the
   subscription by 30 or 365 days (from the end of the current period). Online gateways come later.
 
+## Passwords
+
+- Each institute picks a password policy in Institute settings: **easy** (default, 4+ characters),
+  **standard** (8+, not a common password) or **strong** (8+, letters and numbers, not common).
+- Super admins follow `PLATFORM_PASSWORD_POLICY` (default `standard`).
+- Users change their own password; admins reset their users' passwords; the super admin can reset an
+  institute admin's password. Email "forgot password" comes with the alerts module (Phase 2).
+
 ## Roles
 
 | Role | Tenant | Can do (so far) |
@@ -76,12 +84,16 @@ Shared database, every institute-owned row has a `tenant_id`.
 | POST | `/api/auth/platform-login/` | super admin |
 | POST | `/api/auth/refresh/` | anyone with a refresh token |
 | GET | `/api/auth/me/` | logged-in user |
+| POST | `/api/auth/change-password/` (`current_password`, `new_password`) | any logged-in user |
 | GET | `/api/subscription/` | institute users (works after expiry) |
+| GET/PATCH | `/api/institute/settings/` | institute admin (details + password policy) |
+| POST | `/api/users/<id>/set-password/` | institute admin |
 | GET/POST/PATCH/DELETE | `/api/users/` | institute admin (DELETE deactivates) |
 | GET/POST/PATCH | `/api/platform/tenants/` | super admin |
 | PATCH | `/api/platform/tenants/<id>/subscription/` | super admin |
 | POST | `/api/platform/tenants/<id>/record-payment/` | super admin |
 | GET | `/api/platform/tenants/<id>/payments/` | super admin |
+| POST | `/api/platform/tenants/<id>/reset-admin-password/` | super admin |
 
 Login, lookup and registration are rate-limited.
 
@@ -95,7 +107,8 @@ cd backend && cp .env.example .env
 python manage.py migrate
 python manage.py ensure_superadmin
 python manage.py runserver          # http://localhost:8000
-pytest                              # run tests
+pytest                              # run tests (SQLite; never uses DATABASE_URL)
+TEST_DATABASE_URL=postgres://... pytest   # run tests on a throwaway PostgreSQL
 
 # Frontend
 cd frontend && cp .env.example .env.local

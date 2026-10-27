@@ -130,6 +130,9 @@ export default function RegisterPage() {
               autoComplete="new-password"
               required
             />
+            <p className="-mt-2 text-xs text-slate-500 sm:col-span-2">
+              At least 4 characters. You can make password rules stricter later in Institute settings.
+            </p>
           </div>
         </Card>
         <ErrorBox error={error} />
