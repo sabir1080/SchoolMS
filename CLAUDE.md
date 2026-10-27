@@ -55,3 +55,9 @@ dashboard ✅ → payment gateways JazzCash + Easypaisa ✅ (Safepay/Stripe late
 Phase 2: exams + date sheet + grading scale ✅ → marks entry ✅ → per-exam results, position (per
 `Tenant.show_position`) & report card print ✅ → combined annual result (weightage set per school) +
 parent/student results ✅. Pass rule: `Tenant.pass_percentage` per subject (default 33).
+
+Then (owner asked for all five together): timetable ✅ → homework & diary ✅ → SMS/WhatsApp alerts ✅
+(free wa.me links or Twilio) → staff & payroll ✅ → reports with Excel/PDF ✅.
+
+- Menu items carry the plan `feature` they need (`src/lib/navigation.ts`); the layout hides the rest.
+- Parent alerts go through `apps.messaging.services.queue_and_send` (dedupe keys, plan check).

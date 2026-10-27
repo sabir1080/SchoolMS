@@ -168,12 +168,47 @@ Shared database, every institute-owned row has a `tenant_id`.
 - Parents and students see published exam results and published annual results of the current
   session on their dashboard ("Results") and can open, print or save the report card as PDF.
 
+## Timetable
+
+- Plan feature `timetable`. Bell schedule (periods and breaks; quick setup makes the whole day) and
+  school days (`Tenant.working_days`, Monday–Friday by default).
+- Class timetable: subject, teacher and room per period; a teacher cannot be in two classes at the
+  same time. Teacher timetable (teachers see their own). Parents/students: today's classes + full week.
+
+## Homework & diary
+
+- Plan feature `homework`. Teachers write the diary for sections they are class teacher of or teach in
+  the timetable; admins for all. Only the writer or an admin edits. Parents/students see the last two
+  weeks and anything still due.
+
+## Messages to parents (SMS / WhatsApp)
+
+- Plan feature `sms_alerts`. Outbox of messages to the student's primary guardian (Pakistani numbers
+  normalised to +92): absent alerts (same day; withdrawn if the child is marked present while still
+  waiting), results when an exam is published, homework (optional), fee reminders (once a day, on
+  request) and notices (all parents or one section).
+- Channels: free "WhatsApp link" (each message opens wa.me with the text; marked sent when opened) or
+  Twilio SMS / WhatsApp (sent automatically; failures stay in the outbox to retry). The Twilio token
+  is write-only.
+
+## Staff & payroll
+
+- Plan feature `payroll`. Staff records (teachers linked to their login, and other staff) with basic
+  salary and allowance. Monthly salary slips made in one tap (salary copied at that time), bonus and
+  deductions, mark paid (cash/bank/JazzCash/Easypaisa) or undo, printable slip. Teachers see their own.
+
+## Reports
+
+- Plan feature `reports` (plus each report's module): student list, monthly attendance, fee dues,
+  fee collection, exam result sheet, salaries. Preview, Excel download (openpyxl) or print to PDF.
+
 ## Demo institute
 
 `python manage.py seed_demo` creates "Bright Future Academy" (institute code `demo`, password `demo1234`
 for users `admin`, `sana` (teacher), `rashid` (parent of two), `ahmed` (student)) with 32 students,
-attendance since September, six months of fees, four exams (First Term published with marks) and an
-annual result being prepared. Running it again replaces
+attendance since September, six months of fees, four exams (First Term published with marks), an
+annual result being prepared, a full timetable, a week of homework, staff salaries and parent messages
+waiting in the outbox. Running it again replaces
 the demo. `--wipe-all` first deletes **every** institute and its data (super admins and plans stay).
 
 ## Roles
@@ -227,6 +262,15 @@ the demo. `--wipe-all` first deletes **every** institute and its data (super adm
 | CRUD | `/api/combined-results/` (`?session=`; `components`: `[{exam, weight}]`) | admin; teachers read |
 | GET | `/api/combined-results/<id>/results/` (sections; `?section=` for the result) | admin / class teacher |
 | GET | `/api/me/results/` (`?student=` for parents) | parent / student |
+| CRUD | `/api/timetable/periods/` (+ POST `generate/`), `/api/timetable/entries/` (`?section=` or `?teacher=me`) | admin; teachers read |
+| GET | `/api/me/timetable/` (`?student=` for parents) | parent / student |
+| CRUD | `/api/homework/` (`?section=&date=`), GET `/api/homework/sections/` | admin / teacher |
+| GET | `/api/me/homework/` (`?student=` for parents) | parent / student |
+| GET/PATCH | `/api/messages/settings/` | institute admin |
+| GET/DELETE | `/api/messages/` (`?status=&kind=`); POST `<id>/mark-sent/`, `send-pending/`, `fee-reminders/`, `notice/`, `test/` | institute admin |
+| CRUD | `/api/payroll/employees/`; `/api/payroll/payslips/` (`?period=`; POST `generate/`, `<id>/pay/`, `<id>/unpay/`) | institute admin |
+| GET | `/api/me/payslips/` | teacher / admin |
+| GET | `/api/reports/<students|attendance|fee-dues|fee-collection|exam-result|payroll>/` (`&download=xlsx`) | institute admin |
 | GET | `/api/me/exams/` (`?student=` for parents) | parent / student |
 | GET/PATCH | `/api/pay/settings/` | institute admin |
 | GET | `/api/pay/options/`, `/api/pay/status/?ref=`; POST `/api/pay/start/` (`invoice`, `provider`) | admin / parent / student |
@@ -287,4 +331,5 @@ Phase 1 (MVP): ~~setup, tenants, roles, login~~ -> ~~institute code login, SaaS 
 -> ~~payment gateways (JazzCash, Easypaisa)~~ -> later: Safepay, Stripe.
 
 Phase 2: ~~exams, date sheet, grading scale~~ -> ~~marks entry~~ -> ~~results, position & report cards~~
--> ~~combined (weighted) annual result and parent/student results~~.
+-> ~~combined (weighted) annual result and parent/student results~~
+-> ~~timetable~~ -> ~~homework & diary~~ -> ~~SMS/WhatsApp alerts~~ -> ~~staff & payroll~~ -> ~~reports (Excel/PDF)~~.

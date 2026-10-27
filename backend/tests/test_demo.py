@@ -29,6 +29,15 @@ def test_seed_demo_builds_a_complete_school(db, api):
     annual = CombinedResult.objects.get(tenant=tenant)
     assert [str(c.weight) for c in annual.components.all()] == ["25.00", "25.00", "50.00"]
     assert Mark.objects.filter(tenant=tenant).count() > 200
+    from apps.homework.models import Homework
+    from apps.messaging.models import Message
+    from apps.payroll.models import Payslip
+    from apps.timetable.models import TimetableEntry
+
+    assert TimetableEntry.objects.filter(tenant=tenant).count() == 4 * 5 * 7
+    assert Homework.objects.filter(tenant=tenant).count() == 4 * 5 * 2
+    assert Payslip.objects.filter(tenant=tenant, status="paid").exists() and Payslip.objects.filter(tenant=tenant, status="unpaid").exists()
+    assert Message.objects.filter(tenant=tenant, kind="fee").exists()
     # Logins work and the parent sees both children
     res = api.post("/api/auth/login/", {"institute_code": "demo", "username": "rashid", "password": "demo1234"}, format="json")
     assert res.status_code == 200, res.json()

@@ -22,6 +22,9 @@ from apps.exams.models import CombinedExam, CombinedResult, Exam, ExamStatus, Ex
 from apps.exams.services import default_pass_marks, sync_papers
 from apps.fees.models import DiscountType, FeeHead, FeeRate, Frequency, Invoice, PaymentMethod, StudentDiscount
 from apps.fees.services import generate_monthly_invoices, record_payment
+from apps.homework.models import Homework
+from apps.payroll.models import Employee, Payslip
+from apps.timetable.models import Period, TimetableEntry
 from apps.students.models import Enrollment, Guardian, Relation, Student, StudentGuardian
 from apps.subscriptions.models import BillingCycle, Plan, Subscription, SubscriptionStatus
 
@@ -320,4 +323,80 @@ def seed_demo(today=None):
         CombinedExam(combined=annual, exam=mid_term, weight=25),
         CombinedExam(combined=annual, exam=final, weight=50),
     ])
+
+    # Timetable: 7 periods with a break after the 4th; each class teacher takes their own section.
+    clock = datetime.datetime(2000, 1, 1, 8, 0)
+    periods = []
+    for number in range(1, 8):
+        end = clock + datetime.timedelta(minutes=40)
+        periods.append(Period.objects.create(tenant=tenant, name=f"Period {number}", start_time=clock.time(), end_time=end.time()))
+        clock = end
+        if number == 4:
+            end = clock + datetime.timedelta(minutes=20)
+            Period.objects.create(tenant=tenant, name="Break", start_time=clock.time(), end_time=end.time(), is_break=True)
+            clock = end
+    rooms = {key: f"Room {i}" for i, key in enumerate(SECTIONS, start=1)}
+    entries = []
+    for key, section in sections.items():
+        names = next(subject_names for name, _fee, subject_names in CLASSES if name == key[0])
+        for day in range(5):
+            for i, period in enumerate(periods):
+                entries.append(TimetableEntry(
+                    tenant=tenant, section=section, day=day, period=period, subject=subjects[names[(i + day) % len(names)]],
+                    teacher=teachers.get(key), room=rooms[key],
+                ))
+    TimetableEntry.objects.bulk_create(entries)
+
+    # Homework diary for the last five school days.
+    tasks = {
+        "English": ["Learn the spellings of lesson 6", "Write 10 sentences using adjectives", "Read the story 'The Honest Woodcutter'"],
+        "Urdu": ["سبق نمبر 5 کے سوالات کے جوابات لکھیں", "خوشخطی کا ایک صفحہ لکھیں", "مضمون: میرا پسندیدہ کھیل"],
+        "Mathematics": ["Exercise 4.2, questions 1-10", "Learn the table of 13 and 14", "Solve the word problems on page 58"],
+        "Science": ["Draw and label the parts of a plant", "Read chapter 3: Matter", "Write 5 sources of light"],
+        "Islamiat": ["Memorise Surah Al-Asr with translation", "Write the five pillars of Islam"],
+        "Social Studies": ["Locate the provinces of Pakistan on the map", "Answer questions 1-4 of chapter 2"],
+        "Computer": ["Label the parts of a computer", "Write 5 uses of the internet"],
+    }
+    school_days_back = [d for d in (today - datetime.timedelta(days=n) for n in range(10)) if d.weekday() < 5][:5]
+    diary = []
+    for key, section in sections.items():
+        names = next(subject_names for name, _fee, subject_names in CLASSES if name == key[0])
+        for n, day in enumerate(school_days_back):
+            for subject_name in rng.sample(names, 2):
+                diary.append(Homework(
+                    tenant=tenant, section=section, subject=subjects[subject_name], date=day, title=rng.choice(tasks[subject_name]),
+                    due_date=day + datetime.timedelta(days=1 if day.weekday() < 4 else 3), created_by=teachers.get(key) or admin,
+                ))
+    Homework.objects.bulk_create(diary)
+
+    # Staff and salaries: last month paid, this month partly paid.
+    staff = [(t.get_full_name(), "Teacher", 42000 + 3000 * i, 5000, t) for i, t in enumerate(teachers.values())]
+    staff += [("Muhammad Akram", "Security guard", 28000, 2000, None), ("Shahid Masih", "Office assistant", 30000, 2000, None),
+              ("Bashir Ahmed", "Van driver", 32000, 3000, None)]
+    employees = [
+        Employee.objects.create(tenant=tenant, name=name, designation=role, basic_salary=basic, allowance=allowance, user=login,
+                                phone=f"03{rng.randint(0, 4)}{rng.randint(0, 9)}-{rng.randint(1000000, 9999999)}",
+                                join_date=datetime.date(year - rng.randint(0, 4), rng.randint(1, 12), 1))
+        for name, role, basic, allowance, login in staff
+    ]
+    previous = (today.replace(day=1) - datetime.timedelta(days=1))
+    for period, paid_share in ((previous.strftime("%Y-%m"), 1.0), (today.strftime("%Y-%m"), 0.5)):
+        for i, e in enumerate(employees):
+            deduction = 1500 if i == 1 and paid_share == 1.0 else 0
+            slip = Payslip.objects.create(tenant=tenant, employee=e, period=period, basic=e.basic_salary, allowance=e.allowance,
+                                          deduction=deduction, note="1 day unpaid leave" if deduction else "")
+            if i < len(employees) * paid_share:
+                slip.status, slip.paid_on, slip.paid_by = "paid", min(datetime.date.fromisoformat(f"{period}-01") + datetime.timedelta(days=27), today), admin
+                slip.method = "bank" if e.user_id else "cash"
+                slip.save()
+
+    # Parent messages: today's absent alerts and fee reminders wait in the outbox (free WhatsApp mode).
+    from apps.messaging.alerts import absent_alerts, fee_reminders
+
+    if today.weekday() < 5:
+        for section in sections.values():
+            if section.id in marked_today:
+                records = AttendanceRecord.objects.filter(section=section, date=today).values("student", "status")
+                absent_alerts(tenant, section, today, list(records), admin)
+    fee_reminders(tenant, admin)
     return tenant
