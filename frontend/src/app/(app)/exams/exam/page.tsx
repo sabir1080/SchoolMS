@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { AcademicSession, Program, Subject } from "@/components/academics/types";
 import { useList } from "@/components/academics/useList";
 import { ExamForm } from "@/components/exams/ExamForm";
+import { MarksProgressCard } from "@/components/exams/MarksProgressCard";
 import { ExamStatusBadge, ExamsTabs } from "@/components/exams/ExamsTabs";
 import { Button, Card, ErrorBox } from "@/components/ui";
 import { api } from "@/lib/api";
@@ -114,6 +115,12 @@ export default function ExamPage() {
         )}
       </Card>
 
+      {exam.status !== "draft" && (
+        <div className="print:hidden">
+          <MarksProgressCard examId={exam.id} status={exam.status} />
+        </div>
+      )}
+
       {examPrograms.length > 0 && (
         <div className="-mx-4 overflow-x-auto px-4 print:hidden">
           <div className="flex w-max gap-1 rounded-xl bg-slate-200/60 p-1 dark:bg-slate-800" role="tablist" aria-label={terms.program}>
@@ -188,6 +195,7 @@ function Papers({ exam, program, editable }: { exam: Exam; program: Program; edi
       setAdding("");
       setMessage("Saved.");
     } catch (err) {
+      setRemoved([]);
       setError(err);
     }
   }
@@ -202,7 +210,7 @@ function Papers({ exam, program, editable }: { exam: Exam; program: Program; edi
     <Card>
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="font-medium">
-          {program.name} · date sheet <span className="text-sm font-normal text-slate-500">({visible.length} papers)</span>
+          {program.name} · date sheet <span className="text-sm font-normal text-slate-500">({visible.length} {visible.length === 1 ? "paper" : "papers"})</span>
         </h2>
         <button onClick={() => window.print()} className="text-sm text-indigo-600 hover:underline print:hidden">
           Print
@@ -210,7 +218,7 @@ function Papers({ exam, program, editable }: { exam: Exam; program: Program; edi
       </div>
 
       {visible.length === 0 ? (
-        <p className="text-sm text-slate-500">No papers for this class. Add subjects below.</p>
+        <p className="text-sm text-slate-500">No papers yet. Add subjects below.</p>
       ) : !editable ? (
         <table className="w-full text-sm">
           <thead>

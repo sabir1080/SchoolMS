@@ -1,23 +1,31 @@
 from django.db import transaction
-from django.db.models import Prefetch
+from django.db.models import Count, Max, Prefetch
 from rest_framework import viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.academics.models import Program
+from apps.academics.models import Program, Section
 from apps.accounts.models import Role
+from apps.attendance.views import roll_sort_key, section_label
 from apps.core.mixins import TenantScopedViewSetMixin
 from apps.core.permissions import AdminWriteStaffRead, HasRole
-from apps.students.models import Student
+from apps.students.models import Enrollment, Student, StudentStatus
 from apps.students.serializers import current_enrollment
 from apps.students.services import current_session
 from apps.subscriptions.features import Feature
 from apps.subscriptions.gating import ActiveSubscription, RequiresFeature
 
-from .models import Exam, ExamStatus, ExamSubject, GradeBand, grading_scale
-from .serializers import ExamSerializer, GradeBandSerializer, GradingInputSerializer, PaperSerializer, PapersInputSerializer
+from .models import Exam, ExamStatus, ExamSubject, GradeBand, Mark, grading_scale
+from .serializers import (
+    ExamSerializer,
+    GradeBandSerializer,
+    GradingInputSerializer,
+    MarksInputSerializer,
+    PaperSerializer,
+    PapersInputSerializer,
+)
 from .services import default_pass_marks, sync_papers
 
 
@@ -49,8 +57,15 @@ class ExamViewSet(TenantScopedViewSetMixin, viewsets.ModelViewSet):
             before = set(serializer.instance.programs.values_list("id", flat=True))
             exam = serializer.save()
             after = set(exam.programs.values_list("id", flat=True))
+            if Mark.objects.filter(paper__exam=exam, paper__program_id__in=before - after).exists():
+                raise ValidationError({"programs": ["A class you removed already has marks entered."]})
             ExamSubject.objects.filter(exam=exam, program_id__in=before - after).delete()
             sync_papers(exam, Program.objects.filter(pk__in=after - before))
+
+    def perform_destroy(self, instance):
+        if Mark.objects.filter(paper__exam=instance).exists():
+            raise ValidationError("This exam already has marks and cannot be deleted.")
+        instance.delete()
 
     def program_param(self, exam, value):
         program = exam.programs.filter(pk=value or 0).first()
@@ -77,11 +92,19 @@ class ExamViewSet(TenantScopedViewSetMixin, viewsets.ModelViewSet):
 
     @transaction.atomic
     def save_papers(self, exam, program, data):
-        papers = {p.id: p for p in ExamSubject.objects.filter(exam=exam, program=program)}
+        papers = {p.id: p for p in ExamSubject.objects.filter(exam=exam, program=program).select_related("subject")}
+        highest = dict(
+            Mark.objects.filter(paper__in=papers).order_by().values("paper").annotate(m=Max("marks_obtained")).values_list("paper", "m")
+        )
         for row in data["papers"]:
             paper = papers.get(row["id"])
             if paper is None:
                 raise ValidationError({"papers": ["A paper does not belong to this class and exam."]})
+            top = highest.get(paper.id)
+            if top is not None and "total_marks" in row and row["total_marks"] < top:
+                raise ValidationError(
+                    {"papers": [f"{paper.subject.name}: a student already has {top.normalize():f} marks, more than the new total."]}
+                )
             date = row.get("date")
             if date and not (exam.session.start_date <= date <= exam.session.end_date):
                 raise ValidationError({"papers": [f"Paper dates must be within the session {exam.session.name}."]})
@@ -89,6 +112,9 @@ class ExamViewSet(TenantScopedViewSetMixin, viewsets.ModelViewSet):
                 if field in row:
                     setattr(paper, field, row[field])
             paper.save()
+        marked = Mark.objects.filter(paper_id__in=data["remove"], paper__in=papers).select_related("paper__subject").first()
+        if marked:
+            raise ValidationError({"remove": [f"{marked.paper.subject.name} already has marks and cannot be removed."]})
         ExamSubject.objects.filter(exam=exam, program=program, pk__in=data["remove"]).delete()
         taken = set(ExamSubject.objects.filter(exam=exam, program=program).values_list("subject_id", flat=True))
         ExamSubject.objects.bulk_create(
@@ -107,6 +133,164 @@ class ExamViewSet(TenantScopedViewSetMixin, viewsets.ModelViewSet):
         if request.query_params.get("program"):
             papers = papers.filter(program_id=request.query_params["program"])
         return Response({"exam": ExamSerializer(exam).data, "papers": PaperSerializer(papers, many=True).data})
+
+
+def decimal_text(value):
+    """Decimals as strings, the way DRF serializers send them."""
+    return None if value is None else str(value)
+
+
+class MarksView(APIView):
+    """Base for marks entry: admins for every section, teachers for sections they are class teacher of."""
+
+    required_feature = Feature.EXAMS
+
+    def get_permissions(self):
+        return [HasRole.for_roles(Role.ADMIN, Role.TEACHER)(), ActiveSubscription(), RequiresFeature()]
+
+    def get_exam(self, exam_id):
+        exam = Exam.objects.filter(tenant=self.request.user.tenant, pk=exam_id).select_related("session").first()
+        if exam is None:
+            raise NotFound("Exam not found.")
+        return exam
+
+    def sections(self, exam):
+        """Sections of the exam's session and classes this user may enter marks for."""
+        sections = Section.objects.filter(
+            tenant=exam.tenant, session=exam.session, program__in=exam.programs.all()
+        ).select_related("program", "session")
+        if self.request.user.role == Role.TEACHER:
+            sections = sections.filter(class_teacher=self.request.user)
+        return sorted(sections, key=lambda s: (s.program.sort_order, s.program.name, s.name))
+
+    def get_section(self, exam, section_id):
+        section = next((s for s in self.sections(exam) if str(s.id) == str(section_id)), None)
+        if section is None:
+            if self.request.user.role == Role.TEACHER and Section.objects.filter(tenant=exam.tenant, pk=section_id or 0).exists():
+                raise PermissionDenied("Only the class teacher or an admin can enter marks for this section.")
+            raise ValidationError({"section": ["Choose a section that takes this exam."]})
+        return section
+
+    def get_paper(self, exam, section, paper_id):
+        paper = ExamSubject.objects.filter(exam=exam, program=section.program, pk=paper_id or 0).select_related("subject").first()
+        if paper is None:
+            raise ValidationError({"paper": ["Choose a subject of this class in this exam."]})
+        return paper
+
+    def enrollments(self, section):
+        rows = Enrollment.objects.filter(section=section, student__status=StudentStatus.ACTIVE).select_related("student")
+        return sorted(rows, key=roll_sort_key)
+
+
+class MarksProgressView(MarksView):
+    """For each section the user can see: how many students have marks in each paper."""
+
+    def get(self, request, exam_id):
+        exam = self.get_exam(exam_id)
+        sections = self.sections(exam)
+        papers = list(ExamSubject.objects.filter(exam=exam).select_related("subject"))
+        students = dict(
+            Enrollment.objects.filter(section__in=sections, student__status=StudentStatus.ACTIVE)
+            .order_by().values("section").annotate(n=Count("id")).values_list("section", "n")
+        )
+        entered = {
+            (row["section"], row["paper"]): row["n"]
+            for row in Mark.objects.filter(paper__exam=exam, section__in=sections, student__status=StudentStatus.ACTIVE)
+            .order_by().values("section", "paper").annotate(n=Count("id"))
+        }
+        return Response(
+            {
+                "exam": {"id": exam.id, "name": exam.name, "status": exam.status, "session_name": exam.session.name},
+                "can_enter": exam.status == ExamStatus.MARKS_OPEN,
+                "sections": [
+                    {
+                        **section_label(s),
+                        "program": s.program_id,
+                        "student_count": students.get(s.id, 0),
+                        "papers": [
+                            {
+                                "id": p.id,
+                                "subject_name": p.subject.name,
+                                "total_marks": decimal_text(p.total_marks),
+                                "entered": entered.get((s.id, p.id), 0),
+                            }
+                            for p in papers
+                            if p.program_id == s.program_id
+                        ],
+                    }
+                    for s in sections
+                ],
+            }
+        )
+
+
+class MarksSheetView(MarksView):
+    """GET ?section=&paper=: students with their marks. PUT: save the marks (only while marks entry is open)."""
+
+    def sheet(self, exam, section, paper):
+        enrollments = self.enrollments(section)
+        marks = {m.student_id: m for m in Mark.objects.filter(paper=paper, student__in=[e.student_id for e in enrollments])}
+        return {
+            "exam": {"id": exam.id, "name": exam.name, "status": exam.status},
+            "can_enter": exam.status == ExamStatus.MARKS_OPEN,
+            "section": section_label(section),
+            "paper": PaperSerializer(paper).data,
+            "students": [
+                {
+                    "student": e.student_id,
+                    "admission_no": e.student.admission_no,
+                    "full_name": e.student.full_name,
+                    "roll_number": e.roll_number,
+                    "marks": decimal_text(marks[e.student_id].marks_obtained) if e.student_id in marks else None,
+                    "absent": marks[e.student_id].is_absent if e.student_id in marks else False,
+                }
+                for e in enrollments
+            ],
+        }
+
+    def get(self, request, exam_id):
+        exam = self.get_exam(exam_id)
+        section = self.get_section(exam, request.query_params.get("section"))
+        paper = self.get_paper(exam, section, request.query_params.get("paper"))
+        return Response(self.sheet(exam, section, paper))
+
+    def put(self, request, exam_id):
+        exam = self.get_exam(exam_id)
+        serializer = MarksInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        section = self.get_section(exam, data["section"])
+        paper = self.get_paper(exam, section, data["paper"])
+        if exam.status != ExamStatus.MARKS_OPEN:
+            raise ValidationError("Marks entry is closed for this exam.")
+        enrolled = {e.student_id: e.student for e in self.enrollments(section)}
+        errors = []
+        for entry in data["entries"]:
+            student = enrolled.get(entry["student"])
+            if student is None:
+                raise ValidationError({"entries": ["Some students are not in this section."]})
+            if not entry["absent"] and entry.get("marks") is not None and entry["marks"] > paper.total_marks:
+                errors.append(f"{student.full_name}: marks cannot be more than {paper.total_marks.normalize():f}.")
+        if errors:
+            raise ValidationError({"entries": errors})
+        with transaction.atomic():
+            for entry in data["entries"]:
+                marks = None if entry["absent"] else entry.get("marks")
+                if marks is None and not entry["absent"]:
+                    Mark.objects.filter(paper=paper, student_id=entry["student"]).delete()
+                    continue
+                Mark.objects.update_or_create(
+                    paper=paper,
+                    student_id=entry["student"],
+                    defaults={
+                        "tenant": exam.tenant,
+                        "section": section,
+                        "marks_obtained": marks,
+                        "is_absent": entry["absent"],
+                        "entered_by": request.user,
+                    },
+                )
+        return Response(self.sheet(exam, section, paper))
 
 
 class GradingView(APIView):

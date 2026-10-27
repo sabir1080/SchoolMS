@@ -151,6 +151,11 @@ Shared database, every institute-owned row has a `tenant_id`.
   must start at 0%. Institute settings `pass_percentage` and `show_position` (position on report cards).
 - Teachers see exams and grading read-only. Parents and students see the date sheets of announced
   (non-draft) exams of the current session on their dashboard.
+- Marks entry (only while the exam is "marks entry open"): admins for every section, teachers for
+  sections they are class teacher of. Per section and subject: marks (halves allowed, up to the
+  paper's total) or Absent; empty means not entered yet. The exam page shows progress per section.
+- Once a subject has marks it cannot be removed, its total cannot go below the highest mark, and
+  the exam/class cannot be deleted. Publishing the result locks the marks.
 
 ## Roles
 
@@ -197,6 +202,8 @@ Shared database, every institute-owned row has a `tenant_id`.
 | GET/PUT | `/api/exams/<id>/papers/` (`?program=`; PUT `program`, `papers`, `remove`, `add`) | admin; teachers read |
 | GET | `/api/exams/<id>/datesheet/?program=` | admin / teacher |
 | GET/PUT | `/api/exams/grading/` (PUT `bands`) | admin; teachers read |
+| GET/PUT | `/api/exams/<id>/marks/` (`?section=&paper=`; PUT `section`, `paper`, `entries`) | admin / class teacher |
+| GET | `/api/exams/<id>/marks/progress/` | admin / class teacher |
 | GET | `/api/me/exams/` (`?student=` for parents) | parent / student |
 | GET/PATCH | `/api/pay/settings/` | institute admin |
 | GET | `/api/pay/options/`, `/api/pay/status/?ref=`; POST `/api/pay/start/` (`invoice`, `provider`) | admin / parent / student |
@@ -256,5 +263,5 @@ Phase 1 (MVP): ~~setup, tenants, roles, login~~ -> ~~institute code login, SaaS 
 -> ~~attendance~~ -> ~~fees & invoices~~ -> ~~dashboard~~
 -> ~~payment gateways (JazzCash, Easypaisa)~~ -> later: Safepay, Stripe.
 
-Phase 2: ~~exams, date sheet, grading scale~~ -> marks entry -> results, position & report cards
+Phase 2: ~~exams, date sheet, grading scale~~ -> ~~marks entry~~ -> results, position & report cards
 -> combined (weighted) annual result and parent/student results.

@@ -93,7 +93,7 @@ export default function ExamsPage() {
               <ExamStatusBadge {...EXAM_STATUS[exam.status]} />
             </div>
             <p className="mt-2 truncate text-sm text-slate-600 dark:text-slate-300">{exam.program_names.join(", ")}</p>
-            <p className="text-xs text-slate-500">{exam.paper_count} papers</p>
+            <p className="text-xs text-slate-500">{exam.paper_count} {exam.paper_count === 1 ? "paper" : "papers"}</p>
           </Link>
         ))}
       </div>

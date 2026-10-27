@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.conf import settings
 from django.db import models
 
 from apps.core.models import TenantScopedModel
@@ -96,4 +97,23 @@ class ExamSubject(TenantScopedModel):
         ordering = [models.F("date").asc(nulls_last=True), models.F("start_time").asc(nulls_last=True), "subject__name"]
         constraints = [
             models.UniqueConstraint(fields=["exam", "program", "subject"], name="unique_paper"),
+        ]
+
+
+class Mark(TenantScopedModel):
+    """A student's marks in one paper. ``marks_obtained`` is empty when the student was absent."""
+
+    paper = models.ForeignKey(ExamSubject, on_delete=models.PROTECT, related_name="marks")
+    student = models.ForeignKey("students.Student", on_delete=models.PROTECT, related_name="marks")
+    section = models.ForeignKey("academics.Section", on_delete=models.PROTECT, related_name="+")
+    marks_obtained = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    is_absent = models.BooleanField(default=False)
+    entered_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["paper", "student"], name="unique_mark_per_paper"),
         ]

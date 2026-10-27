@@ -7,6 +7,7 @@ import { Button, Card, ErrorBox, Field } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import type { GradeBand } from "@/lib/exams";
+import { termsFor } from "@/lib/terms";
 
 interface ExamSettings {
   pass_percentage: number;
@@ -16,6 +17,7 @@ interface ExamSettings {
 export default function GradingPage() {
   const { user, refreshUser } = useAuth();
   const isAdmin = user?.role === "admin";
+  const terms = termsFor(user?.tenant);
   const [bands, setBands] = useState<GradeBand[]>([]);
   const [settings, setSettings] = useState<ExamSettings | null>(null);
   const [error, setError] = useState<unknown>(null);
@@ -66,7 +68,7 @@ export default function GradingPage() {
               />
               <label className="flex items-center gap-2 self-end pb-2 text-sm">
                 <input type="checkbox" checked={settings.show_position} onChange={(e) => setSettings({ ...settings, show_position: e.target.checked })} />
-                Show class position (1st, 2nd, 3rd) on report cards
+                Show {terms.program.toLowerCase()} position (1st, 2nd, 3rd) on report cards
               </label>
             </div>
             <p className="mt-2 text-xs text-slate-500">New papers get pass marks from this percentage; you can still change each paper.</p>

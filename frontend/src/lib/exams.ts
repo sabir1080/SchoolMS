@@ -64,6 +64,40 @@ export function timeText(t: string | null) {
   return new Date(2000, 0, 1, h, m).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 }
 
+/** "70.50" -> "70.5", "100.00" -> "100". */
 export function marks(value: string) {
-  return value.replace(/\.00$/, "");
+  return value.includes(".") ? value.replace(/\.?0+$/, "") : value;
+}
+
+export interface ProgressSection {
+  id: number;
+  program: number;
+  program_name: string;
+  name: string;
+  session_name: string;
+  student_count: number;
+  papers: { id: number; subject_name: string; total_marks: string; entered: number }[];
+}
+
+export interface MarksProgress {
+  exam: { id: number; name: string; status: ExamStatus; session_name: string };
+  can_enter: boolean;
+  sections: ProgressSection[];
+}
+
+export interface MarksRow {
+  student: number;
+  admission_no: string;
+  full_name: string;
+  roll_number: string;
+  marks: string | null;
+  absent: boolean;
+}
+
+export interface MarksSheet {
+  exam: { id: number; name: string; status: ExamStatus };
+  can_enter: boolean;
+  section: { id: number; program_name: string; name: string; session_name: string };
+  paper: Paper;
+  students: MarksRow[];
 }

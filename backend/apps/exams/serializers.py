@@ -96,3 +96,21 @@ class PapersInputSerializer(serializers.Serializer):
     papers = PaperUpdateSerializer(many=True, required=False, default=list)
     remove = serializers.ListField(child=serializers.IntegerField(), required=False, default=list)
     add = TenantPrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False, default=list)
+
+
+class MarkEntrySerializer(serializers.Serializer):
+    student = serializers.IntegerField()
+    marks = serializers.DecimalField(max_digits=6, decimal_places=2, min_value=Decimal(0), allow_null=True, required=False)
+    absent = serializers.BooleanField(default=False)
+
+
+class MarksInputSerializer(serializers.Serializer):
+    section = serializers.IntegerField()
+    paper = serializers.IntegerField()
+    entries = MarkEntrySerializer(many=True)
+
+    def validate_entries(self, entries):
+        students = [e["student"] for e in entries]
+        if len(students) != len(set(students)):
+            raise serializers.ValidationError("A student appears twice.")
+        return entries
