@@ -35,7 +35,7 @@ export function MyDateSheets({ url }: { url: string }) {
             {exam.papers.map((p) => (
               <li key={p.id} className="grid grid-cols-[1fr_1fr_auto] items-center gap-2 py-2">
                 <span>
-                  {shortDate(p.date)} <span className="text-xs text-slate-500">{timeText(p.start_time)}</span>
+                  {shortDate(p.date)} <span className="text-xs whitespace-nowrap text-slate-500">{timeText(p.start_time)}</span>
                 </span>
                 <span className="font-medium">{p.subject_name}</span>
                 <span className="text-xs text-slate-500">{marks(p.total_marks)} marks</span>

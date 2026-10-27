@@ -157,6 +157,13 @@ Shared database, every institute-owned row has a `tenant_id`.
 - Once a subject has marks it cannot be removed, its total cannot go below the highest mark, and
   the exam/class cannot be deleted. Publishing the result locks the marks.
 
+## Demo institute
+
+`python manage.py seed_demo` creates "Al-Noor Model School" (institute code `demo`, password `demo1234`
+for users `admin`, `sana` (teacher), `rashid` (parent of two), `ahmed` (student)) with 32 students,
+attendance since September, six months of fees and three exams with marks. Running it again replaces
+the demo. `--wipe-all` first deletes **every** institute and its data (super admins and plans stay).
+
 ## Roles
 
 | Role | Tenant | Can do (so far) |
