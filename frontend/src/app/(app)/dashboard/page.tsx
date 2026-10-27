@@ -1,6 +1,7 @@
 "use client";
 
 import { StaffDashboard } from "@/components/dashboard/StaffDashboard";
+import { NotificationsCard } from "@/components/NotificationsCard";
 import { SetupChecklist } from "@/components/SetupChecklist";
 import { PortalCards } from "@/components/students/PortalCards";
 import { SubscriptionBanner } from "@/components/SubscriptionBanner";
@@ -25,6 +26,7 @@ export default function DashboardPage() {
         </p>
       </div>
       <SetupChecklist />
+      {(user.role === "parent" || user.role === "student") && <NotificationsCard compact />}
       {staff && <StaffDashboard />}
       <PortalCards />
     </div>

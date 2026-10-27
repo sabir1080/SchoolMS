@@ -137,11 +137,16 @@ export const savedInstitute = {
 async function refreshAccessToken(): Promise<boolean> {
   const refresh = tokens.refresh;
   if (!refresh) return false;
-  const res = await fetch(`${API_URL}/api/auth/refresh/`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ refresh }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/api/auth/refresh/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh }),
+    });
+  } catch {
+    return false; // offline: keep the login for when the connection is back
+  }
   if (!res.ok) {
     tokens.clear();
     return false;

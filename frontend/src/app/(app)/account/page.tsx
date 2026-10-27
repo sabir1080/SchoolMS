@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { NotificationsCard } from "@/components/NotificationsCard";
 import { Button, Card, ErrorBox, PasswordField } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -89,6 +90,7 @@ export default function AccountPage() {
           </Button>
         </form>
       </Card>
+      {user.tenant && <NotificationsCard />}
     </div>
   );
 }

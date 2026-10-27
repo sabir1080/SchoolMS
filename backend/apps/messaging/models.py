@@ -69,3 +69,14 @@ class Message(TenantScopedModel):
         constraints = [
             models.UniqueConstraint(fields=["tenant", "dedupe_key"], condition=~models.Q(dedupe_key=""), name="unique_message_key"),
         ]
+
+
+class PushSubscription(TenantScopedModel):
+    """A browser or phone where a user turned on notifications (Web Push)."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="push_subscriptions")
+    endpoint = models.URLField(max_length=1000, unique=True)
+    p256dh = models.CharField(max_length=200)
+    auth = models.CharField(max_length=100)
+    user_agent = models.CharField(max_length=255, blank=True)
+    last_error = models.CharField(max_length=255, blank=True)

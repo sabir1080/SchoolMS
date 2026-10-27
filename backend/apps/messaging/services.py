@@ -18,6 +18,7 @@ from django.utils import timezone
 from apps.students.models import StudentGuardian
 from apps.subscriptions.features import Feature
 
+from . import push
 from .models import AUTOMATIC, Channel, Message, MessagingSettings, Status
 
 SEND_NOW_LIMIT = 50  # automatic sends per request; the rest wait for "Send pending"
@@ -123,6 +124,7 @@ def queue_and_send(tenant, items, kind, user=None):
     if not alerts_enabled(tenant):
         return []
     created = [m for m in (queue(tenant, s, kind, body, key, user) for s, body, key in items) if m]
+    push.notify_for_messages(created)
     cfg = settings_for(tenant)
     if cfg.channel in AUTOMATIC:
         send([m for m in created if m.status == Status.PENDING], cfg)

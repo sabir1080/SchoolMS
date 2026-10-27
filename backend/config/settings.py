@@ -124,6 +124,13 @@ LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 # Month boundaries for the platform owner's dashboard (revenue this month, new institutes).
 PLATFORM_TIMEZONE = os.environ.get("PLATFORM_TIMEZONE", "Asia/Karachi")
+
+# Web Push (phone notifications). Generate keys with `python manage.py generate_vapid_keys`.
+VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", "")
+VAPID_SUBJECT = os.environ.get("VAPID_SUBJECT", "mailto:support@schoolms.app")
+# Extra push hosts allowed besides the real push services (only for local testing).
+PUSH_EXTRA_HOSTS = [h for h in os.environ.get("PUSH_EXTRA_HOSTS", "").split(",") if h.strip()]
+PUSH_SYNC = False
 USE_I18N = True
 USE_TZ = True
 

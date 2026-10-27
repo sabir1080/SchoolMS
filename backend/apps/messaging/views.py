@@ -14,8 +14,8 @@ from apps.core.serializers import TenantPrimaryKeyRelatedField
 from apps.subscriptions.features import Feature
 from apps.subscriptions.gating import ActiveSubscription, RequiresFeature
 
-from . import alerts
-from .models import AUTOMATIC, Channel, Message, MessagingSettings, Status
+from . import alerts, push
+from .models import AUTOMATIC, Channel, Message, MessagingSettings, PushSubscription, Status
 from .services import normalize_phone, send, settings_for, twilio_send, whatsapp_link
 
 
@@ -160,3 +160,59 @@ class MessageViewSet(TenantScopedViewSetMixin, mixins.ListModelMixin, mixins.Des
         if not ok:
             raise ValidationError(error or "Twilio did not accept the message.")
         return Response({"sent": True})
+
+
+class PushSubscribeSerializer(serializers.Serializer):
+    endpoint = serializers.URLField(max_length=1000)
+    keys = serializers.DictField(child=serializers.CharField(max_length=200))
+
+    def validate_endpoint(self, value):
+        if not push.endpoint_allowed(value):
+            raise serializers.ValidationError("This browser's notification service is not supported.")
+        return value
+
+    def validate_keys(self, value):
+        if not value.get("p256dh") or not value.get("auth"):
+            raise serializers.ValidationError("Missing keys.")
+        try:
+            if len(push.b64url_decode(value["p256dh"])) != 65 or len(push.b64url_decode(value["auth"])) != 16:
+                raise ValueError
+        except ValueError:
+            raise serializers.ValidationError("Invalid keys.")
+        return value
+
+
+class PushView(APIView):
+    """Turn phone notifications on or off for this device, and send a test."""
+
+    def get_permissions(self):
+        return [HasRole.for_roles(Role.ADMIN, Role.TEACHER, Role.PARENT, Role.STUDENT)()]
+
+    def get(self, request):
+        return Response({
+            "enabled": push.enabled(),
+            "public_key": push.public_key_b64(),
+            "devices": PushSubscription.objects.filter(user=request.user).count(),
+        })
+
+    def post(self, request):
+        action = request.data.get("action")
+        if action == "test":
+            subs = list(PushSubscription.objects.filter(user=request.user))
+            data = {"title": request.user.tenant.name, "body": "Notifications are working on this device.", "url": "/dashboard/"}
+            sent = sum(push.send_one(s, data) for s in subs) if push.enabled() else 0
+            return Response({"sent": sent, "devices": len(subs)})
+        if action == "unsubscribe":
+            PushSubscription.objects.filter(user=request.user, endpoint=request.data.get("endpoint", "")).delete()
+            return Response({"devices": PushSubscription.objects.filter(user=request.user).count()})
+        if not push.enabled():
+            raise ValidationError("Notifications are not set up on this server yet.")
+        serializer = PushSubscribeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        d = serializer.validated_data
+        PushSubscription.objects.update_or_create(
+            endpoint=d["endpoint"],
+            defaults={"tenant": request.user.tenant, "user": request.user, "p256dh": d["keys"]["p256dh"], "auth": d["keys"]["auth"],
+                      "user_agent": request.META.get("HTTP_USER_AGENT", "")[:255], "last_error": ""},
+        )
+        return Response({"devices": PushSubscription.objects.filter(user=request.user).count()}, status=201)

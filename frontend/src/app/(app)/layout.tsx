@@ -5,11 +5,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { BrandLogo } from "@/components/BrandLogo";
+import { InstallApp } from "@/components/InstallApp";
 import { useAuth } from "@/lib/auth";
 import { ALWAYS_OPEN, NAV_BY_ROLE, ROLE_LABELS } from "@/lib/navigation";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { user, subscription, loading, logout } = useAuth();
+  const { user, subscription, loading, unreachable, retry, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -17,13 +18,27 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const locked = Boolean(user?.tenant && subscription && !subscription.is_usable);
 
   useEffect(() => {
-    if (!loading && !user) router.replace("/login");
-  }, [user, loading, router]);
+    if (!loading && !user && !unreachable) router.replace("/login");
+  }, [user, loading, unreachable, router]);
 
   useEffect(() => {
     // An expired institute can only see the billing and account pages.
     if (locked && !ALWAYS_OPEN.some((path) => pathname.startsWith(path))) router.replace("/billing");
   }, [locked, pathname, router]);
+
+  if (!user && unreachable && !loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <div className="max-w-sm rounded-2xl bg-white p-6 text-center shadow-sm dark:bg-slate-900">
+          <p className="font-semibold">Cannot reach the server</p>
+          <p className="mt-1 text-sm text-slate-500">Check your internet connection. You are still logged in.</p>
+          <button onClick={retry} className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white">
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return <div className="flex min-h-screen items-center justify-center text-slate-500">Loading…</div>;
@@ -81,6 +96,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               {item.label}
             </Link>
           ))}
+          <InstallApp />
           <button
             onClick={onLogout}
             className="block w-full rounded-lg px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950"

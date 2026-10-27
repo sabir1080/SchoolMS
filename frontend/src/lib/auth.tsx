@@ -3,12 +3,15 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 import { applyBrand } from "./brand";
-import { api, savedInstitute, tokens, type LoginResponse, type Subscription, type User } from "./api";
+import { ApiError, api, savedInstitute, tokens, type LoginResponse, type Subscription, type User } from "./api";
 
 interface AuthState {
   user: User | null;
   subscription: Subscription | null;
   loading: boolean;
+  /** The server could not be reached while restoring the login (offline or waking up). */
+  unreachable: boolean;
+  retry: () => void;
   login: (instituteCode: string, username: string, password: string) => Promise<User>;
   platformLogin: (username: string, password: string) => Promise<User>;
   /** Store tokens from a response that already logged the user in (e.g. registration). */
@@ -30,20 +33,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
+  const [unreachable, setUnreachable] = useState(false);
 
-  useEffect(() => {
+  const restore = useCallback(() => {
     if (!tokens.access) {
       setLoading(false);
       return;
     }
+    setLoading(true);
+    setUnreachable(false);
     api<User>("/api/auth/me/")
       .then(async (me) => {
         setUser(me);
         setSubscription(await fetchSubscription(me));
       })
-      .catch(() => tokens.clear())
+      .catch((err) => {
+        // Only a real "not logged in" ends the login; no connection keeps it for a retry.
+        if (err instanceof ApiError && err.status === 0) setUnreachable(true);
+        else tokens.clear();
+      })
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(restore, [restore]);
 
   const acceptLogin = useCallback(async (data: LoginResponse) => {
     tokens.set(data.access, data.refresh);
@@ -103,6 +115,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         subscription,
         loading,
+        unreachable,
+        retry: restore,
         login,
         platformLogin,
         acceptLogin,
