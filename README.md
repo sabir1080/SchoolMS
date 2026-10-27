@@ -159,7 +159,7 @@ Shared database, every institute-owned row has a `tenant_id`.
 
 ## Demo institute
 
-`python manage.py seed_demo` creates "Skyline International School" (institute code `demo`, password `demo1234`
+`python manage.py seed_demo` creates "Bright Future Academy" (institute code `demo`, password `demo1234`
 for users `admin`, `sana` (teacher), `rashid` (parent of two), `ahmed` (student)) with 32 students,
 attendance since September, six months of fees and three exams with marks. Running it again replaces
 the demo. `--wipe-all` first deletes **every** institute and its data (super admins and plans stay).
