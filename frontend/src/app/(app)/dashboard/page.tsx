@@ -1,7 +1,6 @@
 "use client";
 
-import { TodayCard } from "@/components/attendance/TodayCard";
-import { FeeSummaryCard } from "@/components/fees/FeeSummaryCard";
+import { StaffDashboard } from "@/components/dashboard/StaffDashboard";
 import { SetupChecklist } from "@/components/SetupChecklist";
 import { PortalCards } from "@/components/students/PortalCards";
 import { SubscriptionBanner } from "@/components/SubscriptionBanner";
@@ -13,6 +12,7 @@ export default function DashboardPage() {
   if (!user) return null;
 
   const name = [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username;
+  const staff = user.role === "admin" || user.role === "teacher";
 
   return (
     <div className="space-y-6">
@@ -25,8 +25,7 @@ export default function DashboardPage() {
         </p>
       </div>
       <SetupChecklist />
-      <TodayCard />
-      <FeeSummaryCard />
+      {staff && <StaffDashboard />}
       <PortalCards />
     </div>
   );

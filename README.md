@@ -25,6 +25,7 @@ backend/
   apps/students/       Students, guardians (shared by siblings), enrollments, student/parent portals
   apps/attendance/     Daily attendance per section, monthly reports, today summary
   apps/fees/           Fee types, class fees per session, discounts, invoices, payments, summary
+  apps/dashboard/      One endpoint with the admin/teacher dashboard numbers and trends
   tests/
 frontend/
   src/lib/             API client, auth context, navigation, regions
@@ -113,6 +114,15 @@ Shared database, every institute-owned row has a `tenant_id`.
 - Overview: billed and received this month, total due, overdue students. Bills print cleanly.
 - Admins only. Parents and students see their bills. Students with bills cannot be deleted.
 
+## Dashboard
+
+- Admin: active students (new this month), attendance today and sections marked, fees received this
+  month and total due (overdue students), students not in any section, attendance for the last 14
+  school days, fees billed vs received for 6 months, students per class, low attendance (< 75%).
+- Teacher: the same for their own sections, without fees. Parents and students keep their cards.
+- Charts are plain HTML (no chart library), with a hover/focus readout and a "Show as table" view;
+  colours are validated for colour-blind separation in light and dark mode.
+
 ## Roles
 
 | Role | Tenant | Can do (so far) |
@@ -153,6 +163,7 @@ Shared database, every institute-owned row has a `tenant_id`.
 | POST | `/api/fees/invoices/generate/`, `<id>/payments/`, `<id>/cancel/`; DELETE `/api/fees/payments/<id>/` | institute admin |
 | GET | `/api/fees/summary/?month=YYYY-MM` | institute admin |
 | GET | `/api/me/invoices/` (`?student=` for parents) | parent / student |
+| GET | `/api/dashboard/` | admin / teacher |
 | POST | `/api/users/<id>/set-password/` | institute admin |
 | GET/POST/PATCH/DELETE | `/api/users/` | institute admin (DELETE deactivates) |
 | GET/POST/PATCH | `/api/platform/tenants/` | super admin |
@@ -204,5 +215,5 @@ before onboarding real institutes.
 ## Roadmap
 
 Phase 1 (MVP): ~~setup, tenants, roles, login~~ -> ~~institute code login, SaaS subscriptions~~ -> ~~passwords~~ -> ~~academic setup~~ -> ~~student admission & enrollment~~
--> ~~attendance~~ -> ~~fees & invoices~~ -> dashboard
+-> ~~attendance~~ -> ~~fees & invoices~~ -> ~~dashboard~~
 -> payment gateways (JazzCash, Easypaisa, Safepay, Stripe).

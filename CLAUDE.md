@@ -28,6 +28,8 @@ and tuition centers). See README.md for stack, structure and API.
   per institute. Super admins log in at `/platform/login` (no institute).
 - Academics names come from `src/lib/terms.ts` (`termsFor(tenant)`); never hard-code "Class"/"Section" in UI.
 - Use `apps.core.timeutils.tenant_today(tenant)` for "today" (server runs on UTC).
+- Aggregations over models with a default `ordering` must call `.order_by()` first (it splits GROUP BY).
+- Chart colours live in `globals.css` (`--series-1`, `--series-2`, `--chart-grid`); validate new ones.
 - Frontend is a static export (no server code, no dynamic route segments; use query params).
 
 ## Deployment (Render + Neon)
@@ -43,4 +45,4 @@ and tuition centers). See README.md for stack, structure and API.
 
 Phase 1: setup/roles/login ✅ → institute code login + SaaS subscriptions ✅ → passwords ✅ →
 academic setup ✅ → student admission + enrollment ✅ → attendance ✅ → fees & invoices ✅ →
-dashboard → payment gateways (JazzCash, Easypaisa, Safepay, Stripe).
+dashboard ✅ → payment gateways (JazzCash, Easypaisa, Safepay, Stripe).

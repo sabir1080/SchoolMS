@@ -3,6 +3,10 @@
 :root {
   --background: #f6f7fb;
   --foreground: #111827;
+  /* Chart colours (validated for colour-blind separation and contrast in both modes). */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --chart-grid: #e5e7eb;
 }
 
 @theme inline {
@@ -14,6 +18,9 @@
   :root {
     --background: #0b1020;
     --foreground: #e5e7eb;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --chart-grid: #273042;
   }
 }
 

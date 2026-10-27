@@ -26,6 +26,11 @@ export default function StudentsPage() {
   const [program, setProgram] = useState("");
   const [status, setStatus] = useState("active");
   const [page, setPage] = useState(1);
+
+  // The dashboard links here with ?unassigned=1.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("unassigned") === "1") setProgram("none");
+  }, []);
   const [data, setData] = useState<Page | null>(null);
   const [error, setError] = useState<unknown>(null);
 
