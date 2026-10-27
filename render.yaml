@@ -1,0 +1,53 @@
+# Render Blueprint: Dashboard -> New -> Blueprint -> pick this repo.
+# The free plans are fine for testing. Before real institutes use the system,
+# upgrade: free web services sleep when idle and the free database expires
+# after 30 days.
+databases:
+  - name: schoolms-db
+    plan: free
+    databaseName: schoolms
+    user: schoolms
+
+services:
+  - type: web
+    name: schoolms-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: ./build.sh
+    startCommand: gunicorn config.wsgi:application
+    healthCheckPath: /api/health/
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.1
+      - key: DATABASE_URL
+        fromDatabase:
+          name: schoolms-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "0"
+      # Frontend URL, e.g. https://schoolms-web.onrender.com
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: SUPERADMIN_USERNAME
+        sync: false
+      - key: SUPERADMIN_EMAIL
+        sync: false
+      - key: SUPERADMIN_PASSWORD
+        sync: false
+
+  - type: web
+    name: schoolms-web
+    runtime: node
+    plan: free
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # Backend URL, e.g. https://schoolms-api.onrender.com
+      - key: NEXT_PUBLIC_API_URL
+        sync: false
