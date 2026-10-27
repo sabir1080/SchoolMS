@@ -25,7 +25,7 @@ export default function LoginPage() {
   }
 
   useEffect(() => {
-    if (user) router.replace(user.role === "super_admin" ? "/platform/tenants" : "/dashboard");
+    if (user) router.replace(user.role === "super_admin" ? "/platform/overview" : "/dashboard");
   }, [user, router]);
 
   // Show the institute's theme colour once its code is known.

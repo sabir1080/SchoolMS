@@ -273,3 +273,87 @@ export function BarList({ title, rows, emptyText }: { title: string; rows: { key
     </div>
   );
 }
+
+/** One series of amounts per period (e.g. subscription revenue per month). */
+export function AmountColumns({
+  title,
+  columns,
+  format,
+}: {
+  title: string;
+  columns: { key: string; label: string; value: number }[];
+  format: (n: number) => string;
+}) {
+  const [active, setActive] = useState<number | null>(null);
+  const [table, setTable] = useState(false);
+  const max = niceMax(Math.max(0, ...columns.map((c) => c.value)));
+  const current = columns[active ?? columns.length - 1];
+
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="font-medium">{title}</h2>
+        <TableToggle open={table} onToggle={() => setTable(!table)} />
+      </div>
+      {table ? (
+        <table className="mt-2 w-full text-sm tabular-nums">
+          <tbody>
+            {columns.map((c) => (
+              <tr key={c.key} className="border-b border-slate-100 dark:border-slate-800">
+                <td className="py-1">{c.label}</td>
+                <td className="py-1 text-right font-medium">{format(c.value)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <>
+          <Readout>
+            {current && (
+              <>
+                <span className="text-lg font-semibold">{format(current.value)}</span> <span className="text-slate-500">{current.label}</span>
+              </>
+            )}
+          </Readout>
+          <div className="relative mt-3 h-40" onMouseLeave={() => setActive(null)}>
+            {[max, max / 2, 0].map((tick) => (
+              <div key={tick} className="absolute inset-x-0 flex translate-y-1/2 items-center" style={{ bottom: `${(tick / max) * 100}%` }}>
+                <span className="w-9 pr-1 text-right text-[10px] text-slate-400 tabular-nums">{compact(tick)}</span>
+                <div className="h-px flex-1" style={{ background: "var(--chart-grid)" }} />
+              </div>
+            ))}
+            <div className="absolute inset-y-0 right-0 left-9 flex items-end gap-2">
+              {columns.map((c, i) => (
+                <button
+                  key={c.key}
+                  type="button"
+                  onMouseEnter={() => setActive(i)}
+                  onFocus={() => setActive(i)}
+                  onBlur={() => setActive(null)}
+                  aria-label={`${c.label}: ${format(c.value)}`}
+                  className="flex h-full flex-1 items-end justify-center focus:outline-none"
+                >
+                  <span
+                    className="block w-full max-w-10 rounded-t transition-opacity"
+                    style={{
+                      height: `${Math.max((c.value / max) * 100, 0.5)}%`,
+                      background: "var(--series-1)",
+                      opacity: active === null || active === i ? 1 : 0.45,
+                    }}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="mt-1 flex gap-2 pl-9 text-[10px] text-slate-400">
+            {columns.map((c) => (
+              <span key={c.key} className="flex-1 text-center">
+                {c.label}
+              </span>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

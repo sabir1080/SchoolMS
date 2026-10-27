@@ -122,6 +122,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
+# Month boundaries for the platform owner's dashboard (revenue this month, new institutes).
+PLATFORM_TIMEZONE = os.environ.get("PLATFORM_TIMEZONE", "Asia/Karachi")
 USE_I18N = True
 USE_TZ = True
 

@@ -16,7 +16,7 @@ export default function PlatformLoginPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (user) router.replace(user.role === "super_admin" ? "/platform/tenants" : "/dashboard");
+    if (user) router.replace(user.role === "super_admin" ? "/platform/overview" : "/dashboard");
   }, [user, router]);
 
   async function onSubmit(e: React.FormEvent) {

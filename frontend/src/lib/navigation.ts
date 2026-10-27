@@ -11,7 +11,7 @@ export interface NavItem {
 const ACCOUNT: NavItem = { label: "Change password", href: "/account" };
 
 export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
-  super_admin: [{ label: "Institutes", href: "/platform/tenants" }, ACCOUNT],
+  super_admin: [{ label: "Overview", href: "/platform/overview" }, { label: "Institutes", href: "/platform/tenants" }, ACCOUNT],
   admin: [
     { label: "Dashboard", href: "/dashboard" },
     { label: "Students", href: "/students", feature: "students" },

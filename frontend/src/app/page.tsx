@@ -12,7 +12,7 @@ export default function Home() {
   useEffect(() => {
     if (loading) return;
     if (!user) router.replace("/login");
-    else router.replace(user.role === "super_admin" ? "/platform/tenants" : "/dashboard");
+    else router.replace(user.role === "super_admin" ? "/platform/overview" : "/dashboard");
   }, [user, loading, router]);
 
   return null;
