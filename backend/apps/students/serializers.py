@@ -1,3 +1,5 @@
+import re
+
 from django.db import IntegrityError, transaction
 from rest_framework import serializers
 
@@ -66,6 +68,10 @@ class GuardianInputSerializer(serializers.Serializer):
 GUARDIAN_FIELDS = ("name", "phone", "cnic", "email", "occupation")
 
 
+PHOTO_MAX_CHARS = 140_000  # ~100 KB; the app shrinks photos to 300 px first
+PHOTO_PATTERN = re.compile(r"^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$")
+
+
 class StudentWriteSerializer(serializers.ModelSerializer):
     guardians = GuardianInputSerializer(many=True, required=False, write_only=True)
     enrollment = EnrollInputSerializer(required=False, write_only=True, allow_null=True)
@@ -76,7 +82,7 @@ class StudentWriteSerializer(serializers.ModelSerializer):
         fields = [
             "id", "admission_no", "first_name", "last_name", "gender", "date_of_birth", "id_number",
             "blood_group", "phone", "email", "address", "admission_date", "previous_school", "status",
-            "notes", "guardians", "enrollment",
+            "notes", "photo", "guardians", "enrollment",
         ]
 
     @property
@@ -91,6 +97,11 @@ class StudentWriteSerializer(serializers.ModelSerializer):
                 taken = taken.exclude(pk=self.instance.pk)
             if taken.exists():
                 raise serializers.ValidationError("This admission number is already used.")
+        return value
+
+    def validate_photo(self, value):
+        if value and (len(value) > PHOTO_MAX_CHARS or not PHOTO_PATTERN.match(value)):
+            raise serializers.ValidationError("Use a JPG, PNG or WebP photo under 100 KB.")
         return value
 
     def validate_guardians(self, guardians):
@@ -244,7 +255,7 @@ class StudentDetailSerializer(StudentListSerializer):
     class Meta(StudentListSerializer.Meta):
         fields = StudentListSerializer.Meta.fields + [
             "date_of_birth", "id_number", "blood_group", "phone", "email", "address", "admission_date",
-            "previous_school", "notes", "guardian_links", "enrollments", "username",
+            "previous_school", "notes", "photo", "guardian_links", "enrollments", "username",
         ]
 
 

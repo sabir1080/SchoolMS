@@ -314,3 +314,42 @@ def test_new_student_dates_use_institute_day(api, admin_a, school_a, monkeypatch
 
     student = Student.objects.get(first_name="Zara")
     assert student.admission_date == day and student.enrollments.get().enrolled_on == day
+
+
+PHOTO = "data:image/png;base64,iVBORw0KGgo="
+
+
+def test_photo_and_id_cards(api, admin_a, admin_b, make_user, school_a):
+    import datetime
+
+    from apps.academics.models import AcademicSession, Program, Section
+    from apps.accounts.models import Role
+
+    session = AcademicSession.objects.create(tenant=school_a, name="S", start_date=datetime.date(2026, 4, 1), end_date=datetime.date(2027, 3, 31), is_current=True)
+    sec = Section.objects.create(tenant=school_a, program=Program.objects.create(tenant=school_a, name="Class 5"), session=session, name="A")
+    api.force_authenticate(admin_a)
+    ids = []
+    for name, roll in (("Zara", "10"), ("Ali", "2"), ("Gone", "3")):
+        res = api.post("/api/students/", {"first_name": name, "gender": "male", "blood_group": "B+", "enrollment": {"section": sec.pk, "roll_number": roll},
+                                          "guardians": [{"name": f"{name} Sr", "phone": "0300-1234567"}]}, format="json")
+        ids.append(res.json()["id"])
+    zara, ali, gone = ids
+    api.patch(f"/api/students/{gone}/", {"status": "left"}, format="json")
+    assert api.patch(f"/api/students/{zara}/", {"photo": "data:text/html;base64,AAAA"}, format="json").status_code == 400
+    assert api.patch(f"/api/students/{zara}/", {"photo": "data:image/png;base64," + "A" * 150_000}, format="json").status_code == 400
+    assert api.patch(f"/api/students/{zara}/", {"photo": PHOTO}, format="json").json()["photo"] == PHOTO
+    assert "photo" not in api.get("/api/students/").json()["results"][0]
+
+    body = api.get(f"/api/students/id-cards/?section={sec.pk}").json()
+    assert body["institute"]["name"] == "Alpha"
+    assert [c["full_name"] for c in body["cards"]] == ["Ali", "Zara"]  # roll order, left students skipped
+    card = body["cards"][1]
+    assert (card["photo"], card["class_name"], card["roll_number"], card["valid_until"]) == (PHOTO, "Class 5 - A", "10", "2027-03-31")
+    assert (card["guardian_name"], card["guardian_relation"], card["blood_group"]) == ("Zara Sr", "Father", "B+")
+    assert [c["id"] for c in api.get(f"/api/students/id-cards/?ids={ali},{zara}").json()["cards"]] == [ali, zara]
+    assert api.get("/api/students/id-cards/").status_code == 400
+
+    api.force_authenticate(make_user("t", Role.TEACHER, school_a))
+    assert api.get(f"/api/students/id-cards/?section={sec.pk}").status_code == 200
+    api.force_authenticate(admin_b)
+    assert api.get(f"/api/students/id-cards/?ids={ali}").json()["cards"] == []

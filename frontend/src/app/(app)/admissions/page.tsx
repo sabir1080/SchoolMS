@@ -7,7 +7,13 @@ import type { AcademicSession, Section } from "@/components/academics/types";
 import { useList } from "@/components/academics/useList";
 import { Button, Card, ErrorBox, Field, SelectField } from "@/components/ui";
 import { api } from "@/lib/api";
-import { APPLICATION_TABS, applicationNo, applyLink, type Application, type ApplicationStatus } from "@/lib/admissions";
+import {
+  APPLICATION_TABS,
+  applicationNo,
+  applyLink,
+  type Application,
+  type ApplicationStatus,
+} from "@/lib/admissions";
 import { useAuth } from "@/lib/auth";
 import { formatDate } from "@/lib/navigation";
 import { GENDERS, RELATIONS, label } from "@/lib/students";
@@ -33,7 +39,11 @@ export default function AdmissionsPage() {
 
   const load = useCallback(() => {
     setApps(null);
-    latest(api<Application[]>(`/api/admissions/?status=${tab}`), setApps, setError);
+    latest(
+      api<Application[]>(`/api/admissions/?status=${tab}`),
+      setApps,
+      setError,
+    );
   }, [tab, latest]);
 
   useEffect(load, [load]);
@@ -41,10 +51,13 @@ export default function AdmissionsPage() {
   async function toggle() {
     setError(null);
     try {
-      const s = await api<{ admissions_open: boolean }>("/api/institute/settings/", {
-        method: "PATCH",
-        body: JSON.stringify({ admissions_open: !open }),
-      });
+      const s = await api<{ admissions_open: boolean }>(
+        "/api/institute/settings/",
+        {
+          method: "PATCH",
+          body: JSON.stringify({ admissions_open: !open }),
+        },
+      );
       setOpen(s.admissions_open);
     } catch (err) {
       setError(err);
@@ -74,32 +87,57 @@ export default function AdmissionsPage() {
           <div>
             <h2 className="font-medium">Online admission form</h2>
             <p className="text-sm text-slate-500">
-              {open ? "Open: parents can apply from the link below." : "Closed: parents cannot send applications."}
+              {open
+                ? "Open: parents can apply from the link below."
+                : "Closed: parents cannot send applications."}
             </p>
           </div>
           {open !== null && (
-            <Button type="button" onClick={toggle} className={open ? "bg-slate-600 hover:bg-slate-700" : ""}>
+            <Button
+              type="button"
+              onClick={toggle}
+              className={open ? "bg-slate-600 hover:bg-slate-700" : ""}
+            >
               {open ? "Close the form" : "Open the form"}
             </Button>
           )}
         </div>
         {open && (
           <div className="mt-3 space-y-2">
-            <p className="rounded-lg bg-slate-100 px-3 py-2 text-sm break-all dark:bg-slate-800" data-testid="apply-link">
+            <p
+              className="rounded-lg bg-slate-100 px-3 py-2 text-sm break-all dark:bg-slate-800"
+              data-testid="apply-link"
+            >
               {link}
             </p>
             <div className="flex flex-wrap gap-2 text-sm">
-              <button onClick={copy} className="rounded-lg border border-slate-300 px-3 py-1.5 dark:border-slate-700">
+              <button
+                onClick={copy}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 dark:border-slate-700"
+              >
                 {copied ? "Copied" : "Copy link"}
               </button>
-              <a href={share} target="_blank" rel="noreferrer" className="rounded-lg border border-slate-300 px-3 py-1.5 dark:border-slate-700">
+              <a
+                href={share}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-lg border border-slate-300 px-3 py-1.5 dark:border-slate-700"
+              >
                 Share on WhatsApp
               </a>
-              <a href={link} target="_blank" rel="noreferrer" className="rounded-lg border border-slate-300 px-3 py-1.5 dark:border-slate-700">
+              <a
+                href={link}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-lg border border-slate-300 px-3 py-1.5 dark:border-slate-700"
+              >
                 Open the form
               </a>
             </div>
-            <p className="text-xs text-slate-500">Parents also see “Apply for admission” on your login page after entering your institute code.</p>
+            <p className="text-xs text-slate-500">
+              Parents also see “Apply for admission” on your login page after
+              entering your institute code.
+            </p>
           </div>
         )}
       </Card>
@@ -130,16 +168,27 @@ export default function AdmissionsPage() {
           {apps.map((app) => (
             <li key={app.id}>
               <Card>
-                <button onClick={() => setSelected(selected === app.id ? null : app.id)} className="flex w-full items-start justify-between gap-3 text-left">
+                <button
+                  onClick={() =>
+                    setSelected(selected === app.id ? null : app.id)
+                  }
+                  className="flex w-full items-start justify-between gap-3 text-left"
+                >
                   <span className="min-w-0">
                     <span className="block font-medium">{app.full_name}</span>
                     <span className="block text-xs text-slate-500">
-                      {applicationNo(app.number)} · {app.program_name ?? "Class not chosen"} · {app.guardian_name} ({app.guardian_phone})
+                      {applicationNo(app.number)} ·{" "}
+                      {app.program_name ?? "Class not chosen"} ·{" "}
+                      {app.guardian_name} ({app.guardian_phone})
                     </span>
                   </span>
-                  <span className="shrink-0 text-xs text-slate-500">{formatDate(app.created_at)}</span>
+                  <span className="shrink-0 text-xs text-slate-500">
+                    {formatDate(app.created_at)}
+                  </span>
                 </button>
-                {selected === app.id && <ApplicationDetail app={app} onDone={load} />}
+                {selected === app.id && (
+                  <ApplicationDetail app={app} onDone={load} />
+                )}
               </Card>
             </li>
           ))}
@@ -149,12 +198,20 @@ export default function AdmissionsPage() {
   );
 }
 
-function ApplicationDetail({ app, onDone }: { app: Application; onDone: () => void }) {
+function ApplicationDetail({
+  app,
+  onDone,
+}: {
+  app: Application;
+  onDone: () => void;
+}) {
   const { user } = useAuth();
   const terms = termsFor(user?.tenant);
   const sessions = useList<AcademicSession>("/api/academics/sessions/");
   const current = sessions.items.find((s) => s.is_current);
-  const sections = useList<Section>(current ? `/api/academics/sections/?session=${current.id}` : null);
+  const sections = useList<Section>(
+    current ? `/api/academics/sections/?session=${current.id}` : null,
+  );
   const [section, setSection] = useState("");
   const [roll, setRoll] = useState("");
   const [admissionNo, setAdmissionNo] = useState("");
@@ -170,13 +227,26 @@ function ApplicationDetail({ app, onDone }: { app: Application; onDone: () => vo
   }, [sections.items, app.program, section]);
 
   async function decide(action: "approve" | "reject") {
-    if (action === "reject" && !confirm(`Decline ${app.full_name}'s application?`)) return;
+    if (
+      action === "reject" &&
+      !confirm(`Decline ${app.full_name}'s application?`)
+    )
+      return;
     setBusy(true);
     setError(null);
     try {
       const body =
-        action === "approve" ? { section: section ? Number(section) : null, roll_number: roll, admission_no: admissionNo } : { admin_note: note };
-      await api(`/api/admissions/${app.id}/${action}/`, { method: "POST", body: JSON.stringify(body) });
+        action === "approve"
+          ? {
+              section: section ? Number(section) : null,
+              roll_number: roll,
+              admission_no: admissionNo,
+            }
+          : { admin_note: note };
+      await api(`/api/admissions/${app.id}/${action}/`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
       onDone();
     } catch (err) {
       setError(err);
@@ -207,30 +277,64 @@ function ApplicationDetail({ app, onDone }: { app: Application; onDone: () => vo
           </div>
         ))}
       </dl>
-      {app.message && <p className="rounded-lg bg-slate-100 px-3 py-2 text-sm dark:bg-slate-800">“{app.message}”</p>}
+      {app.message && (
+        <p className="rounded-lg bg-slate-100 px-3 py-2 text-sm dark:bg-slate-800">
+          “{app.message}”
+        </p>
+      )}
 
       {app.status === "new" ? (
         <div className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-3">
             <SelectField
               label={`${terms.program} - ${terms.section}`}
-              options={[["", `No ${terms.section.toLowerCase()} yet`], ...sections.items.map((s): [string, string] => [String(s.id), `${s.program_name} - ${s.name}`])]}
+              options={[
+                ["", `No ${terms.section.toLowerCase()} yet`],
+                ...sections.items.map((s): [string, string] => [
+                  String(s.id),
+                  `${s.program_name} - ${s.name}`,
+                ]),
+              ]}
               value={section}
               onChange={(e) => setSection(e.target.value)}
             />
-            <Field label="Roll number (optional)" value={roll} onChange={(e) => setRoll(e.target.value)} maxLength={20} />
-            <Field label="Admission No. (empty = automatic)" value={admissionNo} onChange={(e) => setAdmissionNo(e.target.value)} maxLength={30} />
+            <Field
+              label="Roll number (optional)"
+              value={roll}
+              onChange={(e) => setRoll(e.target.value)}
+              maxLength={20}
+            />
+            <Field
+              label="Admission No. (empty = automatic)"
+              value={admissionNo}
+              onChange={(e) => setAdmissionNo(e.target.value)}
+              maxLength={30}
+            />
           </div>
           <ErrorBox error={error} />
           <div className="flex flex-wrap items-end gap-3">
-            <Button type="button" onClick={() => decide("approve")} disabled={busy}>
+            <Button
+              type="button"
+              onClick={() => decide("approve")}
+              disabled={busy}
+            >
               Admit student
             </Button>
             <div className="flex flex-1 flex-wrap items-end gap-2">
               <div className="min-w-48 flex-1">
-                <Field label="Reason (optional)" value={note} onChange={(e) => setNote(e.target.value)} maxLength={255} />
+                <Field
+                  label="Reason (optional)"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  maxLength={255}
+                />
               </div>
-              <button type="button" onClick={() => decide("reject")} disabled={busy} className="rounded-lg border border-red-300 px-3 py-2 text-sm text-red-600">
+              <button
+                type="button"
+                onClick={() => decide("reject")}
+                disabled={busy}
+                className="rounded-lg border border-red-300 px-3 py-2 text-sm text-red-600"
+              >
                 Decline
               </button>
             </div>
@@ -245,7 +349,10 @@ function ApplicationDetail({ app, onDone }: { app: Application; onDone: () => vo
           {app.student && (
             <>
               {" · "}
-              <Link href={`/students/view/?id=${app.student}`} className="text-brand-600 hover:underline">
+              <Link
+                href={`/students/view/?id=${app.student}`}
+                className="text-brand-600 hover:underline"
+              >
                 Open student
               </Link>
             </>

@@ -9,6 +9,7 @@ import { StudentFeesCard } from "@/components/fees/StudentFeesCard";
 import { CreateLogin, usernameFrom } from "@/components/students/CreateLogin";
 import { SectionPicker, type SectionChoice } from "@/components/students/SectionPicker";
 import { StatusBadge } from "@/components/students/StatusBadge";
+import { StudentPhoto } from "@/components/students/StudentPhoto";
 import { Button, Card, ErrorBox } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -113,14 +114,22 @@ export default function StudentViewPage() {
       )}
 
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">{student.full_name}</h1>
-          <p className="text-sm text-slate-500">
-            #{student.admission_no} · {enrollmentText(student.current_enrollment, terms.section)}
-          </p>
+        <div className="flex items-start gap-4">
+          <StudentPhoto student={student} editable={isAdmin} onChange={setStudent} />
+          <div>
+            <h1 className="text-2xl font-semibold">{student.full_name}</h1>
+            <p className="text-sm text-slate-500">
+              #{student.admission_no} · {enrollmentText(student.current_enrollment, terms.section)}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <StatusBadge status={student.status} />
+          {isAdmin && student.status === "active" && (
+            <Link href={`/students/id-cards/?ids=${student.id}`} className="text-sm font-medium text-brand-600 hover:underline">
+              ID card
+            </Link>
+          )}
           {isAdmin && subscription?.plan.features.includes("certificates") && (
             <Link href={`/certificates/?student=${student.id}`} className="text-sm font-medium text-brand-600 hover:underline">
               Certificate

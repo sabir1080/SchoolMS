@@ -22,6 +22,8 @@ from .serializers import (
     StudentDetailSerializer,
     StudentListSerializer,
     StudentWriteSerializer,
+    current_enrollment,
+    primary_link,
 )
 from .services import current_session, enroll
 
@@ -42,7 +44,9 @@ class StudentViewSet(TenantScopedViewSetMixin, viewsets.ModelViewSet):
     queryset = student_queryset()
 
     def get_queryset(self):
-        return self.filter_queryset_by_params(super().get_queryset())
+        queryset = self.filter_queryset_by_params(super().get_queryset())
+        # Photos are only needed on a student's own page and on ID cards.
+        return queryset.defer("photo") if self.action == "list" else queryset
 
     def filter_queryset_by_params(self, queryset):
         params = self.request.query_params
@@ -100,6 +104,39 @@ class StudentViewSet(TenantScopedViewSetMixin, viewsets.ModelViewSet):
                     user.delete()
         except ProtectedError:
             raise ValidationError("This student has records and cannot be deleted. Mark them as Left instead.")
+
+    @action(detail=False, methods=["get"], url_path="id-cards")
+    def id_cards(self, request):
+        """Card details for printing ID cards: one section (``?section=``) or chosen students (``?ids=1,2``)."""
+        params = request.query_params
+        queryset = super().get_queryset().filter(status=StudentStatus.ACTIVE)
+        if params.get("section"):
+            queryset = queryset.filter(enrollments__section_id=params["section"])
+        elif params.get("ids"):
+            ids = [int(i) for i in params["ids"].split(",") if i.strip().isdigit()][:200]
+            queryset = queryset.filter(pk__in=ids)
+        else:
+            raise ValidationError("Choose a section or students.")
+        tenant = self.get_tenant()
+        cards = []
+        for student in queryset.distinct():
+            enrollment = current_enrollment(student)
+            link = primary_link(student)
+            cards.append({
+                "id": student.id, "full_name": student.full_name, "admission_no": student.admission_no,
+                "photo": student.photo, "date_of_birth": student.date_of_birth, "blood_group": student.blood_group,
+                "class_name": f"{enrollment.section.program.name} - {enrollment.section.name}" if enrollment else None,
+                "roll_number": enrollment.roll_number if enrollment else "",
+                "valid_until": enrollment.session.end_date if enrollment else None,
+                "guardian_name": link.guardian.name if link else "",
+                "guardian_relation": link.get_relation_display() if link else "",
+                "guardian_phone": link.guardian.phone if link else "",
+            })
+        cards.sort(key=lambda c: (c["roll_number"].zfill(6) if c["roll_number"].isdigit() else c["roll_number"] or "~", c["full_name"]))
+        return Response({
+            "institute": {"name": tenant.name, "address": tenant.address, "phone": tenant.phone, "code": tenant.slug},
+            "cards": cards,
+        })
 
     @action(detail=True, methods=["post"])
     def enroll(self, request, pk=None):

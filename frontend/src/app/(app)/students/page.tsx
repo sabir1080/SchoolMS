@@ -62,6 +62,9 @@ export default function StudentsPage() {
         <h1 className="text-2xl font-semibold">Students</h1>
         {isAdmin && (
           <div className="flex items-center gap-3">
+            <Link href="/students/id-cards" className="text-sm font-medium text-brand-600 hover:underline">
+              ID cards
+            </Link>
             <Link href="/students/promotion" className="text-sm font-medium text-brand-600 hover:underline">
               Promote to next class
             </Link>

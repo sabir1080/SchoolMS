@@ -64,6 +64,8 @@ class Student(TenantScopedModel):
     previous_school = models.CharField(max_length=150, blank=True)
     status = models.CharField(max_length=20, choices=StudentStatus.choices, default=StudentStatus.ACTIVE)
     notes = models.TextField(blank=True)
+    # A small photo (data URL, shrunk in the browser) for the ID card and profile.
+    photo = models.TextField(blank=True)
     guardians = models.ManyToManyField(Guardian, through="StudentGuardian", related_name="students")
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="student_profile"

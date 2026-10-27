@@ -58,3 +58,14 @@ body {
     color: black;
   }
 }
+
+/* ID cards: keep the brand colours when printing and never split a card across pages. */
+@media print {
+  .id-card {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .id-card-pair {
+    break-inside: avoid;
+  }
+}

@@ -40,6 +40,7 @@ export interface StudentListItem {
 }
 
 export interface StudentDetail extends StudentListItem {
+  photo: string;
   date_of_birth: string | null;
   id_number: string;
   blood_group: string;
