@@ -23,6 +23,7 @@ class MessagingSettings(TenantScopedModel):
     absent_alerts = models.BooleanField(default=True)
     result_alerts = models.BooleanField(default=True)
     homework_alerts = models.BooleanField(default=False)
+    payment_alerts = models.BooleanField(default=True)
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["tenant"], name="one_messaging_settings_per_tenant")]
@@ -38,6 +39,7 @@ class Kind(models.TextChoices):
     RESULT = "result", "Result"
     HOMEWORK = "homework", "Homework"
     NOTICE = "notice", "Notice"
+    PAYMENT = "payment", "Fee received"
 
 
 class Status(models.TextChoices):

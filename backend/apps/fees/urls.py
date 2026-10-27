@@ -8,6 +8,7 @@ from .views import (
     InvoiceViewSet,
     MyInvoicesView,
     PaymentViewSet,
+    ReceiptView,
     StudentDiscountViewSet,
 )
 
@@ -20,6 +21,7 @@ router.register("fees/payments", PaymentViewSet, basename="payment")
 urlpatterns = [
     path("fees/rates/", FeeRatesView.as_view(), name="fee-rates"),
     path("fees/summary/", FeeSummaryView.as_view(), name="fee-summary"),
+    path("fees/receipts/<int:pk>/", ReceiptView.as_view(), name="fee-receipt"),
     path("me/invoices/", MyInvoicesView.as_view(), name="my-invoices"),
     *router.urls,
 ]

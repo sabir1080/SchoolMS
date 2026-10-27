@@ -259,3 +259,15 @@ def test_plan_without_online_payments(api, admin_a, school, school_a):
     plan.features = [f for f in plan.features if f != "online_payments"]
     plan.save()
     assert auth(api, admin_a).get("/api/pay/options/").status_code == 402
+
+
+def test_gateway_payment_thanks_parent(api, admin_a, school, django_capture_on_commit_callbacks):
+    from apps.messaging.models import Message
+
+    api = auth(api, admin_a)
+    body = start(api, school["sara"], "demo").json()
+    ref = parse_qs(urlparse(body["redirect"]).query)["ref"][0]
+    with django_capture_on_commit_callbacks(execute=True):
+        api.post("/api/pay/demo/complete/", {"reference": ref, "outcome": "success"}, format="json")
+    message = Message.objects.get(kind="payment")
+    assert "This bill is fully paid." in message.body

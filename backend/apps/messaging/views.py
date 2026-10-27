@@ -31,7 +31,8 @@ class SettingsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MessagingSettings
-        fields = ["channel", "twilio_account_sid", "twilio_auth_token", "twilio_from", "absent_alerts", "result_alerts", "homework_alerts"]
+        fields = ["channel", "twilio_account_sid", "twilio_auth_token", "twilio_from", "absent_alerts", "result_alerts", "homework_alerts",
+                  "payment_alerts"]
 
     def validate_twilio_from(self, value):
         value = value.strip()

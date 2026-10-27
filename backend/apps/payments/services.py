@@ -1,3 +1,4 @@
+import logging
 import secrets
 import string
 
@@ -7,8 +8,11 @@ from django.utils import timezone
 from apps.core.timeutils import tenant_today
 from apps.fees.models import InvoiceStatus
 from apps.fees.services import record_payment
+from apps.messaging.alerts import payment_alert
 
 from .models import OnlinePayment, OnlinePaymentStatus, Provider
+
+logger = logging.getLogger(__name__)
 
 METHOD_FOR_PROVIDER = {Provider.JAZZCASH: "jazzcash", Provider.EASYPAISA: "easypaisa", Provider.DEMO: "other"}
 
@@ -43,7 +47,16 @@ def complete(online_payment, message="Paid", gateway_reference="", response=None
     if response is not None:
         op.response = response
     op.save()
+    transaction.on_commit(lambda: notify_parent(op.payment))
     return op
+
+
+def notify_parent(payment):
+    """The payment is saved already; a messaging problem must not fail the gateway's callback."""
+    try:
+        payment_alert(payment)
+    except Exception:  # noqa: BLE001
+        logger.exception("Payment alert failed for payment %s", payment.pk)
 
 
 def fail(online_payment, message, response=None):

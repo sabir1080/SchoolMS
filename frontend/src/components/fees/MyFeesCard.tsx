@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { InvoiceStatusBadge } from "@/components/fees/InvoiceStatusBadge";
@@ -47,6 +48,15 @@ export function MyFeesCard({ url }: { url: string }) {
                   <InvoiceStatusBadge status={inv.status} />
                 </span>
               </div>
+              {inv.payments.length > 0 && (
+                <p className="mt-1 flex flex-wrap gap-x-3 text-xs">
+                  {inv.payments.map((p) => (
+                    <Link key={p.id} href={`/receipt/?id=${p.id}`} className="text-brand-600 hover:underline">
+                      Receipt {formatDate(p.date)}
+                    </Link>
+                  ))}
+                </p>
+              )}
               {(inv.status === "unpaid" || inv.status === "partial") && <PayOnline invoiceId={inv.id} compact />}
             </li>
           ))}

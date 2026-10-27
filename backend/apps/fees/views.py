@@ -14,6 +14,7 @@ from apps.accounts.models import Role
 from apps.core.mixins import TenantScopedViewSetMixin
 from apps.core.permissions import HasRole, IsInstituteAdmin
 from apps.core.timeutils import parse_month, tenant_today
+from apps.messaging.alerts import payment_alert
 from apps.students.models import Enrollment
 from apps.subscriptions.features import Feature
 from apps.subscriptions.gating import ActiveSubscription, RequiresFeature
@@ -29,6 +30,7 @@ from .serializers import (
     PaymentSerializer,
     SetRatesSerializer,
     StudentDiscountSerializer,
+    student_brief,
 )
 from .services import create_invoice, generate_monthly_invoices, record_payment
 
@@ -169,7 +171,8 @@ class InvoiceViewSet(FeesViewSetMixin, mixins.ListModelMixin, mixins.RetrieveMod
         invoice = self.get_object()
         serializer = PaymentInputSerializer(data=request.data, context={"invoice": invoice})
         serializer.is_valid(raise_exception=True)
-        record_payment(invoice, user=request.user, **serializer.validated_data)
+        payment = record_payment(invoice, user=request.user, **serializer.validated_data)
+        payment_alert(payment, request.user)
         return Response(self.detail_data(invoice), status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["post"])
@@ -252,3 +255,40 @@ class MyInvoicesView(ListAPIView):
         if student is None:
             raise NotFound("Student not found.")
         return invoice_queryset().filter(student=student).exclude(status=InvoiceStatus.CANCELLED)
+
+
+class ReceiptView(FeesAPIView):
+    """A printable receipt for one payment: admins for any payment, parents and students for their own."""
+
+    roles = (Role.ADMIN, Role.PARENT, Role.STUDENT)
+
+    def get(self, request, pk):
+        payment = (
+            Payment.objects.filter(tenant=self.tenant, pk=pk)
+            .select_related("invoice__student", "received_by")
+            .prefetch_related("invoice__student__enrollments__section__program", "invoice__student__enrollments__session")
+            .first()
+        )
+        student = payment.invoice.student if payment else None
+        user = request.user
+        if student and user.role == Role.STUDENT and getattr(user, "student_profile", None) != student:
+            student = None
+        if student and user.role == Role.PARENT:
+            guardian = getattr(user, "guardian_profile", None)
+            if not guardian or not guardian.students.filter(pk=student.pk).exists():
+                student = None
+        if student is None:
+            raise NotFound("Receipt not found.")
+        invoice = payment.invoice
+        paid_so_far = invoice.payments.filter(receipt_number__lte=payment.receipt_number).aggregate(s=Sum("amount"))["s"] or 0
+        tenant = self.tenant
+        return Response({
+            **PaymentSerializer(payment).data,
+            "method_label": payment.get_method_display(),
+            "student": student_brief(student),
+            "invoice": {
+                "id": invoice.id, "number": invoice.number, "title": invoice.title, "total": money(invoice.total),
+                "paid_so_far": money(paid_so_far), "balance_after": money(invoice.total - paid_so_far),
+            },
+            "institute": {"name": tenant.name, "address": tenant.address, "phone": tenant.phone, "currency": tenant.currency},
+        })

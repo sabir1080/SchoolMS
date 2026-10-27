@@ -188,3 +188,42 @@ def test_twilio_request_format(monkeypatch):
 
     monkeypatch.setattr(services.urllib.request, "urlopen", failing)
     assert services.twilio_send(cfg, "+92", "x") == (False, "Twilio 400: Invalid To number")
+
+
+def test_payment_alert_and_receipt(api, admin_a, make_user, ms, school_b, admin_b):
+    school_a = ms["sec"].tenant
+    ali, sara = ms["kids"]["Ali"], ms["kids"]["Sara"]
+    inv = create_invoice(school_a, ali, ms["session"], "October fee", ms["today"], ms["today"], [{"description": "Tuition", "amount": 4500, "discount": 0}])
+    admin = auth(api, admin_a)
+    data = admin.post(f"/api/fees/invoices/{inv.pk}/payments/", {"amount": "2000", "date": str(ms["today"])}, format="json").json()
+    first = data["payments"][0]["id"]
+    msg = Message.objects.get(kind="payment")
+    assert msg.dedupe_key == f"pay:{first}" and msg.phone == "+923001234567"
+    assert "Received PKR 2,000 for Ali (October fee)" in msg.body and "Remaining: PKR 2,500." in msg.body
+    admin.post(f"/api/fees/invoices/{inv.pk}/payments/", {"amount": "2500", "date": str(ms["today"])}, format="json")
+    assert "This bill is fully paid." in Message.objects.filter(kind="payment").latest("id").body
+
+    receipt = admin.get(f"/api/fees/receipts/{first}/").json()
+    assert receipt["amount"] == "2000.00" and receipt["invoice"]["paid_so_far"] == "2000.00"
+    assert receipt["invoice"]["balance_after"] == "2500.00" and receipt["student"]["full_name"] == "Ali"
+    assert receipt["institute"]["currency"] == "PKR" and receipt["method_label"] == "Cash"
+
+    # Parents see only their own child's receipts; other institutes see nothing.
+    parent = make_user("ali_dad", Role.PARENT, school_a)
+    guardian = ali.guardians.first()
+    guardian.user = parent
+    guardian.save()
+    assert auth(api, parent).get(f"/api/fees/receipts/{first}/").status_code == 200
+    other = make_user("sara_dad", Role.PARENT, school_a)
+    sara.guardians.update(user=other)
+    assert auth(api, other).get(f"/api/fees/receipts/{first}/").status_code == 404
+    assert auth(api, make_user("t", Role.TEACHER, school_a)).get(f"/api/fees/receipts/{first}/").status_code == 403
+    assert auth(api, admin_b).get(f"/api/fees/receipts/{first}/").status_code == 404
+
+
+def test_payment_alert_can_be_turned_off(api, admin_a, ms):
+    inv = create_invoice(ms["sec"].tenant, ms["kids"]["Ali"], ms["session"], "Fee", ms["today"], ms["today"], [{"description": "Tuition", "amount": 100, "discount": 0}])
+    admin = auth(api, admin_a)
+    assert admin.patch("/api/messages/settings/", {"payment_alerts": False}, format="json").json()["payment_alerts"] is False
+    admin.post(f"/api/fees/invoices/{inv.pk}/payments/", {"amount": "100", "date": str(ms["today"])}, format="json")
+    assert not Message.objects.filter(kind="payment").exists()

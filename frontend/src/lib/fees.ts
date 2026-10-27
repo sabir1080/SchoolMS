@@ -93,3 +93,113 @@ export function monthDefaults() {
   const month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   return { month, issue: `${month}-01`, due: `${month}-10` };
 }
+
+export interface Receipt {
+  id: number;
+  receipt_number: number;
+  amount: string;
+  date: string;
+  method: string;
+  method_label: string;
+  reference: string;
+  received_by_name: string | null;
+  student: {
+    id: number;
+    full_name: string;
+    admission_no: string;
+    class_name: string | null;
+  };
+  invoice: {
+    id: number;
+    number: number;
+    title: string;
+    total: string;
+    paid_so_far: string;
+    balance_after: string;
+  };
+  institute: { name: string; address: string; phone: string; currency: string };
+}
+
+export function receiptNo(n: number) {
+  return `RCPT-${String(n).padStart(4, "0")}`;
+}
+
+const ONES = [
+  "",
+  "One",
+  "Two",
+  "Three",
+  "Four",
+  "Five",
+  "Six",
+  "Seven",
+  "Eight",
+  "Nine",
+  "Ten",
+  "Eleven",
+  "Twelve",
+  "Thirteen",
+  "Fourteen",
+  "Fifteen",
+  "Sixteen",
+  "Seventeen",
+  "Eighteen",
+  "Nineteen",
+];
+const TENS = [
+  "",
+  "",
+  "Twenty",
+  "Thirty",
+  "Forty",
+  "Fifty",
+  "Sixty",
+  "Seventy",
+  "Eighty",
+  "Ninety",
+];
+
+function belowThousand(n: number): string {
+  const parts: string[] = [];
+  if (n >= 100) parts.push(`${ONES[Math.floor(n / 100)]} Hundred`);
+  const rest = n % 100;
+  if (rest >= 20)
+    parts.push(
+      TENS[Math.floor(rest / 10)] + (rest % 10 ? `-${ONES[rest % 10]}` : ""),
+    );
+  else if (rest) parts.push(ONES[rest]);
+  return parts.join(" ");
+}
+
+/** Whole amount in words: lakh/crore for PKR, INR and similar, thousand/million otherwise. */
+export function amountInWords(
+  amount: string | number,
+  currency: string | undefined,
+) {
+  let n = Math.floor(Number(amount));
+  if (!Number.isFinite(n) || n <= 0) return "Zero";
+  const south = ["PKR", "INR", "BDT", "NPR", "LKR"].includes(currency ?? "PKR");
+  const scales: [number, string][] = south
+    ? [
+        [10_000_000, "Crore"],
+        [100_000, "Lakh"],
+        [1000, "Thousand"],
+      ]
+    : [
+        [1_000_000_000, "Billion"],
+        [1_000_000, "Million"],
+        [1000, "Thousand"],
+      ];
+  const parts: string[] = [];
+  for (const [size, name] of scales) {
+    if (n >= size) {
+      const count = Math.floor(n / size);
+      parts.push(
+        `${size === 10_000_000 && count >= 1000 ? amountInWords(count, currency) : belowThousand(count)} ${name}`,
+      );
+      n %= size;
+    }
+  }
+  if (n) parts.push(belowThousand(n));
+  return parts.join(" ");
+}

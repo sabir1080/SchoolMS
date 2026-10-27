@@ -136,6 +136,9 @@ export default function InvoicePage() {
                   </span>
                   <span className="flex items-center gap-3">
                     <span className="font-medium">{money(p.amount, currency)}</span>
+                    <Link href={`/receipt/?id=${p.id}`} className="text-xs text-brand-600 hover:underline print:hidden">
+                      Receipt
+                    </Link>
                     <button onClick={() => deletePayment(p.id)} className="text-xs text-red-600 hover:underline print:hidden">
                       Delete
                     </button>

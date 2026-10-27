@@ -65,6 +65,22 @@ def fee_reminders(tenant, user=None):
     return queue_and_send(tenant, items, Kind.FEE, user)
 
 
+def payment_alert(payment, user=None):
+    """Thank the parent for a fee payment, with the receipt number and what is still due on the bill."""
+    tenant = payment.tenant
+    if not alerts_enabled(tenant) or not settings_for(tenant).payment_alerts:
+        return []
+    invoice = payment.invoice
+    paid = sum(p.amount for p in invoice.payments.all() if p.receipt_number <= payment.receipt_number)
+    balance = invoice.total - paid
+    left = f"Remaining: {tenant.currency} {balance:,.0f}." if balance > 0 else "This bill is fully paid."
+    body = (
+        f"{tenant.name}: Received {tenant.currency} {payment.amount:,.0f} for {invoice.student.full_name} "
+        f"({invoice.title}) on {payment.date:%d %b %Y}, receipt No. {payment.receipt_number}. {left} Thank you."
+    )
+    return queue_and_send(tenant, [(invoice.student, body, f"pay:{payment.id}")], Kind.PAYMENT, user)
+
+
 def result_alerts(exam, user=None):
     """Each student's result in a newly published exam."""
     from apps.exams.results import section_results

@@ -41,6 +41,7 @@ interface Settings {
   absent_alerts: boolean;
   result_alerts: boolean;
   homework_alerts: boolean;
+  payment_alerts: boolean;
 }
 
 const FILTERS: [Message["status"], string][] = [
@@ -241,6 +242,7 @@ function MessageSettings({ onSaved }: { onSaved: () => void }) {
         absent_alerts: s.absent_alerts,
         result_alerts: s.result_alerts,
         homework_alerts: s.homework_alerts,
+        payment_alerts: s.payment_alerts,
       };
       setSettings(await api<Settings>("/api/messages/settings/", { method: "PATCH", body: JSON.stringify(body) }));
       setToken("");
@@ -298,6 +300,7 @@ function MessageSettings({ onSaved }: { onSaved: () => void }) {
                 ["absent_alerts", "Tell parents when their child is marked absent (same day)"],
                 ["result_alerts", "Send each student's result when an exam result is published"],
                 ["homework_alerts", "Send the homework to parents when a teacher adds it"],
+                ["payment_alerts", "Thank parents with the receipt number when a fee payment is received"],
               ] as const
             ).map(([key, label]) => (
               <label key={key} className="flex items-center gap-2 text-sm">
