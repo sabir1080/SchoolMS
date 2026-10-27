@@ -14,6 +14,7 @@ from .serializers import (
     AcademicSessionSerializer,
     BulkNamesSerializer,
     ProgramSerializer,
+    ReorderSerializer,
     SectionSerializer,
     SubjectSerializer,
 )
@@ -83,6 +84,20 @@ class SubjectViewSet(BulkCreateByNameMixin, AcademicsViewSet):
 class ProgramViewSet(BulkCreateByNameMixin, AcademicsViewSet):
     queryset = Program.objects.prefetch_related("subjects", "sections")
     serializer_class = ProgramSerializer
+
+    @action(detail=False, methods=["post"])
+    def reorder(self, request):
+        """``POST .../reorder/ {"ids": [...]}`` with every program id in the new display order."""
+        data = ReorderSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        ids = data.validated_data["ids"]
+        programs = {p.pk: p for p in Program.objects.filter(tenant=self.get_tenant())}
+        if len(ids) != len(set(ids)) or set(ids) != set(programs):
+            raise ValidationError({"ids": ["Send every program exactly once."]})
+        for order, pk in enumerate(ids, start=1):
+            programs[pk].sort_order = order
+        Program.objects.bulk_update(programs.values(), ["sort_order"])
+        return Response(self.get_serializer(self.get_queryset(), many=True).data)
 
 
 class SectionViewSet(AcademicsViewSet):

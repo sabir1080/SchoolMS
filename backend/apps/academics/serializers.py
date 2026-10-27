@@ -92,3 +92,7 @@ class BulkNamesSerializer(serializers.Serializer):
     names = serializers.ListField(
         child=serializers.CharField(max_length=100, allow_blank=True), allow_empty=False, max_length=100
     )
+
+
+class ReorderSerializer(serializers.Serializer):
+    ids = serializers.ListField(child=serializers.IntegerField(), allow_empty=False, max_length=500)

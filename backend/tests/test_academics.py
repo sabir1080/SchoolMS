@@ -67,6 +67,36 @@ def test_bulk_create_programs_skips_existing(api, admin_a, school_a):
     assert list(Program.objects.filter(tenant=school_a).values_list("name", flat=True))[-1] == "Class 0"
 
 
+def test_reorder_programs(api, admin_a, school_a, school_b):
+    names = ["Nursery", "Prep 1", "Class 1", "Prep 2"]
+    programs = [Program.objects.create(tenant=school_a, name=n, sort_order=i) for i, n in enumerate(names)]
+    nursery, prep1, class1, prep2 = programs
+    api = auth(api, admin_a)
+    res = api.post(
+        "/api/academics/programs/reorder/", {"ids": [nursery.pk, prep1.pk, prep2.pk, class1.pk]}, format="json"
+    )
+    assert res.status_code == 200, res.json()
+    assert [p["name"] for p in res.json()] == ["Nursery", "Prep 1", "Prep 2", "Class 1"]
+    assert [p["name"] for p in api.get("/api/academics/programs/").json()["results"]] == [
+        "Nursery", "Prep 1", "Prep 2", "Class 1",
+    ]
+
+
+def test_reorder_needs_every_own_program_once(api, admin_a, school_a, school_b):
+    a = Program.objects.create(tenant=school_a, name="A")
+    b = Program.objects.create(tenant=school_a, name="B")
+    other = Program.objects.create(tenant=school_b, name="X")
+    api = auth(api, admin_a)
+    for ids in ([a.pk], [a.pk, a.pk], [a.pk, b.pk, other.pk], [a.pk, other.pk]):
+        assert api.post("/api/academics/programs/reorder/", {"ids": ids}, format="json").status_code == 400, ids
+
+
+def test_teacher_cannot_reorder(api, teacher_a, school_a):
+    a = Program.objects.create(tenant=school_a, name="A")
+    res = auth(api, teacher_a).post("/api/academics/programs/reorder/", {"ids": [a.pk]}, format="json")
+    assert res.status_code == 403
+
+
 def test_program_with_subjects(api, admin_a, school_a, school_b):
     math = Subject.objects.create(tenant=school_a, name="Mathematics")
     other = Subject.objects.create(tenant=school_b, name="Physics")

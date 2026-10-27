@@ -100,6 +100,7 @@ Shared database, every institute-owned row has a `tenant_id`.
 | GET/PATCH | `/api/institute/settings/` | institute admin (details, password policy, labels) |
 | CRUD | `/api/academics/sessions/`, `programs/`, `sections/`, `subjects/` | admin (teachers read) |
 | POST | `/api/academics/programs/bulk-create/`, `subjects/bulk-create/` (`names`) | institute admin |
+| POST | `/api/academics/programs/reorder/` (`ids` in display order) | institute admin |
 | POST | `/api/users/<id>/set-password/` | institute admin |
 | GET/POST/PATCH/DELETE | `/api/users/` | institute admin (DELETE deactivates) |
 | GET/POST/PATCH | `/api/platform/tenants/` | super admin |
