@@ -18,7 +18,7 @@ from apps.academics.models import AcademicSession, Program, Section, Subject
 from apps.accounts.models import Role, User
 from apps.attendance.models import AttendanceRecord, AttendanceStatus
 from apps.core.timeutils import tenant_today
-from apps.exams.models import Exam, ExamStatus, ExamSubject, Mark
+from apps.exams.models import CombinedExam, CombinedResult, Exam, ExamStatus, ExamSubject, Mark
 from apps.exams.services import default_pass_marks, sync_papers
 from apps.fees.models import DiscountType, FeeHead, FeeRate, Frequency, Invoice, PaymentMethod, StudentDiscount
 from apps.fees.services import generate_monthly_invoices, record_payment
@@ -312,5 +312,12 @@ def seed_demo(today=None):
     october = make_exam("October Test", "test", datetime.date(year, 10, 19), ExamStatus.MARKS_OPEN, 25)
     fill_marks(october, {sections[("Class 5", "A")].id, sections[("Class 3", "A")].id})
     fill_marks(october, {sections[("Class 4", "A")].id}, {"English", "Mathematics", "Urdu"})
-    make_exam("Mid-Term", "midterm", datetime.date(year, 12, 7), ExamStatus.DRAFT, 100)
+    mid_term = make_exam("Mid-Term", "midterm", datetime.date(year, 12, 7), ExamStatus.DRAFT, 100)
+    final = make_exam("Final Exam", "final", datetime.date(year + 1, 3, 1), ExamStatus.DRAFT, 100)
+    annual = CombinedResult.objects.create(tenant=tenant, session=session, name=f"Annual Result {session.name}")
+    CombinedExam.objects.bulk_create([
+        CombinedExam(combined=annual, exam=first_term, weight=25),
+        CombinedExam(combined=annual, exam=mid_term, weight=25),
+        CombinedExam(combined=annual, exam=final, weight=50),
+    ])
     return tenant

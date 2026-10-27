@@ -117,3 +117,36 @@ class Mark(TenantScopedModel):
         constraints = [
             models.UniqueConstraint(fields=["paper", "student"], name="unique_mark_per_paper"),
         ]
+
+
+class CombinedStatus(models.TextChoices):
+    DRAFT = "draft", "Being prepared"
+    PUBLISHED = "published", "Published"
+
+
+class CombinedResult(TenantScopedModel):
+    """An annual (combined) result: several exams of a session added up with the school's weightage."""
+
+    session = models.ForeignKey("academics.AcademicSession", on_delete=models.PROTECT, related_name="combined_results")
+    name = models.CharField(max_length=100)
+    status = models.CharField(max_length=20, choices=CombinedStatus.choices, default=CombinedStatus.DRAFT)
+
+    class Meta:
+        ordering = ["-session__start_date", "name"]
+        constraints = [models.UniqueConstraint(fields=["session", "name"], name="unique_combined_result_name")]
+
+    def __str__(self):
+        return self.name
+
+
+class CombinedExam(models.Model):
+    """One exam in a combined result and its weight (all weights add up to 100)."""
+
+    combined = models.ForeignKey(CombinedResult, on_delete=models.CASCADE, related_name="components")
+    exam = models.ForeignKey(Exam, on_delete=models.PROTECT, related_name="+")
+    weight = models.DecimalField(max_digits=5, decimal_places=2)
+
+    class Meta:
+        # By exam date; exams without a date in the order they were created.
+        ordering = [models.F("exam__start_date").asc(nulls_last=True), "exam_id"]
+        constraints = [models.UniqueConstraint(fields=["combined", "exam"], name="unique_combined_exam")]

@@ -146,3 +146,61 @@ export function ordinal(n: number) {
   const suffix = teen ? "th" : ({ 1: "st", 2: "nd", 3: "rd" } as Record<number, string>)[n % 10] ?? "th";
   return `${n}${suffix}`;
 }
+
+export interface Combined {
+  id: number;
+  session: number;
+  session_name: string;
+  name: string;
+  status: "draft" | "published";
+  components: { exam: number; exam_name: string; exam_status: ExamStatus; weight: string }[];
+}
+
+export const COMBINED_STATUS: Record<Combined["status"], { label: string; tone: string }> = {
+  draft: EXAM_STATUS.draft,
+  published: { label: "Published", tone: EXAM_STATUS.published.tone },
+};
+
+export interface CombinedRow {
+  student: number;
+  full_name: string;
+  admission_no: string;
+  roll_number: string;
+  father_name: string;
+  exams: { exam: number; percentage: string | null }[];
+  subjects: {
+    subject: number;
+    percentage: string | null;
+    grade: string | null;
+    passed: boolean | null;
+    exams: { exam: number; percentage: string | null }[];
+  }[];
+  percentage: string | null;
+  grade: string | null;
+  remark: string;
+  result: ResultStatus;
+  failed_subjects: number;
+  position: number | null;
+  attendance?: ResultRow["attendance"];
+}
+
+export type ResultSummaryData = ExamResults["summary"];
+
+export interface CombinedResults {
+  combined: { id: number; name: string; status: Combined["status"]; session_name: string };
+  institute: ExamResults["institute"];
+  section: ExamResults["section"];
+  show_position: boolean;
+  pass_percentage: number;
+  exams: { id: number; name: string; weight: string }[];
+  subjects: { id: number; name: string }[];
+  students: CombinedRow[];
+  summary: ResultSummaryData;
+  grading: ExamResults["grading"];
+  sections: { id: number; program: number; program_name: string; name: string }[];
+}
+
+export interface MyResults {
+  exams: ExamResults[];
+  combined: CombinedResults[];
+}

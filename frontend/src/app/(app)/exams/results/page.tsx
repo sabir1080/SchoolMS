@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { ExamStatusBadge } from "@/components/exams/ExamsTabs";
 import { ReportCard } from "@/components/exams/ReportCard";
+import { ResultSummary } from "@/components/exams/ResultSummary";
 import { Card, ErrorBox } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -121,15 +122,6 @@ export default function ResultsPage() {
 }
 
 function Summary({ data }: { data: ExamResults }) {
-  const s = data.summary;
-  const tiles: [string, string, string?][] = [
-    ["Students", String(s.students)],
-    ["Passed", String(s.passed), "text-emerald-700 dark:text-emerald-400"],
-    ["Failed", String(s.failed), s.failed ? "text-red-600 dark:text-red-400" : undefined],
-    ["Pass rate", s.pass_rate ? `${s.pass_rate}%` : "—"],
-    ["Average", s.average ? `${s.average}%` : "—"],
-    ["Highest", s.highest ? `${s.highest}%` : "—"],
-  ];
   return (
     <div>
       <div className="mb-2 hidden print:block">
@@ -138,19 +130,7 @@ function Summary({ data }: { data: ExamResults }) {
           Result sheet · {data.exam.name} · {data.section.program_name} - {data.section.name} · Session {data.exam.session_name}
         </p>
       </div>
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-6 print:hidden">
-        {tiles.map(([label, value, tone]) => (
-          <div key={label} className="rounded-2xl bg-white p-3 shadow-sm dark:bg-slate-900">
-            <p className="text-xs text-slate-500">{label}</p>
-            <p className={`text-xl font-semibold ${tone ?? ""}`}>{value}</p>
-          </div>
-        ))}
-      </div>
-      {s.incomplete > 0 && (
-        <p className="mt-2 text-sm text-amber-700 dark:text-amber-300 print:hidden">
-          {s.incomplete} {s.incomplete === 1 ? "student has" : "students have"} marks missing in some subjects (shown as Incomplete).
-        </p>
-      )}
+      <ResultSummary summary={data.summary} />
     </div>
   );
 }

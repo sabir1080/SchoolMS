@@ -5,7 +5,7 @@ from rest_framework import serializers
 from apps.academics.models import AcademicSession, Program, Subject
 from apps.core.serializers import TenantPrimaryKeyRelatedField
 
-from .models import Exam, ExamSubject, GradeBand
+from .models import CombinedExam, CombinedResult, Exam, ExamSubject, GradeBand
 
 
 class GradeBandSerializer(serializers.ModelSerializer):
@@ -114,3 +114,64 @@ class MarksInputSerializer(serializers.Serializer):
         if len(students) != len(set(students)):
             raise serializers.ValidationError("A student appears twice.")
         return entries
+
+
+class CombinedExamSerializer(serializers.Serializer):
+    exam = TenantPrimaryKeyRelatedField(queryset=Exam.objects.all())
+    weight = serializers.DecimalField(max_digits=5, decimal_places=2, min_value=Decimal("0.01"), max_value=Decimal(100))
+
+
+class CombinedResultSerializer(serializers.ModelSerializer):
+    session = TenantPrimaryKeyRelatedField(queryset=AcademicSession.objects.all())
+    session_name = serializers.CharField(source="session.name", read_only=True)
+    components = CombinedExamSerializer(many=True, allow_empty=False)
+
+    class Meta:
+        model = CombinedResult
+        fields = ["id", "session", "session_name", "name", "status", "components"]
+
+    def to_representation(self, combined):
+        data = super().to_representation(combined)
+        data["components"] = [
+            {"exam": c.exam_id, "exam_name": c.exam.name, "exam_status": c.exam.status, "weight": f"{c.weight.normalize():f}"}
+            for c in combined.components.all()
+        ]
+        return data
+
+    def validate(self, attrs):
+        session = attrs.get("session", getattr(self.instance, "session", None))
+        name = attrs.get("name", getattr(self.instance, "name", "")).strip()
+        attrs["name"] = name
+        components = attrs.get("components")
+        if components is not None:
+            exams = [c["exam"].pk for c in components]
+            if len(exams) != len(set(exams)):
+                raise serializers.ValidationError({"components": ["Each exam can be added only once."]})
+            if any(c["exam"].session_id != session.pk for c in components):
+                raise serializers.ValidationError({"components": [f"All exams must be from the session {session.name}."]})
+            if sum(c["weight"] for c in components) != 100:
+                raise serializers.ValidationError({"components": ["The weights must add up to 100%."]})
+        taken = CombinedResult.objects.filter(session=session, name__iexact=name)
+        if self.instance is not None:
+            taken = taken.exclude(pk=self.instance.pk)
+        if taken.exists():
+            raise serializers.ValidationError({"name": [f'"{name}" already exists in {session.name}.']})
+        return attrs
+
+    def save_components(self, combined, components):
+        if components is None:
+            return
+        combined.components.all().delete()
+        CombinedExam.objects.bulk_create([CombinedExam(combined=combined, exam=c["exam"], weight=c["weight"]) for c in components])
+
+    def create(self, validated_data):
+        components = validated_data.pop("components")
+        combined = CombinedResult.objects.create(**validated_data)
+        self.save_components(combined, components)
+        return combined
+
+    def update(self, instance, validated_data):
+        components = validated_data.pop("components", None)
+        instance = super().update(instance, validated_data)
+        self.save_components(instance, components)
+        return instance

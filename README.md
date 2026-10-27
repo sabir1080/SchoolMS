@@ -161,12 +161,19 @@ Shared database, every institute-owned row has a `tenant_id`.
   (1, 2, 2, 4 among students who passed; hidden when `show_position` is off). Summary: pass rate,
   average, highest. Printable result sheet (landscape) and report cards (one A4 page per student,
   with attendance up to the exam's last day). Admins see all sections, class teachers their own.
+- Annual (combined) result: an admin picks exams of a session and their weights (adding up to 100%,
+  e.g. First Term 25% + Mid-Term 25% + Final 50%). Annual % = weighted exam percentages; each subject's
+  weighted % must reach the pass percentage. If a class does not take one of the exams, the others are
+  scaled up to 100%. Result sheet and annual report cards like the exam result.
+- Parents and students see published exam results and published annual results of the current
+  session on their dashboard ("Results") and can open, print or save the report card as PDF.
 
 ## Demo institute
 
 `python manage.py seed_demo` creates "Bright Future Academy" (institute code `demo`, password `demo1234`
 for users `admin`, `sana` (teacher), `rashid` (parent of two), `ahmed` (student)) with 32 students,
-attendance since September, six months of fees and three exams with marks. Running it again replaces
+attendance since September, six months of fees, four exams (First Term published with marks) and an
+annual result being prepared. Running it again replaces
 the demo. `--wipe-all` first deletes **every** institute and its data (super admins and plans stay).
 
 ## Roles
@@ -217,6 +224,9 @@ the demo. `--wipe-all` first deletes **every** institute and its data (super adm
 | GET/PUT | `/api/exams/<id>/marks/` (`?section=&paper=`; PUT `section`, `paper`, `entries`) | admin / class teacher |
 | GET | `/api/exams/<id>/marks/progress/` | admin / class teacher |
 | GET | `/api/exams/<id>/results/?section=` (`&attendance=1` adds attendance) | admin / class teacher |
+| CRUD | `/api/combined-results/` (`?session=`; `components`: `[{exam, weight}]`) | admin; teachers read |
+| GET | `/api/combined-results/<id>/results/` (sections; `?section=` for the result) | admin / class teacher |
+| GET | `/api/me/results/` (`?student=` for parents) | parent / student |
 | GET | `/api/me/exams/` (`?student=` for parents) | parent / student |
 | GET/PATCH | `/api/pay/settings/` | institute admin |
 | GET | `/api/pay/options/`, `/api/pay/status/?ref=`; POST `/api/pay/start/` (`invoice`, `provider`) | admin / parent / student |
@@ -277,4 +287,4 @@ Phase 1 (MVP): ~~setup, tenants, roles, login~~ -> ~~institute code login, SaaS 
 -> ~~payment gateways (JazzCash, Easypaisa)~~ -> later: Safepay, Stripe.
 
 Phase 2: ~~exams, date sheet, grading scale~~ -> ~~marks entry~~ -> ~~results, position & report cards~~
--> combined (weighted) annual result and parent/student results.
+-> ~~combined (weighted) annual result and parent/student results~~.

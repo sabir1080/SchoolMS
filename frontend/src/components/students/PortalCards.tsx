@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { StudentAttendanceCard } from "@/components/attendance/StudentAttendanceCard";
 import { MyDateSheets } from "@/components/exams/MyDateSheets";
+import { MyResultsCard } from "@/components/exams/MyResults";
 import { MyFeesCard } from "@/components/fees/MyFeesCard";
 import { Card } from "@/components/ui";
 import { api } from "@/lib/api";
@@ -67,6 +68,7 @@ export function PortalCards() {
             {hasAttendance && (
               <StudentAttendanceCard url={role === "parent" ? `/api/me/attendance/?student=${c.id}` : "/api/me/attendance/"} />
             )}
+            {hasExams && <MyResultsCard student={role === "parent" ? c.id : undefined} />}
             {hasExams && <MyDateSheets url={role === "parent" ? `/api/me/exams/?student=${c.id}` : "/api/me/exams/"} />}
             {hasFees && <MyFeesCard url={role === "parent" ? `/api/me/invoices/?student=${c.id}` : "/api/me/invoices/"} />}
           </div>

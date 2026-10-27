@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.db.models import ProtectedError
 from django.db.models import Count, Max, Prefetch
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -17,8 +18,9 @@ from apps.students.services import current_session
 from apps.subscriptions.features import Feature
 from apps.subscriptions.gating import ActiveSubscription, RequiresFeature
 
-from .models import Exam, ExamStatus, ExamSubject, GradeBand, Mark, grading_scale
+from .models import CombinedResult, CombinedStatus, Exam, ExamStatus, ExamSubject, GradeBand, Mark, grading_scale
 from .serializers import (
+    CombinedResultSerializer,
     ExamSerializer,
     GradeBandSerializer,
     GradingInputSerializer,
@@ -26,7 +28,7 @@ from .serializers import (
     PaperSerializer,
     PapersInputSerializer,
 )
-from .results import attendance_until, section_results
+from .results import combined_result_payload, exam_result_payload
 from .services import default_pass_marks, sync_papers
 
 
@@ -66,7 +68,10 @@ class ExamViewSet(TenantScopedViewSetMixin, viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         if Mark.objects.filter(paper__exam=instance).exists():
             raise ValidationError("This exam already has marks and cannot be deleted.")
-        instance.delete()
+        try:
+            instance.delete()
+        except ProtectedError:
+            raise ValidationError("This exam is part of an annual result. Remove it there first.")
 
     def program_param(self, exam, value):
         program = exam.programs.filter(pk=value or 0).first()
@@ -300,26 +305,97 @@ class ResultsView(MarksView):
     def get(self, request, exam_id):
         exam = self.get_exam(exam_id)
         section = self.get_section(exam, request.query_params.get("section"))
-        tenant = exam.tenant
-        data = section_results(exam, section)
-        if request.query_params.get("attendance"):
-            end = exam.end_date or exam.session.end_date
-            for row in data["students"]:
-                row["attendance"] = attendance_until(row["student"], exam.session, end)
+        return Response(exam_result_payload(exam, section, bool(request.query_params.get("attendance"))))
+
+
+class CombinedResultViewSet(TenantScopedViewSetMixin, viewsets.ModelViewSet):
+    """Annual (combined) results: exams of a session with weights. Admins edit; teachers read."""
+
+    queryset = CombinedResult.objects.select_related("session").prefetch_related("components__exam")
+    serializer_class = CombinedResultSerializer
+    permission_classes = [AdminWriteStaffRead]
+    required_feature = Feature.EXAMS
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        session = self.request.query_params.get("session")
+        if session:
+            return queryset.filter(session_id=session)
+        if self.action == "list":
+            current = current_session(self.get_tenant())
+            return queryset.filter(session=current) if current else queryset.none()
+        return queryset
+
+    def perform_create(self, serializer):
+        with transaction.atomic():
+            serializer.save(tenant=self.get_tenant())
+
+    def perform_update(self, serializer):
+        with transaction.atomic():
+            serializer.save()
+
+
+class CombinedResultsView(MarksView):
+    """GET ?section=: the annual result of one section. Sections: those whose class takes any of its exams."""
+
+    def get_combined(self, combined_id):
+        combined = (
+            CombinedResult.objects.filter(tenant=self.request.user.tenant, pk=combined_id)
+            .select_related("session", "tenant").prefetch_related("components__exam__programs", "components__exam__session")
+            .first()
+        )
+        if combined is None:
+            raise NotFound("Annual result not found.")
+        return combined
+
+    def sections(self, combined):
+        programs = {p.id for c in combined.components.all() for p in c.exam.programs.all()}
+        sections = Section.objects.filter(
+            tenant=combined.tenant, session=combined.session, program_id__in=programs
+        ).select_related("program", "session", "class_teacher")
+        if self.request.user.role == Role.TEACHER:
+            sections = sections.filter(class_teacher=self.request.user)
+        return sorted(sections, key=lambda s: (s.program.sort_order, s.program.name, s.name))
+
+    def get(self, request, combined_id):
+        combined = self.get_combined(combined_id)
+        sections = self.sections(combined)
+        listing = [{**section_label(s), "program": s.program_id} for s in sections]
+        section_id = request.query_params.get("section")
+        if not section_id:
+            return Response({"combined": CombinedResultSerializer(combined).data, "sections": listing})
+        section = self.get_section(combined, section_id)
+        payload = combined_result_payload(combined, section, bool(request.query_params.get("attendance")))
+        return Response({**payload, "sections": listing})
+
+
+class MyResultsView(APIView):
+    """Parents (?student=) and students: published exam results and annual results of the current session."""
+
+    required_feature = Feature.EXAMS
+
+    def get_permissions(self):
+        return [HasRole.for_roles(Role.PARENT, Role.STUDENT)(), ActiveSubscription(), RequiresFeature()]
+
+    def get(self, request):
+        student = my_student(request)
+        enrollment = current_enrollment(student)
+        if enrollment is None or not enrollment.session.is_current:
+            return Response({"exams": [], "combined": []})
+        section = Section.objects.select_related("program", "session", "class_teacher").get(pk=enrollment.section_id)
+        exams = (
+            Exam.objects.filter(session=enrollment.session, programs=section.program_id, status=ExamStatus.PUBLISHED)
+            .select_related("session", "tenant").order_by("start_date", "name")
+        )
+        combined = (
+            CombinedResult.objects.filter(session=enrollment.session, status=CombinedStatus.PUBLISHED,
+                                          components__exam__programs=section.program_id)
+            .distinct().select_related("session", "tenant").prefetch_related("components__exam__programs")
+        )
         return Response(
             {
-                "exam": {
-                    "id": exam.id, "name": exam.name, "status": exam.status, "exam_type": exam.exam_type,
-                    "session_name": exam.session.name, "start_date": exam.start_date, "end_date": exam.end_date,
-                },
-                "institute": {"name": tenant.name, "address": tenant.address, "phone": tenant.phone, "email": tenant.email},
-                "section": {
-                    **section_label(section),
-                    "class_teacher_name": section.class_teacher and (section.class_teacher.get_full_name() or section.class_teacher.username),
-                },
-                "show_position": tenant.show_position,
-                "pass_percentage": tenant.pass_percentage,
-                **data,
+                "exams": [exam_result_payload(e, section, True, student.pk) for e in exams],
+                "combined": [combined_result_payload(c, section, True, student.pk) for c in combined],
             }
         )
 
@@ -348,6 +424,19 @@ class GradingView(APIView):
         return self.get(request)
 
 
+def my_student(request):
+    """The logged-in student, or the parent's child given as ?student=."""
+    user = request.user
+    if user.role == Role.STUDENT:
+        student = getattr(user, "student_profile", None)
+    else:
+        guardian = getattr(user, "guardian_profile", None)
+        student = guardian.students.filter(pk=request.query_params.get("student") or 0).first() if guardian else None
+    if student is None:
+        raise NotFound("Student not found.")
+    return Student.objects.prefetch_related("enrollments__session", "enrollments__section").get(pk=student.pk)
+
+
 class MyExamsView(APIView):
     """Parents (?student=) and students: date sheets of announced exams in the current session."""
 
@@ -357,15 +446,7 @@ class MyExamsView(APIView):
         return [HasRole.for_roles(Role.PARENT, Role.STUDENT)(), ActiveSubscription(), RequiresFeature()]
 
     def get(self, request):
-        user = request.user
-        if user.role == Role.STUDENT:
-            student = getattr(user, "student_profile", None)
-        else:
-            guardian = getattr(user, "guardian_profile", None)
-            student = guardian.students.filter(pk=request.query_params.get("student") or 0).first() if guardian else None
-        if student is None:
-            raise NotFound("Student not found.")
-        student = Student.objects.prefetch_related("enrollments__session", "enrollments__section").get(pk=student.pk)
+        student = my_student(request)
         enrollment = current_enrollment(student)
         if enrollment is None or not enrollment.session.is_current:
             return Response([])

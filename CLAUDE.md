@@ -54,4 +54,4 @@ dashboard ✅ → payment gateways JazzCash + Easypaisa ✅ (Safepay/Stripe late
 
 Phase 2: exams + date sheet + grading scale ✅ → marks entry ✅ → per-exam results, position (per
 `Tenant.show_position`) & report card print ✅ → combined annual result (weightage set per school) +
-parent/student results. Pass rule: `Tenant.pass_percentage` per subject (default 33).
+parent/student results ✅. Pass rule: `Tenant.pass_percentage` per subject (default 33).

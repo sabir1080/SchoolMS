@@ -4,7 +4,7 @@ from django.core.management import call_command
 
 from apps.accounts.models import Role, User
 from apps.attendance.models import AttendanceRecord
-from apps.exams.models import Exam, Mark
+from apps.exams.models import CombinedResult, Exam, Mark
 from apps.fees.models import Invoice, Payment
 from apps.students.models import Student
 from apps.subscriptions.models import Plan
@@ -24,8 +24,10 @@ def test_seed_demo_builds_a_complete_school(db, api):
     assert Invoice.objects.filter(tenant=tenant, status="unpaid").exists()
     assert Payment.objects.filter(tenant=tenant).count() > 100
     assert list(Exam.objects.filter(tenant=tenant).order_by("start_date").values_list("status", flat=True)) == [
-        "published", "marks_open", "draft"
+        "published", "marks_open", "draft", "draft"
     ]
+    annual = CombinedResult.objects.get(tenant=tenant)
+    assert [str(c.weight) for c in annual.components.all()] == ["25.00", "25.00", "50.00"]
     assert Mark.objects.filter(tenant=tenant).count() > 200
     # Logins work and the parent sees both children
     res = api.post("/api/auth/login/", {"institute_code": "demo", "username": "rashid", "password": "demo1234"}, format="json")
