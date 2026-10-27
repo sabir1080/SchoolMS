@@ -23,6 +23,7 @@ backend/
   apps/subscriptions/  SaaS plans, prices, subscriptions, trial, feature gating, plan limits, payments
   apps/academics/      Sessions, programs (class/course), sections (section/batch), subjects
   apps/students/       Students, guardians (shared by siblings), enrollments, student/parent portals
+  apps/attendance/     Daily attendance per section, monthly reports, today summary
   tests/
 frontend/
   src/lib/             API client, auth context, navigation, regions
@@ -88,6 +89,16 @@ Shared database, every institute-owned row has a `tenant_id`.
 - Admins can create student and parent logins; parents see their children and students their own
   profile on the dashboard. Teachers can view students; only admins can change them.
 
+## Attendance
+
+- Daily, per section: Present, Absent, Leave or Late (one record per student per day). Re-saving
+  a date updates it. No future dates; the date must be inside the section's session.
+- Admins can take attendance for every section; teachers only for sections where they are the
+  class teacher. "Today" uses the institute's timezone.
+- Percentage = (Present + Late) / days taken. Monthly report per section with a day-by-day grid.
+- Dashboard: today's summary and sections not yet marked (admin/teacher); parents and students see
+  today's status and monthly/session percentages. Students with attendance cannot be deleted.
+
 ## Roles
 
 | Role | Tenant | Can do (so far) |
@@ -118,6 +129,10 @@ Shared database, every institute-owned row has a `tenant_id`.
 | POST | `/api/students/<id>/enroll/`, `create-login/`; DELETE `.../enrollments/<id>/` | institute admin |
 | GET/PATCH | `/api/guardians/` (`?phone=`), POST `/api/guardians/<id>/create-login/` | admin (teachers read) |
 | GET | `/api/me/children/` (parent), `/api/me/student/` (student) | parent / student |
+| GET | `/api/attendance/sections/`, `today/` | admin / teacher |
+| GET/POST | `/api/attendance/sheet/` (`?section=&date=`; POST `section`, `date`, `records`) | admin / class teacher |
+| GET | `/api/attendance/report/?section=&month=YYYY-MM`, `/api/attendance/students/<id>/` | admin / teacher |
+| GET | `/api/me/attendance/` (`?student=` for parents) | parent / student |
 | POST | `/api/users/<id>/set-password/` | institute admin |
 | GET/POST/PATCH/DELETE | `/api/users/` | institute admin (DELETE deactivates) |
 | GET/POST/PATCH | `/api/platform/tenants/` | super admin |
@@ -169,5 +184,5 @@ before onboarding real institutes.
 ## Roadmap
 
 Phase 1 (MVP): ~~setup, tenants, roles, login~~ -> ~~institute code login, SaaS subscriptions~~ -> ~~passwords~~ -> ~~academic setup~~ -> ~~student admission & enrollment~~
--> attendance -> fees & invoices -> dashboard
+-> ~~attendance~~ -> fees & invoices -> dashboard
 -> payment gateways (JazzCash, Easypaisa, Safepay, Stripe).

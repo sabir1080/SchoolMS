@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { StudentAttendanceCard } from "@/components/attendance/StudentAttendanceCard";
 import { Card } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -25,6 +26,7 @@ export function PortalCards() {
   const terms = termsFor(user?.tenant);
   const role = user?.role;
   const enabled = (role === "parent" || role === "student") && subscription?.is_usable;
+  const hasAttendance = subscription?.plan.features.includes("attendance");
 
   useEffect(() => {
     if (!enabled) return;
@@ -48,15 +50,20 @@ export function PortalCards() {
   return (
     <div className="space-y-3">
       <h2 className="font-medium">{role === "parent" ? "My children" : "My profile"}</h2>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="space-y-4">
         {children.map((c) => (
-          <Card key={c.id}>
-            <p className="text-lg font-semibold">{c.full_name}</p>
-            <p className="text-sm text-slate-500">Admission no {c.admission_no}</p>
-            <p className="mt-2 text-sm">{enrollmentText(c.current_enrollment, terms.section)}</p>
-            {c.current_enrollment && <p className="text-xs text-slate-500">Session {c.current_enrollment.session_name}</p>}
-            {c.date_of_birth && <p className="text-xs text-slate-500">Born {formatDate(c.date_of_birth)}</p>}
-          </Card>
+          <div key={c.id} className="space-y-2">
+            <Card>
+              <p className="text-lg font-semibold">{c.full_name}</p>
+              <p className="text-sm text-slate-500">Admission no {c.admission_no}</p>
+              <p className="mt-2 text-sm">{enrollmentText(c.current_enrollment, terms.section)}</p>
+              {c.current_enrollment && <p className="text-xs text-slate-500">Session {c.current_enrollment.session_name}</p>}
+              {c.date_of_birth && <p className="text-xs text-slate-500">Born {formatDate(c.date_of_birth)}</p>}
+            </Card>
+            {hasAttendance && (
+              <StudentAttendanceCard url={role === "parent" ? `/api/me/attendance/?student=${c.id}` : "/api/me/attendance/"} />
+            )}
+          </div>
         ))}
       </div>
     </div>

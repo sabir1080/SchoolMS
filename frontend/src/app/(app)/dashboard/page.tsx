@@ -1,5 +1,6 @@
 "use client";
 
+import { TodayCard } from "@/components/attendance/TodayCard";
 import { SetupChecklist } from "@/components/SetupChecklist";
 import { PortalCards } from "@/components/students/PortalCards";
 import { SubscriptionBanner } from "@/components/SubscriptionBanner";
@@ -23,10 +24,11 @@ export default function DashboardPage() {
         </p>
       </div>
       <SetupChecklist />
+      <TodayCard />
       <PortalCards />
       {(user.role === "admin" || user.role === "teacher") && (
         <div className="rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-500 dark:border-slate-700">
-          Attendance and fee summaries will appear here once those modules are added.
+          Fee summaries will appear here once the fees module is added.
         </div>
       )}
     </div>

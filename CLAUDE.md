@@ -27,6 +27,7 @@ and tuition centers). See README.md for stack, structure and API.
 - Users log in with institute code + username/password. Usernames and emails are unique
   per institute. Super admins log in at `/platform/login` (no institute).
 - Academics names come from `src/lib/terms.ts` (`termsFor(tenant)`); never hard-code "Class"/"Section" in UI.
+- Use `apps.core.timeutils.tenant_today(tenant)` for "today" (server runs on UTC).
 - Frontend is a static export (no server code, no dynamic route segments; use query params).
 
 ## Deployment (Render + Neon)
@@ -41,5 +42,5 @@ and tuition centers). See README.md for stack, structure and API.
 ## Roadmap
 
 Phase 1: setup/roles/login ✅ → institute code login + SaaS subscriptions ✅ → passwords ✅ →
-academic setup ✅ → student admission + enrollment ✅ → attendance → fees & invoices →
+academic setup ✅ → student admission + enrollment ✅ → attendance ✅ → fees & invoices →
 dashboard → payment gateways (JazzCash, Easypaisa, Safepay, Stripe).
