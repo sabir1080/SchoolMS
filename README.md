@@ -169,5 +169,5 @@ before onboarding real institutes.
 ## Roadmap
 
 Phase 1 (MVP): ~~setup, tenants, roles, login~~ -> ~~institute code login, SaaS subscriptions~~ -> ~~passwords~~ -> ~~academic setup~~ -> ~~student admission & enrollment~~
--> student admission -> enrollment -> attendance -> fees & invoices -> dashboard
+-> attendance -> fees & invoices -> dashboard
 -> payment gateways (JazzCash, Easypaisa, Safepay, Stripe).
