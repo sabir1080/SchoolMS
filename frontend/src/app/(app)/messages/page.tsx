@@ -8,6 +8,7 @@ import { Button, Card, ErrorBox, Field, PasswordField, SelectField } from "@/com
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { termsFor } from "@/lib/terms";
+import { useLatestRequest } from "@/lib/useLatestRequest";
 
 interface Message {
   id: number;
@@ -59,16 +60,11 @@ export default function MessagesPage() {
   const [error, setError] = useState<unknown>(null);
   const [notice, setNotice] = useState("");
 
+  const latest = useLatestRequest();
   const load = useCallback(() => {
-    let current = true;
-    api<Outbox>(`/api/messages/?status=${status}&page_size=100`)
-      .then((d) => current && setOutbox(d))
-      .catch((e) => current && setError(e));
-    return () => {
-      current = false;
-    };
-  }, [status]);
-  useEffect(load, [load]);
+    latest(api<Outbox>(`/api/messages/?status=${status}&page_size=100`), setOutbox, setError);
+  }, [status, latest]);
+  useEffect(() => load(), [load]);
 
   async function act(path: string, body?: object, done?: (r: Record<string, number>) => string) {
     setError(null);

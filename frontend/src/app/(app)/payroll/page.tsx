@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/auth";
 import { PAYMENT_METHODS, money, monthDefaults } from "@/lib/fees";
 import { isoDay } from "@/lib/homework";
 import { monthName, type Employee, type Payslip } from "@/lib/payroll";
+import { useLatestRequest } from "@/lib/useLatestRequest";
 
 type Tab = "salaries" | "staff";
 
@@ -55,16 +56,11 @@ function Salaries({ onAddStaff }: { onAddStaff: () => void }) {
   const [error, setError] = useState<unknown>(null);
   const [message, setMessage] = useState("");
 
+  const latest = useLatestRequest();
   const load = useCallback(() => {
-    let current = true;
-    api<Month>(`/api/payroll/payslips/?period=${period}`)
-      .then((d) => current && setData(d))
-      .catch((e) => current && setError(e));
-    return () => {
-      current = false;
-    };
-  }, [period]);
-  useEffect(load, [load]);
+    latest(api<Month>(`/api/payroll/payslips/?period=${period}`), setData, setError);
+  }, [period, latest]);
+  useEffect(() => load(), [load]);
 
   async function run(path: string, body?: object, done?: string) {
     setError(null);

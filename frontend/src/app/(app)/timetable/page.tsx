@@ -12,6 +12,7 @@ type StaffUser = User & { is_active: boolean };
 import { useAuth } from "@/lib/auth";
 import { DAY_SHORT, type Entry, type Period, type Timetable } from "@/lib/timetable";
 import { termsFor } from "@/lib/terms";
+import { useLatestRequest } from "@/lib/useLatestRequest";
 
 type Tab = "class" | "teacher" | "periods";
 
@@ -74,17 +75,11 @@ function ClassTimetable({ editable }: { editable: boolean }) {
     if (!sectionId && sections.length) setSectionId(String(sections[0].id));
   }, [sections, sectionId]);
 
+  const latest = useLatestRequest();
   const load = useCallback(() => {
-    if (!sectionId) return;
-    let current = true; // ignore a slower answer for a section no longer chosen
-    api<Timetable>(`/api/timetable/entries/?section=${sectionId}`)
-      .then((d) => current && setData(d))
-      .catch((e) => current && setError(e));
-    return () => {
-      current = false;
-    };
-  }, [sectionId]);
-  useEffect(load, [load]);
+    if (sectionId) latest(api<Timetable>(`/api/timetable/entries/?section=${sectionId}`), setData, setError);
+  }, [sectionId, latest]);
+  useEffect(() => load(), [load]);
 
   if (loaded && !sections.length) {
     return (
@@ -238,16 +233,10 @@ function TeacherTimetable({ isAdmin }: { isAdmin: boolean }) {
     setTeacherId(id);
   };
 
+  const latest = useLatestRequest();
   useEffect(() => {
-    if (!teacherId) return;
-    let current = true; // ignore a slower answer for a teacher no longer chosen
-    api<Timetable>(`/api/timetable/entries/?teacher=${teacherId}`)
-      .then((d) => current && setData(d))
-      .catch((e) => current && setError(e));
-    return () => {
-      current = false;
-    };
-  }, [teacherId]);
+    if (teacherId) latest(api<Timetable>(`/api/timetable/entries/?teacher=${teacherId}`), setData, setError);
+  }, [teacherId, latest]);
 
   const periods = data ? data.entries.length : 0;
   return (

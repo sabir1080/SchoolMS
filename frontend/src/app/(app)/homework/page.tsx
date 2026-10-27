@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/auth";
 import { dayTitle, isoDay, shiftDay, type Homework } from "@/lib/homework";
 import { formatDate } from "@/lib/navigation";
 import { termsFor } from "@/lib/terms";
+import { useLatestRequest } from "@/lib/useLatestRequest";
 
 interface DiarySection {
   id: number;
@@ -31,18 +32,13 @@ export default function HomeworkPage() {
     if (!sectionId && sections.items.length) setSectionId(String(sections.items[0].id));
   }, [sections.items, sectionId]);
 
+  const latest = useLatestRequest();
   const load = useCallback(() => {
     if (!sectionId) return;
-    let current = true;
     setEntries(null);
-    api<Homework[]>(`/api/homework/?section=${sectionId}&date=${date}`)
-      .then((d) => current && setEntries(d))
-      .catch((e) => current && setError(e));
-    return () => {
-      current = false;
-    };
-  }, [sectionId, date]);
-  useEffect(load, [load]);
+    latest(api<Homework[]>(`/api/homework/?section=${sectionId}&date=${date}`), setEntries, setError);
+  }, [sectionId, date, latest]);
+  useEffect(() => load(), [load]);
 
   async function remove(h: Homework) {
     if (!window.confirm(`Delete "${h.title}"?`)) return;
