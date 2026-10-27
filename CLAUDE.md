@@ -51,7 +51,7 @@ and tuition centers). See README.md for stack, structure and API.
 
 Phase 1: setup/roles/login ✅ → institute code login + SaaS subscriptions ✅ → passwords ✅ →
 academic setup ✅ → student admission + enrollment ✅ → attendance ✅ → fees & invoices ✅ →
-dashboard ✅ → payment gateways JazzCash + Easypaisa ✅ (Safepay/Stripe later).
+dashboard ✅ → payment gateways JazzCash + Easypaisa ✅ → Safepay + Stripe ✅.
 
 Phase 2: exams + date sheet + grading scale ✅ → marks entry ✅ → per-exam results, position (per
 `Tenant.show_position`) & report card print ✅ → combined annual result (weightage set per school) +
@@ -62,6 +62,13 @@ Then (owner asked for all five together): timetable ✅ → homework & diary ✅
 
 Then: promotion to next class/session ✅ → subject teacher marks entry (timetable teachers) ✅ →
 certificates ✅ → white-label logo + theme colour ✅ (`apps.tenants.branding`).
+
+Then: fee receipts + payment message ✅ → online admission form ✅ → student photo + ID cards ✅ →
+platform owner dashboard ✅ → PWA + Web Push notifications ✅ → Safepay + Stripe ✅. Not yet: library, transport.
+
+- Payments: a gateway payment counts only after server-side verification (signature, read-back or IPN).
+- Web Push needs `VAPID_PRIVATE_KEY` on the API service; push endpoints are limited to real push services.
+- Stored images (logo, student photo) are small data URLs resized in the browser; validate type and size.
 
 - Menu items carry the plan `feature` they need (`src/lib/navigation.ts`); the layout hides the rest.
 - Parent alerts go through `apps.messaging.services.queue_and_send` (dedupe keys, plan check).

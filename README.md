@@ -137,6 +137,13 @@ Shared database, every institute-owned row has a `tenant_id`.
 - Easypaisa: `merchantHashedReq` = AES-128-ECB/PKCS5 (hash key), base64; the `auth_token` is confirmed
   via `Confirm.jsf`; the final redirect alone is not trusted — the payment is recorded when the
   IPN (`/api/pay/easypaisa/ipn/`, set in the Easypaisa portal) reports it PAID with the right amount.
+- Safepay (API key + Secret key, PKR): a tracker is created (`/order/v1/init`) and the browser goes to
+  Safepay's checkout; the return is accepted only for our tracker with `sig` = HMAC-SHA256(secret, tracker).
+- Stripe (Secret key `sk_...`, optional webhook secret `whsec_...`, the institute's currency): a Checkout
+  Session is created; the payment counts only after the session is read back from Stripe (on return) or a
+  `checkout.session.completed` webhook (`/api/pay/stripe/webhook/<code>/`) with a valid `Stripe-Signature`
+  arrives; amount and currency are checked. Test or live follows the key.
+- Every recorded payment has a printable receipt (`/receipt/?id=`) and sends parents a thank-you message.
 - Demo gateway (admins only) to try the flow without a merchant account.
 - `FRONTEND_URL` (defaults to the first CORS origin) is where customers are sent back to.
 
@@ -197,6 +204,31 @@ Shared database, every institute-owned row has a `tenant_id`.
 - Plan feature `payroll`. Staff records (teachers linked to their login, and other staff) with basic
   salary and allowance. Monthly salary slips made in one tap (salary copied at that time), bonus and
   deductions, mark paid (cash/bank/JazzCash/Easypaisa) or undo, printable slip. Teachers see their own.
+
+## Online admission form
+
+- Plan feature `admissions` (all plans). Institute settings `admissions_open`; admins open/close it on the
+  Admissions page and share the link `/apply/?code=<institute code>` (also shown on the login page).
+- Parents fill student and guardian details (honeypot field, 20 forms/hour per IP). Admins admit (creates
+  the student, guardian and enrollment, sends a welcome message) or decline with a reason.
+
+## Student photos and ID cards
+
+- Student photo (shrunk to 300 px in the browser, stored as a small data URL). ID cards at card size
+  (85.6 × 54 mm), front and back, with logo, photo, details and a QR code; one student or a whole section.
+
+## Phone app (PWA) and notifications
+
+- Manifest, icons and a service worker (`public/sw.js`): installable ("Install app on this phone"),
+  offline page, and opening offline keeps the login.
+- Web Push (`apps/messaging/push.py`, no extra libraries): every parent alert queued through
+  `queue_and_send` is also sent as a notification to the parents' and student's devices. Needs
+  `VAPID_PRIVATE_KEY` (`python manage.py generate_vapid_keys`); only real push services are contacted.
+
+## Platform owner dashboard
+
+- `/platform/overview` (super admin landing page): institutes by status, plans, students, users,
+  subscription revenue per month, renewals due in 14 days, expired institutes, newest institutes and payments.
 
 ## Promotion to the next class / session
 
@@ -293,6 +325,13 @@ the demo. `--wipe-all` first deletes **every** institute and its data (super adm
 | GET/DELETE | `/api/messages/` (`?status=&kind=`); POST `<id>/mark-sent/`, `send-pending/`, `fee-reminders/`, `notice/`, `test/` | institute admin |
 | CRUD | `/api/payroll/employees/`; `/api/payroll/payslips/` (`?period=`; POST `generate/`, `<id>/pay/`, `<id>/unpay/`) | institute admin |
 | GET | `/api/me/payslips/` | teacher / admin |
+| GET | `/api/fees/receipts/<payment id>/` | admin / parent / student (own) |
+| GET/POST | `/api/public/admissions/<code>/` | public |
+| GET/PATCH/DELETE | `/api/admissions/` (`?status=`); POST `<id>/approve/`, `<id>/reject/` | institute admin |
+| GET | `/api/students/id-cards/` (`?section=` or `?ids=`) | admin / teacher |
+| GET/POST | `/api/push/` (subscribe; `action`: `test`, `unsubscribe`) | logged-in institute users |
+| GET | `/api/platform/overview/` | super admin |
+| GET/POST | `/api/pay/stripe/return/`, `/api/pay/stripe/webhook/<code>/`, `/api/pay/safepay/return/` | gateways (public) |
 | GET/POST | `/api/students/promotion/` (`?section=&to_session=`) | institute admin |
 | GET/POST/DELETE | `/api/certificates/` (`?student=`) | institute admin |
 | GET/PATCH | `/api/institute/settings/` (incl. `logo`, `brand_color`; read `brand`) | institute admin |
@@ -359,4 +398,6 @@ Phase 1 (MVP): ~~setup, tenants, roles, login~~ -> ~~institute code login, SaaS 
 Phase 2: ~~exams, date sheet, grading scale~~ -> ~~marks entry~~ -> ~~results, position & report cards~~
 -> ~~combined (weighted) annual result and parent/student results~~
 -> ~~timetable~~ -> ~~homework & diary~~ -> ~~SMS/WhatsApp alerts~~ -> ~~staff & payroll~~ -> ~~reports (Excel/PDF)~~
--> ~~promotion~~ -> ~~subject teacher marks entry~~ -> ~~certificates~~ -> ~~white-label (logo, colour)~~.
+-> ~~promotion~~ -> ~~subject teacher marks entry~~ -> ~~certificates~~ -> ~~white-label (logo, colour)~~
+-> ~~fee receipts~~ -> ~~online admissions~~ -> ~~ID cards~~ -> ~~platform dashboard~~ -> ~~PWA + notifications~~
+-> ~~Safepay, Stripe~~. Later: library, transport.
