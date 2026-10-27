@@ -61,9 +61,14 @@ export default function StudentsPage() {
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Students</h1>
         {isAdmin && (
-          <Link href="/students/new">
-            <Button>+ New admission</Button>
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/students/promotion" className="text-sm font-medium text-indigo-600 hover:underline">
+              Promote to next class
+            </Link>
+            <Link href="/students/new">
+              <Button>+ New admission</Button>
+            </Link>
+          </div>
         )}
       </div>
 
