@@ -26,6 +26,7 @@ backend/
   apps/attendance/     Daily attendance per section, monthly reports, today summary
   apps/fees/           Fee types, class fees per session, discounts, invoices, payments, summary
   apps/dashboard/      One endpoint with the admin/teacher dashboard numbers and trends
+  apps/payments/       Online fee payments: JazzCash, Easypaisa and a demo gateway
   tests/
 frontend/
   src/lib/             API client, auth context, navigation, regions
@@ -123,6 +124,22 @@ Shared database, every institute-owned row has a `tenant_id`.
 - Charts are plain HTML (no chart library), with a hover/focus readout and a "Show as table" view;
   colours are validated for colour-blind separation in light and dark mode.
 
+## Online payments
+
+- Each institute adds its own merchant accounts in Institute settings (plan feature
+  `online_payments`): JazzCash (Merchant ID, Password, Integrity Salt) and Easypaisa (Store ID,
+  16-character Hash Key). Secrets are write-only. "Test mode" uses the gateways' sandbox systems.
+- Parents/students (and admins) see "Pay with JazzCash / Easypaisa" on open bills. The browser posts
+  a signed form to the gateway (hosted checkout) and comes back to `/pay/result/`.
+- JazzCash: `pp_SecureHash` = HMAC-SHA256 (integrity salt) over the salt and sorted non-empty `pp_*`
+  values; the reply is verified (hash, merchant, amount, response code `000`) before the payment is
+  recorded.
+- Easypaisa: `merchantHashedReq` = AES-128-ECB/PKCS5 (hash key), base64; the `auth_token` is confirmed
+  via `Confirm.jsf`; the final redirect alone is not trusted — the payment is recorded when the
+  IPN (`/api/pay/easypaisa/ipn/`, set in the Easypaisa portal) reports it PAID with the right amount.
+- Demo gateway (admins only) to try the flow without a merchant account.
+- `FRONTEND_URL` (defaults to the first CORS origin) is where customers are sent back to.
+
 ## Roles
 
 | Role | Tenant | Can do (so far) |
@@ -164,6 +181,10 @@ Shared database, every institute-owned row has a `tenant_id`.
 | GET | `/api/fees/summary/?month=YYYY-MM` | institute admin |
 | GET | `/api/me/invoices/` (`?student=` for parents) | parent / student |
 | GET | `/api/dashboard/` | admin / teacher |
+| GET/PATCH | `/api/pay/settings/` | institute admin |
+| GET | `/api/pay/options/`, `/api/pay/status/?ref=`; POST `/api/pay/start/` (`invoice`, `provider`) | admin / parent / student |
+| GET | `/api/pay/attempts/?invoice=`; POST `/api/pay/demo/complete/` | institute admin |
+| POST/GET | `/api/pay/jazzcash/return/`, `/api/pay/easypaisa/postback/`, `/api/pay/easypaisa/ipn/` | gateways (public) |
 | POST | `/api/users/<id>/set-password/` | institute admin |
 | GET/POST/PATCH/DELETE | `/api/users/` | institute admin (DELETE deactivates) |
 | GET/POST/PATCH | `/api/platform/tenants/` | super admin |
@@ -216,4 +237,4 @@ before onboarding real institutes.
 
 Phase 1 (MVP): ~~setup, tenants, roles, login~~ -> ~~institute code login, SaaS subscriptions~~ -> ~~passwords~~ -> ~~academic setup~~ -> ~~student admission & enrollment~~
 -> ~~attendance~~ -> ~~fees & invoices~~ -> ~~dashboard~~
--> payment gateways (JazzCash, Easypaisa, Safepay, Stripe).
+-> ~~payment gateways (JazzCash, Easypaisa)~~ -> later: Safepay, Stripe.

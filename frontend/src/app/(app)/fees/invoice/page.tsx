@@ -5,6 +5,8 @@ import { useCallback, useEffect, useState } from "react";
 
 import { FeesTabs } from "@/components/fees/FeesTabs";
 import { InvoiceStatusBadge } from "@/components/fees/InvoiceStatusBadge";
+import { OnlineAttempts } from "@/components/payments/OnlineAttempts";
+import { PayOnline } from "@/components/payments/PayOnline";
 import { Button, Card, ErrorBox, Field, SelectField } from "@/components/ui";
 import { api } from "@/lib/api";
 import { localToday } from "@/lib/attendance";
@@ -146,10 +148,18 @@ export default function InvoicePage() {
       </Card>
 
       {open && (
-        <div className="print:hidden">
+        <div className="space-y-4 print:hidden">
           <RecordPayment invoice={invoice} onSaved={setInvoice} />
+          <Card>
+            <h2 className="font-medium">Online payment</h2>
+            <p className="mb-2 text-sm text-slate-500">Parents see these buttons on their dashboard for this bill.</p>
+            <PayOnline invoiceId={invoice.id} />
+          </Card>
         </div>
       )}
+      <div className="print:hidden">
+        <OnlineAttempts invoiceId={invoice.id} />
+      </div>
 
       <div className="flex flex-wrap gap-3 print:hidden">
         <Button onClick={() => window.print()}>Print</Button>

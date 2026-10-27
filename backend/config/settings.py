@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "apps.attendance",
     "apps.fees",
     "apps.dashboard",
+    "apps.payments",
 ]
 
 MIDDLEWARE = [
@@ -171,3 +172,6 @@ TRIAL_DAYS = int(os.environ.get("TRIAL_DAYS", "14"))
 # Password rules for platform super admins ("easy", "standard" or "strong").
 # Each institute chooses its own rule in its settings (default "easy").
 PLATFORM_PASSWORD_POLICY = os.environ.get("PLATFORM_PASSWORD_POLICY", "standard")
+
+# Where gateways send the customer back to (the frontend). Defaults to the first CORS origin.
+FRONTEND_URL = os.environ.get("FRONTEND_URL", (CORS_ALLOWED_ORIGINS or ["http://localhost:3000"])[0]).rstrip("/")

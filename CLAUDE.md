@@ -30,6 +30,8 @@ and tuition centers). See README.md for stack, structure and API.
 - Use `apps.core.timeutils.tenant_today(tenant)` for "today" (server runs on UTC).
 - Aggregations over models with a default `ordering` must call `.order_by()` first (it splits GROUP BY).
 - Chart colours live in `globals.css` (`--series-1`, `--series-2`, `--chart-grid`); validate new ones.
+- Gateway hosts are blocked in cloud sessions: payment flows are tested with simulated gateways
+  (Playwright `page.route`) and unit tests; never trust a gateway redirect without verification.
 - Frontend is a static export (no server code, no dynamic route segments; use query params).
 
 ## Deployment (Render + Neon)
@@ -45,4 +47,4 @@ and tuition centers). See README.md for stack, structure and API.
 
 Phase 1: setup/roles/login ✅ → institute code login + SaaS subscriptions ✅ → passwords ✅ →
 academic setup ✅ → student admission + enrollment ✅ → attendance ✅ → fees & invoices ✅ →
-dashboard ✅ → payment gateways (JazzCash, Easypaisa, Safepay, Stripe).
+dashboard ✅ → payment gateways JazzCash + Easypaisa ✅ (Safepay/Stripe later).

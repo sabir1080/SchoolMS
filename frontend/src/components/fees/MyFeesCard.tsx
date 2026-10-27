@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { InvoiceStatusBadge } from "@/components/fees/InvoiceStatusBadge";
+import { PayOnline } from "@/components/payments/PayOnline";
 import { Card } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -33,17 +34,20 @@ export function MyFeesCard({ url }: { url: string }) {
       ) : (
         <ul className="mt-2 divide-y divide-slate-200 text-sm dark:divide-slate-800">
           {invoices.slice(0, 6).map((inv) => (
-            <li key={inv.id} className="flex items-center justify-between gap-2 py-2">
-              <span className="min-w-0">
-                <span className="block truncate">{inv.title}</span>
-                <span className="text-xs text-slate-500">
-                  {invoiceNo(inv.number)} · due {formatDate(inv.due_date)}
+            <li key={inv.id} className="py-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="min-w-0">
+                  <span className="block truncate">{inv.title}</span>
+                  <span className="text-xs text-slate-500">
+                    {invoiceNo(inv.number)} · due {formatDate(inv.due_date)}
+                  </span>
                 </span>
-              </span>
-              <span className="flex shrink-0 flex-col items-end gap-1">
-                {money(inv.status === "paid" ? inv.total : inv.balance, currency)}
-                <InvoiceStatusBadge status={inv.status} />
-              </span>
+                <span className="flex shrink-0 flex-col items-end gap-1">
+                  {money(inv.status === "paid" ? inv.total : inv.balance, currency)}
+                  <InvoiceStatusBadge status={inv.status} />
+                </span>
+              </div>
+              {(inv.status === "unpaid" || inv.status === "partial") && <PayOnline invoiceId={inv.id} compact />}
             </li>
           ))}
         </ul>
