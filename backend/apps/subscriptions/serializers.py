@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.accounts.models import STAFF_ROLES, Role
+from apps.accounts.models import STAFF_ROLES
 
 from .features import Feature
 from .models import BillingCycle, PaymentMethod, Plan, PlanPrice, Subscription, SubscriptionPayment
@@ -43,10 +43,12 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         ]
 
     def get_usage(self, subscription):
-        active = subscription.tenant.users.filter(is_active=True)
+        from apps.students.models import Student, StudentStatus
+
+        tenant = subscription.tenant
         return {
-            "students": active.filter(role=Role.STUDENT).count(),
-            "staff": active.filter(role__in=STAFF_ROLES).count(),
+            "students": Student.objects.filter(tenant=tenant, status=StudentStatus.ACTIVE).count(),
+            "staff": tenant.users.filter(is_active=True, role__in=STAFF_ROLES).count(),
         }
 
 

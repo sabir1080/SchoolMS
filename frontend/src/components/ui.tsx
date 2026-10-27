@@ -56,16 +56,56 @@ const FIELD_LABELS: Record<string, string> = {
 };
 
 function fieldLabel(field: string) {
-  return FIELD_LABELS[field] ?? field.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
+  return FIELD_LABELS[field] ?? genericLabel(field);
+}
+
+/** Names for nested groups; "" hides the group name (e.g. enrollment.roll_number -> "Roll number"). */
+const GROUP_LABELS: Record<string, string> = { guardians: "Guardian", enrollment: "" };
+
+function genericLabel(field: string) {
+  return field.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
+}
+
+/** "Guardian 2 Name" for ["guardians", 1, "name"]; top-level fields use FIELD_LABELS. */
+function pathLabel(keys: (string | number)[]) {
+  const parts: string[] = [];
+  keys.forEach((key, i) => {
+    if (typeof key === "number") {
+      const group = GROUP_LABELS[String(keys[i - 1])] ?? "Item";
+      parts.pop();
+      parts.push(`${group} ${key + 1}`);
+    } else if (key in GROUP_LABELS) {
+      parts.push(GROUP_LABELS[key]);
+    } else {
+      parts.push(i === 0 ? fieldLabel(key) : genericLabel(key));
+    }
+  });
+  return parts.filter(Boolean).join(" ");
+}
+
+/** Flatten DRF errors (possibly nested in objects and lists) into "Label: message" lines. */
+function collect(value: unknown, keys: (string | number)[], out: string[]) {
+  if (value === null || value === undefined) return;
+  if (typeof value === "string") {
+    const last = keys[keys.length - 1];
+    const plain = last === undefined || last === "detail" || last === "non_field_errors";
+    out.push(plain ? value : `${pathLabel(keys)}: ${value}`);
+  } else if (Array.isArray(value)) {
+    if (value.every((v) => typeof v === "string")) collect(value.join(" "), keys, out);
+    else value.forEach((v, i) => collect(v, [...keys, i], out));
+  } else if (typeof value === "object") {
+    for (const [key, v] of Object.entries(value as Record<string, unknown>)) collect(v, [...keys, key], out);
+  } else {
+    out.push(String(value));
+  }
 }
 
 /** Turn a DRF error response into readable lines. */
 export function errorLines(err: unknown): string[] {
   if (err instanceof ApiError && err.body && typeof err.body === "object") {
-    return Object.entries(err.body as Record<string, unknown>).map(([field, msgs]) => {
-      const text = Array.isArray(msgs) ? msgs.join(" ") : String(msgs);
-      return field === "detail" || field === "non_field_errors" ? text : `${fieldLabel(field)}: ${text}`;
-    });
+    const out: string[] = [];
+    collect(err.body, [], out);
+    if (out.length) return out;
   }
   return [err instanceof Error ? err.message : "Something went wrong"];
 }

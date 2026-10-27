@@ -97,7 +97,11 @@ def test_registration_cannot_create_suspended_or_extra_fields(api, db):
 # --- Subscription status ---------------------------------------------------
 
 def test_my_subscription_shows_plan_days_and_usage(api, admin_a, make_user, school_a):
-    make_user("s1", Role.STUDENT, school_a)
+    from apps.students.models import Student
+
+    Student.objects.create(tenant=school_a, admission_no="1", first_name="Ali", gender="male")
+    Student.objects.create(tenant=school_a, admission_no="2", first_name="Old", gender="male", status="left")
+    make_user("s1", Role.STUDENT, school_a)  # a login is not an admission
     make_user("t1", Role.TEACHER, school_a)
     res = auth(api, admin_a).get("/api/subscription/")
     assert res.status_code == 200
@@ -120,10 +124,9 @@ def test_expired_subscription_blocks_modules_but_not_billing(api, admin_a, schoo
     assert api.get("/api/auth/me/").status_code == 200
 
 
-def test_limit_on_staff_and_students(api, admin_a, school_a):
+def test_limit_on_staff(api, admin_a, school_a):
     plan = school_a.subscription.plan
     plan.max_staff = 2
-    plan.max_students = 1
     plan.save()
     api = auth(api, admin_a)
 
@@ -134,20 +137,20 @@ def test_limit_on_staff_and_students(api, admin_a, school_a):
     res = add("t2", "teacher")
     assert res.status_code == 402
     assert "allows up to 2" in res.json()["detail"]
-    assert add("s1", "student").status_code == 201
-    assert add("s2", "student").status_code == 402
     assert add("p1", "parent").status_code == 201  # parents are not limited
+    assert add("s1", "student").status_code == 201  # student logins are not limited here
 
     # Deactivating frees a seat; reactivating is checked again.
-    s1 = User.objects.get(username="s1")
-    assert api.delete(f"/api/users/{s1.pk}/").status_code == 204
-    assert add("s2", "student").status_code == 201
-    assert api.patch(f"/api/users/{s1.pk}/", {"is_active": True}, format="json").status_code == 402
-    # Switching a parent to student is checked too.
+    t1 = User.objects.get(username="t1")
+    assert api.delete(f"/api/users/{t1.pk}/").status_code == 204
+    assert add("t2", "teacher").status_code == 201
+    assert api.patch(f"/api/users/{t1.pk}/", {"is_active": True}, format="json").status_code == 402
+    # Switching a parent to teacher is checked too.
     p1 = User.objects.get(username="p1")
-    assert api.patch(f"/api/users/{p1.pk}/", {"role": "student"}, format="json").status_code == 402
+    assert api.patch(f"/api/users/{p1.pk}/", {"role": "teacher"}, format="json").status_code == 402
     # Editing an already-counted user is fine.
-    assert api.patch(f"/api/users/{s1.pk}/", {"first_name": "X"}, format="json").status_code == 200
+    t2 = User.objects.get(username="t2")
+    assert api.patch(f"/api/users/{t2.pk}/", {"first_name": "X"}, format="json").status_code == 200
 
 
 def test_feature_gating(rf, admin_a, school_a):

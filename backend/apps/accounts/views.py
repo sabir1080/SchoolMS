@@ -9,7 +9,7 @@ from apps.core.mixins import TenantScopedViewSetMixin
 from apps.core.permissions import IsInstituteAdmin
 from apps.subscriptions.gating import check_limit
 
-from .models import STAFF_ROLES, Role, User
+from .models import STAFF_ROLES, User
 from .throttles import LoginAccountThrottle, LoginIPThrottle
 from .serializers import (
     ChangePasswordSerializer,
@@ -63,8 +63,9 @@ class ChangePasswordView(GenericAPIView):
         return Response({"detail": "Password changed."})
 
 
-# Which plan limit applies to each role.
-LIMIT_FOR_ROLE = {**{role: ("max_staff", STAFF_ROLES) for role in STAFF_ROLES}, Role.STUDENT: ("max_students", (Role.STUDENT,))}
+# Which plan limit applies to each role. Students are limited by their admission
+# records (apps.students), not by their logins.
+LIMIT_FOR_ROLE = {role: ("max_staff", STAFF_ROLES) for role in STAFF_ROLES}
 
 
 class UserViewSet(TenantScopedViewSetMixin, viewsets.ModelViewSet):

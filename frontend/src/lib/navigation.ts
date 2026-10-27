@@ -12,13 +12,14 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   super_admin: [{ label: "Institutes", href: "/platform/tenants" }, ACCOUNT],
   admin: [
     { label: "Dashboard", href: "/dashboard" },
+    { label: "Students", href: "/students" },
     { label: "Academic setup", href: "/academics" },
     { label: "Users", href: "/users" },
     { label: "Institute settings", href: "/settings" },
     { label: "Plan & Billing", href: "/billing" },
     ACCOUNT,
   ],
-  teacher: [{ label: "Dashboard", href: "/dashboard" }, ACCOUNT],
+  teacher: [{ label: "Dashboard", href: "/dashboard" }, { label: "Students", href: "/students" }, ACCOUNT],
   student: [{ label: "Dashboard", href: "/dashboard" }, ACCOUNT],
   parent: [{ label: "Dashboard", href: "/dashboard" }, ACCOUNT],
 };

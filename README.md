@@ -22,6 +22,7 @@ backend/
   apps/accounts/       Users, roles, institute-code login, institute user management
   apps/subscriptions/  SaaS plans, prices, subscriptions, trial, feature gating, plan limits, payments
   apps/academics/      Sessions, programs (class/course), sections (section/batch), subjects
+  apps/students/       Students, guardians (shared by siblings), enrollments, student/parent portals
   tests/
 frontend/
   src/lib/             API client, auth context, navigation, regions
@@ -75,6 +76,18 @@ Shared database, every institute-owned row has a `tenant_id`.
 - Admins edit (bulk "one per line" add for programs and subjects); teachers can read. Items in use
   cannot be deleted (mark them inactive instead). Requires the `academics` plan feature.
 
+## Students
+
+- Admission form: student details, automatic admission number (1, 2, 3 ... per institute; a manual
+  number can be typed), optional class/section + roll number, and guardians.
+- A guardian whose phone already exists in the institute is reused, so siblings share one parent.
+- Enrollment = a student's section for one session; changing class keeps the history. Roll numbers
+  are unique within a section.
+- Statuses: active, left, graduated, suspended. Only active students count toward `max_students`,
+  and a student's login works only while active.
+- Admins can create student and parent logins; parents see their children and students their own
+  profile on the dashboard. Teachers can view students; only admins can change them.
+
 ## Roles
 
 | Role | Tenant | Can do (so far) |
@@ -101,6 +114,10 @@ Shared database, every institute-owned row has a `tenant_id`.
 | CRUD | `/api/academics/sessions/`, `programs/`, `sections/`, `subjects/` | admin (teachers read) |
 | POST | `/api/academics/programs/bulk-create/`, `subjects/bulk-create/` (`names`) | institute admin |
 | POST | `/api/academics/programs/reorder/` (`ids` in display order) | institute admin |
+| CRUD | `/api/students/` (`?search=`, `program`, `section`, `session`, `status`, `unassigned=1`) | admin (teachers read) |
+| POST | `/api/students/<id>/enroll/`, `create-login/`; DELETE `.../enrollments/<id>/` | institute admin |
+| GET/PATCH | `/api/guardians/` (`?phone=`), POST `/api/guardians/<id>/create-login/` | admin (teachers read) |
+| GET | `/api/me/children/` (parent), `/api/me/student/` (student) | parent / student |
 | POST | `/api/users/<id>/set-password/` | institute admin |
 | GET/POST/PATCH/DELETE | `/api/users/` | institute admin (DELETE deactivates) |
 | GET/POST/PATCH | `/api/platform/tenants/` | super admin |
@@ -151,6 +168,6 @@ before onboarding real institutes.
 
 ## Roadmap
 
-Phase 1 (MVP): ~~setup, tenants, roles, login~~ -> ~~institute code login, SaaS subscriptions~~ -> ~~passwords~~ -> ~~academic setup~~
+Phase 1 (MVP): ~~setup, tenants, roles, login~~ -> ~~institute code login, SaaS subscriptions~~ -> ~~passwords~~ -> ~~academic setup~~ -> ~~student admission & enrollment~~
 -> student admission -> enrollment -> attendance -> fees & invoices -> dashboard
 -> payment gateways (JazzCash, Easypaisa, Safepay, Stripe).

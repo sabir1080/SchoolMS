@@ -41,5 +41,5 @@ and tuition centers). See README.md for stack, structure and API.
 ## Roadmap
 
 Phase 1: setup/roles/login ✅ → institute code login + SaaS subscriptions ✅ → passwords ✅ →
-academic setup ✅ → student admission → enrollment → attendance → fees & invoices →
+academic setup ✅ → student admission + enrollment ✅ → attendance → fees & invoices →
 dashboard → payment gateways (JazzCash, Easypaisa, Safepay, Stripe).
