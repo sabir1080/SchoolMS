@@ -36,6 +36,7 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { label: "Homework", href: "/homework", feature: "homework" },
     { label: "Exams", href: "/exams", feature: "exams" },
     { label: "Students", href: "/students", feature: "students" },
+    { label: "My salary slips", href: "/my-payslips", feature: "payroll" },
     ACCOUNT,
   ],
   student: [{ label: "Dashboard", href: "/dashboard" }, ACCOUNT],
