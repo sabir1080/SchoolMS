@@ -10,6 +10,7 @@ from apps.core.permissions import IsInstituteAdmin
 from apps.subscriptions.gating import check_limit
 
 from .models import STAFF_ROLES, Role, User
+from .throttles import LoginAccountThrottle, LoginIPThrottle
 from .serializers import (
     ChangePasswordSerializer,
     InstituteLoginSerializer,
@@ -23,7 +24,7 @@ from .serializers import (
 class LoginView(GenericAPIView):
     authentication_classes = []
     permission_classes = [AllowAny]
-    throttle_scope = "login"
+    throttle_classes = [LoginAccountThrottle, LoginIPThrottle]
 
     def get_authenticate_header(self, request):
         # Makes DRF answer failed logins with 401 instead of 403.

@@ -118,9 +118,20 @@ def test_non_super_admin_must_belong_to_a_tenant():
         User.objects.create_user(username="orphan", password=PASSWORD, role=Role.TEACHER)
 
 
-def test_login_is_rate_limited(api, admin_a, monkeypatch):
-    from rest_framework.throttling import ScopedRateThrottle
+def test_login_is_rate_limited_per_account(api, admin_a, make_user, school_a, monkeypatch):
+    from apps.accounts.throttles import LoginAccountThrottle
 
-    monkeypatch.setattr(ScopedRateThrottle, "THROTTLE_RATES", {"login": "3/min"})
+    monkeypatch.setattr(LoginAccountThrottle, "THROTTLE_RATES", {"login": "3/min"})
     codes = [login(api, "alpha", "admin_a", "bad").status_code for _ in range(4)]
     assert codes == [401, 401, 401, 429]
+    # Other people on the same connection can still log in.
+    make_user("t1", Role.TEACHER, school_a)
+    assert login(api, "alpha", "t1").status_code == 200
+
+
+def test_login_ip_cap(api, admin_a, monkeypatch):
+    from apps.accounts.throttles import LoginIPThrottle
+
+    monkeypatch.setattr(LoginIPThrottle, "THROTTLE_RATES", {"login_ip": "2/min"})
+    codes = [login(api, "alpha", f"user{i}", "bad").status_code for i in range(3)]
+    assert codes == [401, 401, 429]

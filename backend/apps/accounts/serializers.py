@@ -64,7 +64,9 @@ class PlatformLoginSerializer(serializers.Serializer):
 class TenantSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Tenant
-        fields = ["id", "name", "slug", "institute_type", "country", "currency", "timezone", "password_policy"]
+        fields = ["id", "name", "slug", "institute_type", "country", "currency", "timezone", "password_policy",
+            "program_label", "section_label",
+        ]
 
 
 class MeSerializer(serializers.ModelSerializer):

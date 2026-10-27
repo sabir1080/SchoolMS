@@ -21,6 +21,7 @@ backend/
   apps/tenants/        Institutes (tenants), institute code lookup, self-registration, platform API
   apps/accounts/       Users, roles, institute-code login, institute user management
   apps/subscriptions/  SaaS plans, prices, subscriptions, trial, feature gating, plan limits, payments
+  apps/academics/      Sessions, programs (class/course), sections (section/batch), subjects
   tests/
 frontend/
   src/lib/             API client, auth context, navigation, regions
@@ -64,6 +65,16 @@ Shared database, every institute-owned row has a `tenant_id`.
 - Users change their own password; admins reset their users' passwords; the super admin can reset an
   institute admin's password. Email "forgot password" comes with the alerts module (Phase 2).
 
+## Academic setup
+
+- **Session**: academic year/term (one is "current"; the first one added becomes current).
+- **Program**: class, grade, course or degree program. **Section**: section, batch or group of a
+  program in one session, with an optional class teacher and capacity. **Subject**: linked to programs.
+- Names follow the institute type (school: Class/Section, coaching: Course/Batch, university:
+  Program/Section, tuition: Class/Batch) and can be renamed in Institute settings.
+- Admins edit (bulk "one per line" add for programs and subjects); teachers can read. Items in use
+  cannot be deleted (mark them inactive instead). Requires the `academics` plan feature.
+
 ## Roles
 
 | Role | Tenant | Can do (so far) |
@@ -86,7 +97,9 @@ Shared database, every institute-owned row has a `tenant_id`.
 | GET | `/api/auth/me/` | logged-in user |
 | POST | `/api/auth/change-password/` (`current_password`, `new_password`) | any logged-in user |
 | GET | `/api/subscription/` | institute users (works after expiry) |
-| GET/PATCH | `/api/institute/settings/` | institute admin (details + password policy) |
+| GET/PATCH | `/api/institute/settings/` | institute admin (details, password policy, labels) |
+| CRUD | `/api/academics/sessions/`, `programs/`, `sections/`, `subjects/` | admin (teachers read) |
+| POST | `/api/academics/programs/bulk-create/`, `subjects/bulk-create/` (`names`) | institute admin |
 | POST | `/api/users/<id>/set-password/` | institute admin |
 | GET/POST/PATCH/DELETE | `/api/users/` | institute admin (DELETE deactivates) |
 | GET/POST/PATCH | `/api/platform/tenants/` | super admin |
@@ -95,7 +108,8 @@ Shared database, every institute-owned row has a `tenant_id`.
 | GET | `/api/platform/tenants/<id>/payments/` | super admin |
 | POST | `/api/platform/tenants/<id>/reset-admin-password/` | super admin |
 
-Login, lookup and registration are rate-limited.
+Login, lookup and registration are rate-limited (login: per account and IP, plus a looser per-IP cap so a
+school computer lab can log in together). List endpoints accept `?page_size=` (max 500).
 
 ## Local development
 
@@ -136,6 +150,6 @@ before onboarding real institutes.
 
 ## Roadmap
 
-Phase 1 (MVP): ~~setup, tenants, roles, login~~ -> ~~institute code login, SaaS subscriptions~~ -> academic setup (session, program, batch)
+Phase 1 (MVP): ~~setup, tenants, roles, login~~ -> ~~institute code login, SaaS subscriptions~~ -> ~~passwords~~ -> ~~academic setup~~
 -> student admission -> enrollment -> attendance -> fees & invoices -> dashboard
 -> payment gateways (JazzCash, Easypaisa, Safepay, Stripe).

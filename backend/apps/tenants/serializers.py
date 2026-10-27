@@ -94,7 +94,7 @@ class InstituteSettingsSerializer(serializers.ModelSerializer):
         model = Tenant
         fields = [
             "name", "slug", "institute_type", "email", "phone", "address",
-            "country", "currency", "timezone", "password_policy",
+            "country", "currency", "timezone", "password_policy", "program_label", "section_label",
         ]
         read_only_fields = ["slug", "institute_type", "country", "currency", "timezone"]
 

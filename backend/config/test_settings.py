@@ -17,5 +17,10 @@ PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
 REST_FRAMEWORK = {
     **REST_FRAMEWORK,
-    "DEFAULT_THROTTLE_RATES": {"login": "1000/min", "lookup": "1000/min", "register": "1000/min"},
+    "DEFAULT_THROTTLE_RATES": {
+        "login": "1000/min",
+        "login_ip": "1000/min",
+        "lookup": "1000/min",
+        "register": "1000/min",
+    },
 }

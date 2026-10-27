@@ -15,6 +15,8 @@ export interface Tenant {
   currency: string;
   timezone: string;
   password_policy: PasswordPolicy;
+  program_label: string;
+  section_label: string;
 }
 
 export type PasswordPolicy = "easy" | "standard" | "strong";
@@ -171,4 +173,11 @@ export function formatMoney(amount: string | number, currency: string) {
   } catch {
     return `${currency} ${amount}`;
   }
+}
+
+/** Fetch every row of a paginated list endpoint (up to 500). */
+export async function apiList<T>(path: string): Promise<T[]> {
+  const sep = path.includes("?") ? "&" : "?";
+  const data = await api<{ results: T[] }>(`${path}${sep}page_size=500`);
+  return data.results;
 }

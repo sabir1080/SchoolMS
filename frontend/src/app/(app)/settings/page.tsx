@@ -6,6 +6,7 @@ import { Button, Card, ErrorBox, Field } from "@/components/ui";
 import { api, type PasswordPolicy } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { POLICY_OPTIONS } from "@/lib/passwords";
+import { defaultTermsFor } from "@/lib/terms";
 
 interface InstituteSettings {
   name: string;
@@ -18,6 +19,8 @@ interface InstituteSettings {
   currency: string;
   timezone: string;
   password_policy: PasswordPolicy;
+  program_label: string;
+  section_label: string;
 }
 
 export default function SettingsPage() {
@@ -46,11 +49,11 @@ export default function SettingsPage() {
     setError(null);
     setMessage("");
     try {
-      const { name, email, phone, address, password_policy } = form;
+      const { name, email, phone, address, password_policy, program_label, section_label } = form;
       setForm(
         await api<InstituteSettings>("/api/institute/settings/", {
           method: "PATCH",
-          body: JSON.stringify({ name, email, phone, address, password_policy }),
+          body: JSON.stringify({ name, email, phone, address, password_policy, program_label, section_label }),
         }),
       );
       setMessage("Settings saved.");
@@ -87,6 +90,29 @@ export default function SettingsPage() {
           Code, country ({form.country}), currency ({form.currency}) and timezone ({form.timezone}) can be changed by
           the platform team.
         </p>
+      </Card>
+
+      <Card>
+        <h2 className="font-medium">Names used in your institute</h2>
+        <p className="mb-4 text-sm text-slate-500">
+          What do you call a class and a section? Leave empty to use the default.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field
+            label="Instead of “Class” (e.g. Course, Grade, Program)"
+            value={form.program_label}
+            onChange={set("program_label")}
+            placeholder={defaultTermsFor(form.institute_type).program}
+            maxLength={30}
+          />
+          <Field
+            label="Instead of “Section” (e.g. Batch, Group)"
+            value={form.section_label}
+            onChange={set("section_label")}
+            placeholder={defaultTermsFor(form.institute_type).section}
+            maxLength={30}
+          />
+        </div>
       </Card>
 
       <Card>

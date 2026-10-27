@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "apps.tenants",
     "apps.accounts",
     "apps.subscriptions",
+    "apps.academics",
 ]
 
 MIDDLEWARE = [
@@ -133,11 +134,11 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 25,
+    "DEFAULT_PAGINATION_CLASS": "apps.core.pagination.StandardPagination",
     "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.ScopedRateThrottle"],
     "DEFAULT_THROTTLE_RATES": {
-        "login": "10/min",
+        "login": "10/min",  # per account and IP
+        "login_ip": "120/min",  # all logins from one IP (e.g. a school computer lab)
         "lookup": "30/min",
         "register": "5/hour",
     },

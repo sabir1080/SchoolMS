@@ -1,5 +1,6 @@
 "use client";
 
+import { SetupChecklist } from "@/components/SetupChecklist";
 import { SubscriptionBanner } from "@/components/SubscriptionBanner";
 import { useAuth } from "@/lib/auth";
 import { ROLE_LABELS } from "@/lib/navigation";
@@ -20,6 +21,7 @@ export default function DashboardPage() {
           {user.tenant && ` · ${user.tenant.name}`}
         </p>
       </div>
+      <SetupChecklist />
       <div className="rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-500 dark:border-slate-700">
         Attendance and fee summaries will appear here once those modules are added.
       </div>

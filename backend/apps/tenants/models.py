@@ -29,6 +29,10 @@ class Tenant(TimeStampedModel):
     currency = models.CharField(max_length=3, default="PKR", help_text="ISO 4217 code")
     timezone = models.CharField(max_length=50, default="Asia/Karachi")
     is_active = models.BooleanField(default=True)
+    # What this institute calls a Program and a Section, e.g. "Class"/"Section" or "Course"/"Batch".
+    # Blank means the default for the institute type.
+    program_label = models.CharField(max_length=30, blank=True)
+    section_label = models.CharField(max_length=30, blank=True)
     password_policy = models.CharField(
         max_length=10, choices=PasswordPolicy.choices, default=PasswordPolicy.EASY
     )
