@@ -42,7 +42,7 @@ and tuition centers). See README.md for stack, structure and API.
 - Do not touch other services in the workspace (e.g. `tradeflow_demo`).
 - `RENDER_API_KEY` and `DATABASE_URL` (Neon) come from the environment; never print them.
 - After pushing, wait for the deploy via the Render API and check the service logs for errors.
-- Free plan has no one-off jobs. To run `seed_demo --wipe-all` on production (only when the owner
+- Free plan has no one-off jobs. To run `seed_demo` (rebuilds only the demo institute) on production (only when the owner
   asks): set env var `SEED_DEMO_COMMIT` to the deployed commit SHA, trigger a deploy of that commit,
   check the logs, then DELETE the env var. Demo institute: code `demo`, password `demo1234`.
 

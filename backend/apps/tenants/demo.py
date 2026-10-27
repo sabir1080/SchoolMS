@@ -1,7 +1,7 @@
 """A small, realistic demo institute for showing the system to clients.
 
 ``wipe_institutes`` deletes institutes with all their data (platform super admins and plans stay);
-``seed_demo`` builds "Al-Noor Model School" (code ``demo``) with students, attendance, fees and exams.
+``seed_demo`` builds "Skyline International School" (code ``demo``) with students, attendance, fees and exams.
 Random values come from a fixed seed, so every run gives the same school.
 """
 
@@ -102,8 +102,8 @@ def seed_demo(today=None):
     rng = random.Random(2026)
 
     tenant = Tenant.objects.create(
-        name="Al-Noor Model School", slug=DEMO_CODE, institute_type="school", country="PK", currency="PKR",
-        timezone="Asia/Karachi", email="info@alnoor-demo.pk", phone="042-35761234",
+        name="Skyline International School", slug=DEMO_CODE, institute_type="school", country="PK", currency="PKR",
+        timezone="Asia/Karachi", email="info@skyline-demo.pk", phone="042-35761234",
         address="12-B, Main Boulevard, Gulberg III, Lahore", password_policy="easy",
     )
     now = timezone.now()
@@ -114,7 +114,7 @@ def seed_demo(today=None):
     today = today or tenant_today(tenant)
     user = lambda username, first, last, role: User.objects.create_user(  # noqa: E731
         username=username, password=DEMO_PASSWORD, role=role, tenant=tenant, first_name=first, last_name=last,
-        email=f"{username}@alnoor-demo.pk",
+        email=f"{username}@skyline-demo.pk",
     )
     admin = user("admin", "Farhan", "Ahmed", Role.ADMIN)
 
