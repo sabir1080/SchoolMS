@@ -95,7 +95,12 @@ class PublicInstituteSerializer(BrandingFieldsMixin, serializers.ModelSerializer
 
     class Meta:
         model = Tenant
-        fields = ["name", "slug", "institute_type", "brand"]
+        fields = ["name", "slug", "institute_type", "brand", "admissions_open"]
+
+    def to_representation(self, tenant):
+        from apps.admissions.rules import admissions_open
+
+        return {**super().to_representation(tenant), "admissions_open": admissions_open(tenant)}
 
 
 class InstituteSettingsSerializer(BrandingFieldsMixin, serializers.ModelSerializer):
@@ -109,7 +114,7 @@ class InstituteSettingsSerializer(BrandingFieldsMixin, serializers.ModelSerializ
         fields = [
             "name", "slug", "institute_type", "email", "phone", "address",
             "country", "currency", "timezone", "password_policy", "program_label", "section_label",
-            "pass_percentage", "show_position", "working_days", "logo", "brand_color", "brand",
+            "pass_percentage", "show_position", "working_days", "logo", "brand_color", "brand", "admissions_open",
         ]
         read_only_fields = ["slug", "institute_type", "country", "currency", "timezone"]
         extra_kwargs = {"pass_percentage": {"min_value": 1, "max_value": 100}}

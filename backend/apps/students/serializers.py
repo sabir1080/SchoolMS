@@ -5,6 +5,7 @@ from apps.academics.models import Section
 from apps.accounts.models import User
 from apps.accounts.passwords import check_password, policy_for
 from apps.core.serializers import TenantPrimaryKeyRelatedField
+from apps.core.timeutils import tenant_today
 
 from .models import Enrollment, Guardian, Relation, Student, StudentGuardian, StudentStatus
 from .services import (
@@ -137,6 +138,7 @@ class StudentWriteSerializer(serializers.ModelSerializer):
             check_student_limit(tenant)
         if not validated_data.get("admission_no"):
             validated_data["admission_no"], validated_data["admission_seq"] = next_admission_number(tenant)
+        validated_data.setdefault("admission_date", tenant_today(tenant))
         student = Student.objects.create(tenant=tenant, **validated_data)
         self._save_guardians(student, guardians)
         if enrollment:

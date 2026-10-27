@@ -429,4 +429,21 @@ def seed_demo(today=None):
                 records = AttendanceRecord.objects.filter(section=section, date=today).values("student", "status")
                 absent_alerts(tenant, section, today, list(records), admin)
     fee_reminders(tenant, admin)
+
+    # Online admission form is open, with two applications waiting for a decision.
+    from apps.admissions.models import Application
+
+    tenant.admissions_open = True
+    tenant.save(update_fields=["admissions_open"])
+    first_class = CLASSES[0][0]
+    for number, (first, last, gender, dob, guardian, phone, note) in enumerate([
+        ("Hania", "Qureshi", "female", datetime.date(today.year - 8, 2, 14), "Kamran Qureshi", "0301-5550101", "Looking for a seat this term."),
+        ("Musa", "Siddiqui", "male", datetime.date(today.year - 8, 9, 2), "Nadia Siddiqui", "0333-5550202", ""),
+    ], start=1):
+        Application.objects.create(
+            tenant=tenant, number=number, first_name=first, last_name=last, gender=gender, date_of_birth=dob,
+            program=programs[first_class], guardian_name=guardian, guardian_phone=phone,
+            guardian_relation="father" if guardian.startswith("Kamran") else "mother",
+            address="Gulberg, Lahore", message=note,
+        )
     return tenant

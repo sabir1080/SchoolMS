@@ -73,6 +73,7 @@ export interface SavedInstitute {
   name: string;
   slug: string;
   brand?: Brand;
+  admissions_open?: boolean;
 }
 
 export interface LoginResponse {

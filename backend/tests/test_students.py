@@ -292,3 +292,25 @@ def test_usage_counts_active_students(api, admin_a, setup):
     admit(api, status="left")
     assert api.get("/api/subscription/").json()["usage"]["students"] == 1
 
+
+
+def test_new_student_dates_use_institute_day(api, admin_a, school_a, monkeypatch):
+    """The server runs on UTC; just after midnight in the institute it is already the next day there."""
+    import datetime
+
+    from apps.academics.models import AcademicSession, Program, Section
+    from apps.students import serializers as student_serializers
+    from apps.students import services as student_services
+
+    day = datetime.date(2026, 10, 28)
+    monkeypatch.setattr(student_serializers, "tenant_today", lambda tenant: day)
+    monkeypatch.setattr(student_services, "tenant_today", lambda tenant: day)
+    session = AcademicSession.objects.create(tenant=school_a, name="S", start_date=day, end_date=day + datetime.timedelta(days=300), is_current=True)
+    sec = Section.objects.create(tenant=school_a, program=Program.objects.create(tenant=school_a, name="C1"), session=session, name="A")
+    api.force_authenticate(admin_a)
+    res = api.post("/api/students/", {"first_name": "Zara", "gender": "female", "enrollment": {"section": sec.pk}}, format="json")
+    assert res.status_code == 201, res.json()
+    from apps.students.models import Student
+
+    student = Student.objects.get(first_name="Zara")
+    assert student.admission_date == day and student.enrollments.get().enrolled_on == day

@@ -95,7 +95,7 @@ export default function LoginPage() {
 async function lookup(code: string): Promise<SavedInstitute> {
   const data = await api<SavedInstitute>(`/api/public/institutes/${encodeURIComponent(code.trim().toLowerCase())}/`);
   savedInstitute.set({ name: data.name, slug: data.slug });
-  return { name: data.name, slug: data.slug, brand: data.brand };
+  return { name: data.name, slug: data.slug, brand: data.brand, admissions_open: data.admissions_open };
 }
 
 function CodeStep({ notice, onFound }: { notice: string; onFound: (institute: SavedInstitute) => void }) {
@@ -209,6 +209,14 @@ function CredentialsStep({
       <button onClick={onChange} className="w-full text-center text-sm text-brand-600 hover:underline">
         Use a different institute code
       </button>
+      {institute.admissions_open && (
+        <Link
+          href={`/apply/?code=${encodeURIComponent(institute.slug)}`}
+          className="block rounded-lg border border-brand-200 px-3 py-2 text-center text-sm font-medium text-brand-700 hover:bg-brand-50"
+        >
+          New student? Apply for admission
+        </Link>
+      )}
     </AuthCard>
   );
 }

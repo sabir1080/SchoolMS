@@ -3,6 +3,7 @@ from django.db.models import Max
 
 from apps.academics.models import AcademicSession
 from apps.accounts.models import User
+from apps.core.timeutils import tenant_today
 from apps.subscriptions.gating import check_limit
 from apps.tenants.models import Tenant
 
@@ -39,7 +40,7 @@ def enroll(student, section, roll_number=""):
     """Put the student in ``section`` for that section's session (replacing any other section that session)."""
     enrollment = Enrollment.objects.filter(student=student, session_id=section.session_id).first()
     if enrollment is None:
-        enrollment = Enrollment(tenant=student.tenant, student=student)
+        enrollment = Enrollment(tenant=student.tenant, student=student, enrolled_on=tenant_today(student.tenant))
     enrollment.section = section
     enrollment.roll_number = roll_number
     enrollment.save()

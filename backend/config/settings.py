@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "apps.payroll",
     "apps.reports",
     "apps.certificates",
+    "apps.admissions",
 ]
 
 MIDDLEWARE = [
@@ -153,6 +154,7 @@ REST_FRAMEWORK = {
         "login_ip": "120/min",  # all logins from one IP (e.g. a school computer lab)
         "lookup": "30/min",
         "register": "5/hour",
+        "admission": "20/hour",  # online admission forms from one IP
     },
 }
 

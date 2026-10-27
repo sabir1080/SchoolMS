@@ -22,5 +22,6 @@ REST_FRAMEWORK = {
         "login_ip": "1000/min",
         "lookup": "1000/min",
         "register": "1000/min",
+        "admission": "1000/min",
     },
 }

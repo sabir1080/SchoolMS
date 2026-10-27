@@ -40,6 +40,7 @@ class Tenant(TimeStampedModel):
     working_days = models.CharField(max_length=20, default="0,1,2,3,4")
     # Branding (plan feature "white_label"): a small logo kept as a data URL, and a theme colour key.
     logo = models.TextField(blank=True)
+    admissions_open = models.BooleanField(default=False, help_text="Parents can send applications from the online form")
     brand_color = models.CharField(max_length=20, default="indigo")
     password_policy = models.CharField(
         max_length=10, choices=PasswordPolicy.choices, default=PasswordPolicy.EASY

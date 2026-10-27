@@ -20,7 +20,7 @@ def test_institute_lookup_shows_name(api, school_a):
     res = api.get("/api/public/institutes/ALPHA/")
     assert res.status_code == 200
     assert res.json() == {"name": "Alpha", "slug": "alpha", "institute_type": "school",
-                          "brand": {"logo": "", "color": "indigo", "hex": "#4f46e5", "allowed": True}}
+                          "brand": {"logo": "", "color": "indigo", "hex": "#4f46e5", "allowed": True}, "admissions_open": False}
 
 
 def test_institute_lookup_unknown_and_suspended(api, school_a):

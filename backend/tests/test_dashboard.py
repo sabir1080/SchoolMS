@@ -1,4 +1,5 @@
 import datetime
+from zoneinfo import ZoneInfo
 from decimal import Decimal
 
 import pytest
@@ -10,7 +11,8 @@ from apps.attendance.models import AttendanceRecord
 from apps.fees.models import Invoice, InvoiceItem, Payment
 from apps.students.models import Enrollment, Student
 
-TODAY = timezone.localdate()
+# The institute's day (Asia/Karachi), not the server's UTC day: they differ late in the evening.
+TODAY = timezone.localdate(timezone=ZoneInfo("Asia/Karachi"))
 
 
 def auth(api, user):

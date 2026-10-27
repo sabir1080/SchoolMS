@@ -15,6 +15,7 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   admin: [
     { label: "Dashboard", href: "/dashboard" },
     { label: "Students", href: "/students", feature: "students" },
+    { label: "Admissions", href: "/admissions", feature: "admissions" },
     { label: "Attendance", href: "/attendance", feature: "attendance" },
     { label: "Timetable", href: "/timetable", feature: "timetable" },
     { label: "Homework", href: "/homework", feature: "homework" },

@@ -14,6 +14,7 @@ class Feature(models.TextChoices):
     HOMEWORK = "homework", "Homework & diary"
     PAYROLL = "payroll", "Staff & payroll"
     CERTIFICATES = "certificates", "Certificates"
+    ADMISSIONS = "admissions", "Online admission form"
     REPORTS = "reports", "Reports & analytics"
     SMS_ALERTS = "sms_alerts", "SMS / WhatsApp / Email alerts"
     WHITE_LABEL = "white_label", "White-labeling"
