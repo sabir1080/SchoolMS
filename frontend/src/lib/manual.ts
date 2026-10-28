@@ -541,6 +541,36 @@ export const MANUAL: ManualSection[] = [
       ],
     },
   },
+  {
+    id: "backup",
+    icon: "cloud",
+    audience: "admin",
+    title: { en: "Data backup and recycle bin", ur: "Data backup aur recycle bin" },
+    intro: {
+      en: "Keep your own copy of your institute's data, and bring back things deleted by mistake.",
+      ur: "Apne institute ke data ki apni copy rakhein, aur ghalti se delete hui cheezen wapas layein.",
+    },
+    steps: {
+      en: [
+        "Institute settings → Data backup → Download backup saves a file with all your data (students, fees, results, attendance, staff and settings). Keep it in Google Drive.",
+        "Download in Excel gives sheets you can open yourself: students, bills, payments, results, attendance and staff.",
+        "The card shows when you last downloaded a backup; download one every month. If your plan has expired, the same card is on Plan & Billing.",
+        "If something goes wrong with your data, send the backup file to the SchoolMS team; they restore only your institute.",
+        "Recycle bin (admin menu): a deleted student, payment, homework, exam, staff member, certificate or other record stays here for 30 days. Tap Restore to bring it back with everything deleted with it, or Delete for good.",
+      ],
+      ur: [
+        "Institute settings → Data backup → Download backup se aik file save hoti hai jis mein aap ka sara data hai (students, fees, results, haazri, staff aur settings). Ise Google Drive mein rakhein.",
+        "Download in Excel se sheets milti hain jo aap khud khol sakte hain: students, bills, payments, results, haazri aur staff.",
+        "Card par likha hota hai ke aakhri backup kab liya; har mahine aik backup lein. Plan khatam ho jaye to yehi card Plan & Billing par hota hai.",
+        "Agar data mein koi masla ho jaye to backup file SchoolMS team ko bhejein; woh sirf aap ke institute ka data wapas laate hain.",
+        "Recycle bin (admin menu): delete kiya gaya student, payment, homework, imtihan, staff, certificate waghera 30 din yahan rehta hai. Restore se woh apni sab mutaliqa cheezon ke saath wapas aa jata hai, ya Delete for good.",
+      ],
+    },
+    tip: {
+      en: "The backup file does not contain your payment gateway keys, so it is safe to keep in your own Drive.",
+      ur: "Backup file mein payment gateway ki keys nahi hotin, is liye apni Drive mein rakhna mehfooz hai.",
+    },
+  },
 ];
 
 export const FAQ: { q: Text; a: Text }[] = [
@@ -575,8 +605,8 @@ export const FAQ: { q: Text; a: Text }[] = [
   {
     q: { en: "Is our data safe?", ur: "Kya hamara data mehfooz hai?" },
     a: {
-      en: "Each institute sees only its own data. Online payments count only after the gateway confirms them, and the platform keeps backups.",
-      ur: "Har institute sirf apna data dekhta hai. Online payment tabhi maani jati hai jab gateway tasdeeq kare, aur platform backup rakhta hai.",
+      en: "Each institute sees only its own data. Online payments count only after the gateway confirms them. You can download your own backup any time, and deleted records stay in the Recycle bin for 30 days.",
+      ur: "Har institute sirf apna data dekhta hai. Online payment tabhi maani jati hai jab gateway tasdeeq kare. Aap jab chahein apna backup download kar sakte hain, aur delete hui cheezen 30 din Recycle bin mein rehti hain.",
     },
   },
 ];

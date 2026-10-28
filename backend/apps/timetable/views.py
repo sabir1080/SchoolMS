@@ -14,6 +14,7 @@ from apps.core.mixins import TenantScopedViewSetMixin
 from apps.core.permissions import AdminWriteStaffRead, HasRole
 from apps.core.timeutils import tenant_today
 from apps.exams.views import my_student
+from apps.recyclebin.mixins import RecycleBinMixin
 from apps.students.serializers import current_enrollment
 from apps.subscriptions.features import Feature
 from apps.subscriptions.gating import ActiveSubscription, RequiresFeature
@@ -35,7 +36,7 @@ def timetable_payload(tenant, entries):
     }
 
 
-class PeriodViewSet(TenantScopedViewSetMixin, viewsets.ModelViewSet):
+class PeriodViewSet(RecycleBinMixin, TenantScopedViewSetMixin, viewsets.ModelViewSet):
     """The bell schedule. Admins edit; teachers read."""
 
     queryset = Period.objects.all()
@@ -71,7 +72,7 @@ class PeriodViewSet(TenantScopedViewSetMixin, viewsets.ModelViewSet):
         return Response(PeriodSerializer(Period.objects.filter(tenant=tenant), many=True).data)
 
 
-class EntryViewSet(TenantScopedViewSetMixin, viewsets.ModelViewSet):
+class EntryViewSet(RecycleBinMixin, TenantScopedViewSetMixin, viewsets.ModelViewSet):
     """Timetable entries. ?section= for a class, ?teacher= (or "me") for a teacher. Admins edit."""
 
     queryset = TimetableEntry.objects.select_related("section__program", "period", "subject", "teacher")

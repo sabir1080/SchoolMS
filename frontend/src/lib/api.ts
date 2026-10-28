@@ -197,7 +197,8 @@ async function refreshAccessToken(): Promise<boolean> {
 /** Call the backend API. Adds the JWT and retries once after refreshing an expired token. */
 export async function api<T = unknown>(path: string, init: RequestInit = {}, retry = true): Promise<T> {
   const headers = new Headers(init.headers);
-  if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+  // File uploads (FormData) set their own multipart Content-Type.
+  if (init.body && !(init.body instanceof FormData) && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
   if (tokens.access) headers.set("Authorization", `Bearer ${tokens.access}`);
 
   let res: Response;

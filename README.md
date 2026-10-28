@@ -254,6 +254,19 @@ Shared database, every institute-owned row has a `tenant_id`.
   hashes and gateway keys: keep it private.
 - Restore into an empty, migrated database: `python manage.py restore_backup <file>` (refuses a database
   that already has institutes). `python manage.py create_backup <file>` makes one from the command line.
+- Per institute (`apps.backups.institute`): the institute admin downloads its own file (gateway keys and Twilio
+  token blanked) and an Excel workbook from Institute settings → Data backup (also on Plan & Billing when expired).
+  The owner downloads one institute (with keys) and restores ONLY that institute from its file or from a full
+  backup: preview first, then the institute code to confirm. The current data is saved as an `InstituteSnapshot`
+  (last 5 kept) so a restore can be undone. Subscription, payments, agreements and push devices are not touched;
+  blank secrets keep their current values.
+
+## Recycle bin
+
+- Deletes in institute modules go through `apps.recyclebin.services.trash()` (or `RecycleBinMixin`): the object and
+  everything it cascades to is stored in `DeletedItem` for 30 days (`KEEP_DAYS`). Admins restore it at `/recycle-bin`
+  with the same IDs; SET_NULL links are re-linked and invoice totals refreshed. A clash (same number reused) gives a
+  clear error instead of a partial restore.
 
 ## Promotion to the next class / session
 
@@ -357,6 +370,10 @@ the demo. `--wipe-all` first deletes **every** institute and its data (super adm
 | GET/POST | `/api/push/` (subscribe; `action`: `test`, `unsubscribe`) | logged-in institute users |
 | GET | `/api/platform/overview/` | super admin |
 | GET | `/api/platform/backup/` (download `.json.gz`) | super admin |
+| GET | `/api/institute/backup/`, `/api/institute/backup/excel/`, `/api/institute/backup/status/` | institute admin |
+| GET | `/api/platform/tenants/<id>/backup/`; POST `.../restore/` (multipart `file`, optional `confirm_code`) | super admin |
+| GET/POST | `/api/platform/tenants/<id>/snapshots/`, `.../snapshots/<sid>/` (download / put back with `confirm_code`) | super admin |
+| GET | `/api/recycle-bin/`; POST/DELETE `/api/recycle-bin/<id>/` (restore / delete for good) | institute admin |
 | GET | `/api/public/agreements/trial/` | public |
 | GET/POST | `/api/agreements/` (sign), `/api/agreements/preview/?plan=&cycle=`, POST `/api/agreements/accept-trial/` | institute admin |
 | GET/POST | `/api/agreements/<id>/` (`payment_reference`, `action: cancel`) | institute admin |

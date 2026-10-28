@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { BrandingSettings } from "@/components/BrandingSettings";
+import { DataBackupCard } from "@/components/backups/DataBackupCard";
 import { PaymentSettings } from "@/components/payments/PaymentSettings";
 import { Button, Card, ErrorBox, Field } from "@/components/ui";
 import { api, type PasswordPolicy } from "@/lib/api";
@@ -156,6 +157,7 @@ export default function SettingsPage() {
         </Button>
       </form>
       <BrandingSettings />
+      <DataBackupCard />
       <PaymentSettings />
     </div>
   );

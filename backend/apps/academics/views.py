@@ -7,6 +7,7 @@ from rest_framework.response import Response
 
 from apps.core.mixins import TenantScopedViewSetMixin
 from apps.core.permissions import AdminWriteStaffRead
+from apps.recyclebin.services import trash
 from apps.subscriptions.features import Feature
 
 from .models import AcademicSession, Program, Section, Subject
@@ -28,7 +29,7 @@ class AcademicsViewSet(TenantScopedViewSetMixin, viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         try:
-            instance.delete()
+            trash(instance, self.request.user)
         except ProtectedError:
             raise ValidationError(
                 f'"{instance}" is in use and cannot be deleted. Mark it inactive instead.', code="in_use"

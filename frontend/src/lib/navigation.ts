@@ -34,6 +34,7 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { label: "Certificates", href: "/certificates", feature: "certificates" },
     { label: "Academic setup", href: "/academics", feature: "academics" },
     { label: "Users", href: "/users" },
+    { label: "Recycle bin", href: "/recycle-bin" },
     { label: "Institute settings", href: "/settings" },
     { label: "Plan & Billing", href: "/billing" },
     HELP,

@@ -80,7 +80,7 @@ export default function StudentViewPage() {
   }
 
   async function onDelete() {
-    if (!confirm(`Delete ${student!.full_name} permanently? To keep the record, edit and mark as Left instead.`)) return;
+    if (!confirm(`Delete ${student!.full_name}? It stays in the Recycle bin for 30 days. To keep the record, edit and mark as Left instead.`)) return;
     try {
       await api(`/api/students/${student!.id}/`, { method: "DELETE" });
       router.replace("/students");

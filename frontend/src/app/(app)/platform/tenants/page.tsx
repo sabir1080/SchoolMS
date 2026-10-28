@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { TenantAgreements } from "@/components/agreements/TenantAgreements";
+import { TenantBackups } from "@/components/backups/TenantBackups";
 import { Button, Card, ErrorBox, Field, PasswordField, SelectField } from "@/components/ui";
 import { api, formatMoney, type Plan, type Subscription, type Tenant } from "@/lib/api";
 import { formatDate, STATUS_LABELS } from "@/lib/navigation";
@@ -229,6 +230,8 @@ function ManageSubscription({ tenant, plans, onSaved }: { tenant: PlatformTenant
       </form>
 
       <TenantAgreements tenantId={tenant.id} />
+
+      <TenantBackups tenantId={tenant.id} code={tenant.slug} />
 
       <div>
         <h3 className="mb-2 text-sm font-medium">Payment history</h3>

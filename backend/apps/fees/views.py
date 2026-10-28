@@ -15,6 +15,8 @@ from apps.core.mixins import TenantScopedViewSetMixin
 from apps.core.permissions import HasRole, IsInstituteAdmin
 from apps.core.timeutils import parse_month, tenant_today
 from apps.messaging.alerts import payment_alert
+from apps.recyclebin.mixins import RecycleBinMixin
+from apps.recyclebin.services import trash
 from apps.students.models import Enrollment
 from apps.subscriptions.features import Feature
 from apps.subscriptions.gating import ActiveSubscription, RequiresFeature
@@ -59,7 +61,7 @@ class FeesAPIView(APIView):
         return self.request.user.tenant
 
 
-class FeeHeadViewSet(BulkCreateByNameMixin, FeesViewSetMixin, viewsets.ModelViewSet):
+class FeeHeadViewSet(RecycleBinMixin, BulkCreateByNameMixin, FeesViewSetMixin, viewsets.ModelViewSet):
     queryset = FeeHead.objects.all()
     serializer_class = FeeHeadSerializer
 
@@ -88,7 +90,7 @@ class FeeRatesView(FeesAPIView):
         return Response(self.rates(session.pk))
 
 
-class StudentDiscountViewSet(FeesViewSetMixin, viewsets.ModelViewSet):
+class StudentDiscountViewSet(RecycleBinMixin, FeesViewSetMixin, viewsets.ModelViewSet):
     queryset = StudentDiscount.objects.select_related("fee_head")
     serializer_class = StudentDiscountSerializer
 
@@ -194,7 +196,7 @@ class PaymentViewSet(FeesViewSetMixin, mixins.DestroyModelMixin, viewsets.Generi
     def perform_destroy(self, instance):
         with transaction.atomic():
             invoice = instance.invoice
-            instance.delete()
+            trash(instance, self.request.user)
             invoice.refresh_totals()
 
 

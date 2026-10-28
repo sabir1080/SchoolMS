@@ -7,6 +7,7 @@ from apps.core.mixins import TenantScopedViewSetMixin
 from apps.core.permissions import IsInstituteAdmin
 from apps.core.serializers import TenantPrimaryKeyRelatedField
 from apps.core.timeutils import tenant_today
+from apps.recyclebin.mixins import RecycleBinMixin
 from apps.students.models import Student, StudentGuardian, StudentStatus
 from apps.students.serializers import current_enrollment
 from apps.students.services import lock_tenant, sync_login_status
@@ -63,7 +64,7 @@ def snapshot(student, extra):
     }
 
 
-class CertificateViewSet(TenantScopedViewSetMixin, mixins.CreateModelMixin, mixins.ListModelMixin,
+class CertificateViewSet(RecycleBinMixin, TenantScopedViewSetMixin, mixins.CreateModelMixin, mixins.ListModelMixin,
                          mixins.RetrieveModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
     """Issue, list (?student=), reprint and cancel certificates. Admins only."""
 

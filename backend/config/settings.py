@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     "apps.admissions",
     "apps.backups",
     "apps.agreements",
+    "apps.recyclebin",
 ]
 
 MIDDLEWARE = [

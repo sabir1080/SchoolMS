@@ -12,12 +12,14 @@ from apps.accounts.models import Role
 from apps.attendance.views import roll_sort_key, section_label
 from apps.core.mixins import TenantScopedViewSetMixin
 from apps.core.permissions import AdminWriteStaffRead, HasRole
+from apps.recyclebin.mixins import RecycleBinMixin
+from apps.recyclebin.services import trash
 from apps.students.models import Enrollment, Student, StudentStatus
 from apps.students.serializers import current_enrollment
 from apps.students.services import current_session
 from apps.subscriptions.features import Feature
-from apps.timetable.models import TimetableEntry
 from apps.subscriptions.gating import ActiveSubscription, RequiresFeature
+from apps.timetable.models import TimetableEntry
 
 from .models import CombinedResult, CombinedStatus, Exam, ExamStatus, ExamSubject, GradeBand, Mark, grading_scale
 from .serializers import (
@@ -79,7 +81,7 @@ class ExamViewSet(TenantScopedViewSetMixin, viewsets.ModelViewSet):
         if Mark.objects.filter(paper__exam=instance).exists():
             raise ValidationError("This exam already has marks and cannot be deleted.")
         try:
-            instance.delete()
+            trash(instance, self.request.user)
         except ProtectedError:
             raise ValidationError("This exam is part of an annual result. Remove it there first.")
 
@@ -339,7 +341,7 @@ class ResultsView(MarksView):
         return Response(exam_result_payload(exam, section, bool(request.query_params.get("attendance"))))
 
 
-class CombinedResultViewSet(TenantScopedViewSetMixin, viewsets.ModelViewSet):
+class CombinedResultViewSet(RecycleBinMixin, TenantScopedViewSetMixin, viewsets.ModelViewSet):
     """Annual (combined) results: exams of a session with weights. Admins edit; teachers read."""
 
     queryset = CombinedResult.objects.select_related("session").prefetch_related("components__exam")

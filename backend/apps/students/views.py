@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from apps.accounts.models import Role
 from apps.core.mixins import TenantScopedViewSetMixin
 from apps.core.permissions import AdminWriteStaffRead, HasRole
+from apps.recyclebin.services import trash
 from apps.subscriptions.features import Feature
 from apps.subscriptions.gating import ActiveSubscription, RequiresFeature
 
@@ -97,11 +98,8 @@ class StudentViewSet(TenantScopedViewSetMixin, viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         try:
-            with transaction.atomic():
-                user = instance.user
-                instance.delete()
-                if user is not None:
-                    user.delete()
+            # The student's login goes too (and comes back if the student is restored).
+            trash([instance, instance.user], self.request.user)
         except ProtectedError:
             raise ValidationError("This student has records and cannot be deleted. Mark them as Left instead.")
 

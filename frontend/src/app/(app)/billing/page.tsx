@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { BillingAgreements } from "@/components/agreements/BillingAgreements";
+import { DataBackupCard } from "@/components/backups/DataBackupCard";
 import { Button, Card, ErrorBox } from "@/components/ui";
 import { api, formatMoney, type Plan, type PlanPrice } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -155,6 +156,8 @@ export default function BillingPage() {
       <div id="agreements" className="scroll-mt-4">
         <BillingAgreements plans={plans} choose={choose} onChosen={() => setChoose(null)} />
       </div>
+
+      {!subscription?.is_usable && <DataBackupCard />}
     </div>
   );
 }

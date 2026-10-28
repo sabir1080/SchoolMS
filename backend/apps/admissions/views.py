@@ -14,6 +14,7 @@ from apps.core.serializers import TenantPrimaryKeyRelatedField
 from apps.fees.services import next_number
 from apps.messaging.models import Kind
 from apps.messaging.services import queue_and_send
+from apps.recyclebin.mixins import RecycleBinMixin
 from apps.students.serializers import StudentWriteSerializer
 from apps.students.services import lock_tenant
 from apps.subscriptions.features import Feature
@@ -80,7 +81,7 @@ class ApproveSerializer(serializers.Serializer):
     admission_no = serializers.CharField(max_length=30, required=False, allow_blank=True, default="")
 
 
-class ApplicationViewSet(TenantScopedViewSetMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin,
+class ApplicationViewSet(RecycleBinMixin, TenantScopedViewSetMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin,
                          mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
     """Admins review applications: admit (creates the student) or decline."""
 

@@ -14,6 +14,7 @@ from apps.core.mixins import TenantScopedViewSetMixin
 from apps.core.permissions import HasRole
 from apps.core.timeutils import tenant_today
 from apps.exams.views import my_student
+from apps.recyclebin.services import trash
 from apps.students.serializers import current_enrollment
 from apps.subscriptions.features import Feature
 from apps.subscriptions.gating import ActiveSubscription, RequiresFeature
@@ -81,7 +82,7 @@ class HomeworkViewSet(TenantScopedViewSetMixin, viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         self.check_owner(instance)
-        instance.delete()
+        trash(instance, self.request.user)
 
     @action(detail=False)
     def sections(self, request):

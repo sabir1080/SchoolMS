@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from apps.accounts.models import Role
 from apps.core.mixins import TenantScopedViewSetMixin
 from apps.core.permissions import HasRole, IsInstituteAdmin
+from apps.recyclebin.services import trash
 from apps.subscriptions.features import Feature
 from apps.subscriptions.gating import ActiveSubscription, RequiresFeature
 
@@ -31,7 +32,7 @@ class EmployeeViewSet(TenantScopedViewSetMixin, viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         try:
-            instance.delete()
+            trash(instance, self.request.user)
         except ProtectedError:
             raise ValidationError("This staff member has salary records. Untick “Active” instead of deleting.")
 
@@ -67,7 +68,7 @@ class PayslipViewSet(TenantScopedViewSetMixin, mixins.ListModelMixin, mixins.Ret
     def perform_destroy(self, instance):
         if instance.status == PayslipStatus.PAID:
             raise ValidationError("A paid salary cannot be deleted. Undo the payment first.")
-        instance.delete()
+        trash(instance, self.request.user)
 
     @action(detail=False, methods=["post"])
     def generate(self, request):

@@ -7,7 +7,6 @@ from apps.admissions.models import Application
 from apps.core.timeutils import tenant_today
 from apps.messaging.models import Message
 from apps.students.models import Student
-from apps.subscriptions.models import Plan
 
 FORM = {
     "first_name": "Zara", "last_name": "Ahmed", "gender": "female", "date_of_birth": "2018-03-04",

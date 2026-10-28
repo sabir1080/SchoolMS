@@ -66,7 +66,8 @@ certificates ✅ → white-label logo + theme colour ✅ (`apps.tenants.branding
 Then: fee receipts + payment message ✅ → online admission form ✅ → student photo + ID cards ✅ →
 platform owner dashboard ✅ → PWA + Web Push notifications ✅ → Safepay + Stripe ✅ → backups ✅
 (`apps.backups`: download on platform overview, `restore_backup` command) → subscription agreements ✅
-(`apps.agreements`: trial accepted at registration, sign before paying, activated by record-payment). Not yet: library, transport.
+(`apps.agreements`: trial accepted at registration, sign before paying, activated by record-payment). → per-institute backup, Excel,
+single-institute restore with undo snapshots ✅ (`apps.backups.institute`) → recycle bin, 30 days ✅ (`apps.recyclebin`). Not yet: library, transport.
 - Agreement wording lives in `apps/agreements/texts.py`; changing it means bumping the VERSION constants.
 
 - Payments: a gateway payment counts only after server-side verification (signature, read-back or IPN).
@@ -74,4 +75,6 @@ platform owner dashboard ✅ → PWA + Web Push notifications ✅ → Safepay + 
 - Stored images (logo, student photo) are small data URLs resized in the browser; validate type and size.
 
 - Menu items carry the plan `feature` they need (`src/lib/navigation.ts`); the layout hides the rest.
+- Deleting institute records goes through `apps.recyclebin.services.trash()` / `RecycleBinMixin` (never plain `.delete()`).
+- New institute models with secrets: add them to `SECRETS` in `apps/backups/institute.py`; billing models to `KEEP_OUT`.
 - Parent alerts go through `apps.messaging.services.queue_and_send` (dedupe keys, plan check).
