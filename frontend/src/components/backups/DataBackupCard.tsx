@@ -45,10 +45,12 @@ export function DataBackupCard() {
 
   async function toggleAuto(on: boolean) {
     setError(null);
+    setStatus((current) => current && { ...current, auto_backup: on }); // show the change at once
     try {
       setStatus(await api<Status>("/api/institute/backup/status/", { method: "PATCH", body: JSON.stringify({ auto_backup: on }) }));
       setListKey((k) => k + 1);
     } catch (err) {
+      setStatus((current) => current && { ...current, auto_backup: !on });
       setError(err);
     }
   }
