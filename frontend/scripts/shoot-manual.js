@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- plain Node script run outside the app */
 // Refresh the user manual's screenshots: run against a local API with the demo seeded (python manage.py seed_demo,
 // TZ=Asia/Karachi) and the static site served on :3000, then: node scripts/shoot-manual.js
 const { chromium, devices } = require('playwright');
