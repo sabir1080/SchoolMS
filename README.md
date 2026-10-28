@@ -233,7 +233,8 @@ Shared database, every institute-owned row has a `tenant_id`.
 ## About, user manual and owner guide
 
 - `/about`: public product page. `/manual`: step-by-step user manual (English / Roman Urdu, filter by role,
-  search), content in `frontend/src/lib/manual.ts` (keep button names in sync with the app). Linked under every
+  search, screenshots from the demo in `public/manual/`, refreshed with `node scripts/shoot-manual.js`), content in
+  `frontend/src/lib/manual.ts` (keep button names in sync with the app). Linked under every
   login card and as "Help & manual" in the menu.
 - `/platform/guide`: the platform owner's guide (Roman Urdu) with live plans and a developer appendix.
 

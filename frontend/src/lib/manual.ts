@@ -12,6 +12,8 @@ export interface ManualSection {
   intro: Text;
   steps: Record<Lang, string[]>;
   tip?: Text;
+  /** Screenshots from the demo school (public/manual/<file>.jpg, phone size). */
+  images?: { file: string; caption: Text }[];
 }
 
 export const AUDIENCES: { value: Audience | "every"; label: Text }[] = [
@@ -31,6 +33,9 @@ export const AUDIENCE_BADGE: Record<Audience, Text> = {
 export const MANUAL: ManualSection[] = [
   {
     id: "login",
+    images: [
+      { file: "login", caption: { en: "The sign-in screen after entering the institute code.", ur: "Institute code ke baad sign in ki screen." } },
+    ],
     icon: "key",
     audience: "all",
     title: { en: "Logging in", ur: "Login karna" },
@@ -61,6 +66,9 @@ export const MANUAL: ManualSection[] = [
   },
   {
     id: "install",
+    images: [
+      { file: "install", caption: { en: "Menu with “Install app on this phone” and “Help & manual”.", ur: "Menu mein “Install app on this phone” aur “Help & manual”." } },
+    ],
     icon: "phone",
     audience: "all",
     title: { en: "Install the app and turn on notifications", ur: "App install karna aur notifications on karna" },
@@ -89,6 +97,10 @@ export const MANUAL: ManualSection[] = [
   },
   {
     id: "first-setup",
+    images: [
+      { file: "first-setup-dashboard", caption: { en: "The admin dashboard.", ur: "Admin ka dashboard." } },
+      { file: "first-setup", caption: { en: "Academic setup → Classes.", ur: "Academic setup → Classes." } },
+    ],
     icon: "rocket",
     audience: "admin",
     title: { en: "First-time setup (admin)", ur: "Pehli dafa setup (admin)" },
@@ -121,6 +133,9 @@ export const MANUAL: ManualSection[] = [
   },
   {
     id: "students",
+    images: [
+      { file: "students", caption: { en: "A student's page: photo, ID card, certificate and edit.", ur: "Student ka page: photo, ID card, certificate aur edit." } },
+    ],
     icon: "users",
     audience: "admin",
     title: { en: "Students and admissions", ur: "Students aur admission" },
@@ -151,6 +166,9 @@ export const MANUAL: ManualSection[] = [
   },
   {
     id: "online-admission",
+    images: [
+      { file: "online-admission", caption: { en: "An application opened on the Admissions page.", ur: "Admissions page par khuli hui application." } },
+    ],
     icon: "form",
     audience: "admin",
     title: { en: "Online admission form", ur: "Online admission form" },
@@ -179,6 +197,9 @@ export const MANUAL: ManualSection[] = [
   },
   {
     id: "attendance",
+    images: [
+      { file: "attendance", caption: { en: "Taking attendance: tap Absent, Leave or Late, then Save attendance.", ur: "Haazri: Absent, Leave ya Late dabayein, phir Save attendance." } },
+    ],
     icon: "check",
     audience: "teacher",
     title: { en: "Daily attendance", ur: "Rozana haazri" },
@@ -205,6 +226,9 @@ export const MANUAL: ManualSection[] = [
   },
   {
     id: "fees",
+    images: [
+      { file: "fees", caption: { en: "A bill with a payment and its Receipt link.", ur: "Bill, payment aur us ki Receipt ka link." } },
+    ],
     icon: "wallet",
     audience: "admin",
     title: { en: "Fees, bills and receipts", ur: "Fees, bill aur raseed" },
@@ -239,6 +263,9 @@ export const MANUAL: ManualSection[] = [
   },
   {
     id: "online-pay",
+    images: [
+      { file: "online-pay", caption: { en: "Institute settings → Online fee payments.", ur: "Institute settings → Online fee payments." } },
+    ],
     icon: "card",
     audience: "admin",
     title: { en: "Online fee payments", ur: "Online fees ki adaigi" },
@@ -265,6 +292,9 @@ export const MANUAL: ManualSection[] = [
   },
   {
     id: "exams",
+    images: [
+      { file: "exams", caption: { en: "Exam result with pass rate, positions and report cards.", ur: "Imtihan ka result: pass rate, position aur report cards." } },
+    ],
     icon: "clipboard",
     audience: "admin",
     title: { en: "Exams, marks and report cards", ur: "Imtihan, marks aur report card" },
@@ -297,6 +327,9 @@ export const MANUAL: ManualSection[] = [
   },
   {
     id: "teacher-day",
+    images: [
+      { file: "teacher-day", caption: { en: "A teacher's dashboard.", ur: "Teacher ka dashboard." } },
+    ],
     icon: "book",
     audience: "teacher",
     title: { en: "A teacher's day", ur: "Teacher ka din" },
@@ -325,6 +358,9 @@ export const MANUAL: ManualSection[] = [
   },
   {
     id: "timetable",
+    images: [
+      { file: "timetable", caption: { en: "A class timetable, day by day.", ur: "Class ka timetable, din ba din." } },
+    ],
     icon: "calendar",
     audience: "admin",
     title: { en: "Timetable", ur: "Timetable" },
@@ -349,6 +385,9 @@ export const MANUAL: ManualSection[] = [
   },
   {
     id: "messages",
+    images: [
+      { file: "messages", caption: { en: "Messages to parents with “Send on WhatsApp”.", ur: "Parents ke messages, “Send on WhatsApp” ke saath." } },
+    ],
     icon: "chat",
     audience: "admin",
     title: { en: "Messages to parents", ur: "Parents ko messages" },
@@ -375,6 +414,9 @@ export const MANUAL: ManualSection[] = [
   },
   {
     id: "staff",
+    images: [
+      { file: "staff", caption: { en: "Monthly salaries: paid and to pay.", ur: "Mahana tankhwah: di gayi aur baqi." } },
+    ],
     icon: "briefcase",
     audience: "admin",
     title: { en: "Staff and salaries", ur: "Staff aur tankhwah" },
@@ -396,6 +438,9 @@ export const MANUAL: ManualSection[] = [
   },
   {
     id: "year-end",
+    images: [
+      { file: "year-end", caption: { en: "Promotion suggestions from the result.", ur: "Result se promotion ke mashware." } },
+    ],
     icon: "arrow",
     audience: "admin",
     title: { en: "Year end: promotion and certificates", ur: "Saal ka aakhir: promotion aur certificates" },
@@ -419,6 +464,9 @@ export const MANUAL: ManualSection[] = [
   },
   {
     id: "reports",
+    images: [
+      { file: "reports", caption: { en: "A report with Download Excel and Print / Save PDF.", ur: "Report, Download Excel aur Print / Save PDF ke saath." } },
+    ],
     icon: "chart",
     audience: "admin",
     title: { en: "Reports (Excel and PDF)", ur: "Reports (Excel aur PDF)" },
@@ -438,6 +486,9 @@ export const MANUAL: ManualSection[] = [
   },
   {
     id: "family",
+    images: [
+      { file: "family", caption: { en: "A parent's dashboard: children, attendance and fees.", ur: "Parent ka dashboard: bachche, haazri aur fees." } },
+    ],
     icon: "home",
     audience: "family",
     title: { en: "For parents and students", ur: "Parents aur students ke liye" },
@@ -464,6 +515,9 @@ export const MANUAL: ManualSection[] = [
   },
   {
     id: "plan",
+    images: [
+      { file: "plan", caption: { en: "Plan & Billing.", ur: "Plan & Billing." } },
+    ],
     icon: "star",
     audience: "admin",
     title: { en: "Plan, billing and users", ur: "Plan, billing aur users" },

@@ -186,14 +186,37 @@ export default function ManualPage() {
                 </div>
               </div>
               <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{s.intro[lang]}</p>
-              <ol className="mt-4 space-y-3">
-                {s.steps[lang].map((step, i) => (
-                  <li key={i} className="flex gap-3 text-sm leading-relaxed">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">{i + 1}</span>
-                    <span>{step}</span>
-                  </li>
-                ))}
-              </ol>
+              <div className={s.images ? "mt-4 grid gap-5 md:grid-cols-[1fr_200px]" : "mt-4"}>
+                <ol className="space-y-3">
+                  {s.steps[lang].map((step, i) => (
+                    <li key={i} className="flex gap-3 text-sm leading-relaxed">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">{i + 1}</span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+                {s.images && (
+                  <div className="flex gap-4 overflow-x-auto pb-1 md:flex-col md:overflow-visible">
+                    {s.images.map((img) => (
+                      <figure key={img.file} className="w-52 shrink-0 md:w-full">
+                        <a href={`/manual/${img.file}.jpg`} target="_blank" rel="noreferrer" className="block">
+                          {/* Static screenshots shipped with the site; next/image is not available in the static export. */}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={`/manual/${img.file}.jpg`}
+                            alt={img.caption[lang]}
+                            width={390}
+                            height={760}
+                            loading="lazy"
+                            className="h-auto w-full rounded-2xl border-4 border-slate-800 bg-white shadow-md dark:border-slate-600"
+                          />
+                        </a>
+                        <figcaption className="mt-1.5 text-center text-xs text-slate-500">{img.caption[lang]}</figcaption>
+                      </figure>
+                    ))}
+                  </div>
+                )}
+              </div>
               {s.tip && (
                 <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
                   <span className="font-semibold">{t.tip}: </span>
