@@ -41,6 +41,7 @@ class Tenant(TimeStampedModel):
     # Branding (plan feature "white_label"): a small logo kept as a data URL, and a theme colour key.
     logo = models.TextField(blank=True)
     admissions_open = models.BooleanField(default=False, help_text="Parents can send applications from the online form")
+    auto_backup = models.BooleanField(default=True, help_text="Save a copy of the data automatically every day the app is used")
     brand_color = models.CharField(max_length=20, default="indigo")
     password_policy = models.CharField(
         max_length=10, choices=PasswordPolicy.choices, default=PasswordPolicy.EASY

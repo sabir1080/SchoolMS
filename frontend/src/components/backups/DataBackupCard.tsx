@@ -13,6 +13,7 @@ interface Status {
   last_excel: string | null;
   days_since_file: number | null;
   last_auto: string | null;
+  auto_backup: boolean;
 }
 
 /** Institute settings: the institute downloads its own data (backup file and Excel copy). */
@@ -21,6 +22,7 @@ export function DataBackupCard() {
   const [status, setStatus] = useState<Status | null>(null);
   const [busy, setBusy] = useState<"file" | "excel" | null>(null);
   const [error, setError] = useState<unknown>(null);
+  const [listKey, setListKey] = useState(0);
 
   const load = useCallback(() => {
     api<Status>("/api/institute/backup/status/").then(setStatus).catch(() => setStatus(null));
@@ -41,6 +43,16 @@ export function DataBackupCard() {
     }
   }
 
+  async function toggleAuto(on: boolean) {
+    setError(null);
+    try {
+      setStatus(await api<Status>("/api/institute/backup/status/", { method: "PATCH", body: JSON.stringify({ auto_backup: on }) }));
+      setListKey((k) => k + 1);
+    } catch (err) {
+      setError(err);
+    }
+  }
+
   const overdue = status && (status.days_since_file === null || status.days_since_file >= 30);
 
   return (
@@ -56,10 +68,28 @@ export function DataBackupCard() {
           {overdue && " We suggest downloading one every month."}
         </p>
       )}
-      <p className="mt-1 text-sm text-slate-600 dark:text-slate-300" data-testid="auto-backup-status">
-        Automatic backup: the app saves a copy of your data every day it is used and keeps the last 14 days (see below).
-        {status?.last_auto && ` Last: ${formatDate(status.last_auto)}.`}
-      </p>
+      {status && (
+        <div className="mt-3 rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+          <label className="flex items-center justify-between gap-3">
+            <span className="text-sm font-medium">Automatic daily backup</span>
+            <input
+              type="checkbox"
+              role="switch"
+              aria-label="Automatic daily backup"
+              checked={status.auto_backup}
+              disabled={busy !== null}
+              onChange={(e) => toggleAuto(e.target.checked)}
+              className="h-5 w-5 accent-brand-600"
+            />
+          </label>
+          <p className="mt-1 text-xs text-slate-500" data-testid="auto-backup-status">
+            {status.auto_backup
+              ? "On: the app saves a copy of your data every day it is used and keeps the last 14 days (listed below)."
+              : "Off: only the backups you make yourself (Back up now or Download backup)."}
+            {status.auto_backup && status.last_auto && ` Last: ${formatDate(status.last_auto)}.`}
+          </p>
+        </div>
+      )}
       <div className="mt-3 flex flex-wrap gap-2">
         <Button type="button" onClick={() => get("file")} disabled={busy !== null}>
           {busy === "file" ? "Preparing…" : "Download backup"}
@@ -80,7 +110,7 @@ export function DataBackupCard() {
       <ErrorBox error={error} />
       {user?.tenant && (
         <div className="mt-4">
-          <TenantBackups code={user.tenant.slug} />
+          <TenantBackups key={listKey} code={user.tenant.slug} />
         </div>
       )}
     </Card>

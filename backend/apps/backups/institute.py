@@ -101,6 +101,21 @@ def export_file(tenant, include_secrets):
     return gzip.compress(json.dumps(payload).encode())
 
 
+MANUAL_KEEP = 10
+
+
+def manual_backup(tenant, user=None):
+    """“Back up now”: save a copy in the app (the last 10 are kept)."""
+    from .models import InstituteSnapshot
+
+    data = export_file(tenant, include_secrets=True)
+    snap = InstituteSnapshot.objects.create(tenant=tenant, kind=InstituteSnapshot.MANUAL, reason="Back up now", data=data,
+                                            size_bytes=len(data), created_by=user)
+    for old in InstituteSnapshot.objects.filter(tenant=tenant, kind=InstituteSnapshot.MANUAL).order_by("-created_at")[MANUAL_KEEP:]:
+        old.delete()
+    return snap
+
+
 def without_secrets(data, tenant):
     """A saved copy as the institute may download it: payment keys and tokens blanked, signed again."""
     content = json.loads(gzip.decompress(data))

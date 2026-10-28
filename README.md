@@ -270,7 +270,9 @@ Shared database, every institute-owned row has a `tenant_id`.
   the day's copy in a background thread after an institute user's first request of the day (institute timezone).
   Stored as `InstituteSnapshot(kind="auto", day=...)`, one per day (unique constraint), last 14 kept. Listed with
   the restore copies; the institute downloads them without keys. They live in the same database, so the owner's
-  monthly full download to Drive is still needed. Off in tests (`AUTO_BACKUP = False`).
+  monthly full download to Drive is still needed. Off in tests (`AUTO_BACKUP = False`). Admins switch it per
+  institute (`Tenant.auto_backup`, PATCH `/api/institute/backup/status/`). Manual mode: "Back up now" (POST to
+  `.../snapshots/` without an id, admin or owner) saves `kind="manual"` copies, last 10 kept.
 
 ## Recycle bin
 

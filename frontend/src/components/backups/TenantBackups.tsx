@@ -20,7 +20,7 @@ interface Preview {
 
 interface Snapshot {
   id: number;
-  kind: "restore" | "auto";
+  kind: "restore" | "auto" | "manual";
   day: string | null;
   reason: string;
   size_bytes: number;
@@ -70,6 +70,13 @@ export function TenantBackups({ tenantId, code }: { tenantId?: number; code: str
   };
 
   const check = () => run(async () => setPreview(await upload()));
+
+  const backUpNow = () =>
+    run(async () => {
+      await api(`${base}/snapshots/`, { method: "POST" });
+      setMessage("Backup saved in the app. It is listed under Saved with Back up now.");
+      loadSnapshots();
+    });
 
   const restore = () =>
     run(async () => {
@@ -124,16 +131,17 @@ export function TenantBackups({ tenantId, code }: { tenantId?: number; code: str
 
   return (
     <div data-testid="tenant-backups">
-      {owner && (
-        <>
-          <h3 className="mb-2 text-sm font-medium">Backup &amp; restore (this institute only)</h3>
-          <div className="mb-3 flex flex-wrap gap-2">
-            <button type="button" disabled={busy} className={outline} onClick={() => run(() => downloadFile(`${base}/backup/`, `${code}-backup.json.gz`))}>
-              Download this institute&apos;s backup
-            </button>
-          </div>
-        </>
-      )}
+      {owner && <h3 className="mb-2 text-sm font-medium">Backup &amp; restore (this institute only)</h3>}
+      <div className="mb-3 flex flex-wrap gap-2">
+        <button type="button" disabled={busy} className={outline} onClick={backUpNow}>
+          Back up now (save in the app)
+        </button>
+        {owner && (
+          <button type="button" disabled={busy} className={outline} onClick={() => run(() => downloadFile(`${base}/backup/`, `${code}-backup.json.gz`))}>
+            Download this institute&apos;s backup
+          </button>
+        )}
+      </div>
 
       <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
         <p className="text-sm font-medium">{owner ? "Restore this institute" : "Restore from a backup"}</p>
@@ -197,7 +205,8 @@ export function TenantBackups({ tenantId, code }: { tenantId?: number; code: str
       </div>
 
       {[
-        { title: "Copies saved before a restore", items: snapshots.filter((s) => s.kind !== "auto"), testId: "restore-copies" },
+        { title: "Copies saved before a restore", items: snapshots.filter((s) => s.kind === "restore"), testId: "restore-copies" },
+        { title: "Saved with Back up now (last 10)", items: snapshots.filter((s) => s.kind === "manual"), testId: "manual-backups" },
         { title: "Daily automatic backups (last 14 days)", items: snapshots.filter((s) => s.kind === "auto"), testId: "daily-backups" },
       ].map(
         (group) =>
@@ -210,7 +219,8 @@ export function TenantBackups({ tenantId, code }: { tenantId?: number; code: str
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span>
                         {formatDate(s.created_at)}, {new Date(s.created_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
-                        {s.kind !== "auto" && ` · ${s.reason}`} · {Math.max(1, Math.round(s.size_bytes / 1024))} KB
+                        {s.kind === "restore" && ` · ${s.reason}`}
+                        {s.kind === "manual" && s.created_by_name && ` · by ${s.created_by_name}`} · {Math.max(1, Math.round(s.size_bytes / 1024))} KB
                       </span>
                       <span className="flex gap-3">
                         <button

@@ -23,6 +23,11 @@ _running = set()
 _lock = threading.Lock()
 
 
+def forget(tenant_id):
+    """Check again on the next request (e.g. automatic backup was just switched on)."""
+    _done.pop(tenant_id, None)
+
+
 def _today_known(tenant_id):
     known = _done.get(tenant_id)
     if not known:
@@ -66,7 +71,7 @@ def _run(tenant_id):
             return
         day = tenant_today(tenant)
         auto = InstituteSnapshot.objects.filter(tenant=tenant, kind=InstituteSnapshot.AUTO)
-        if not auto.filter(day=day).exists():
+        if tenant.auto_backup and not auto.filter(day=day).exists():
             data = institute.export_file(tenant, include_secrets=True)
             try:
                 with transaction.atomic():

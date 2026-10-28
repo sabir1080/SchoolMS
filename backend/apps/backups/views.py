@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 from apps.core.permissions import IsInstituteAdmin, IsSuperAdmin
 from apps.tenants.models import Tenant
 
-from . import institute
+from . import auto, institute
 from .excel import institute_workbook
 from .models import BackupRecord, InstituteBackupLog, InstituteSnapshot
 from .services import create_backup
@@ -93,7 +93,21 @@ class InstituteExcelView(APIView):
 
 
 class InstituteBackupStatusView(APIView):
+    """Backup status for the Data backup card; PATCH ``auto_backup`` switches the daily automatic backup on or off."""
+
     permission_classes = [IsInstituteAdmin]
+
+    def patch(self, request):
+        tenant = request.user.tenant
+        value = request.data.get("auto_backup")
+        if not isinstance(value, bool):
+            raise ValidationError({"auto_backup": ["Send true or false."]})
+        tenant.auto_backup = value
+        tenant.save(update_fields=["auto_backup"])
+        if value:
+            auto.forget(tenant.pk)
+            auto.schedule(tenant.pk)  # today's copy right away
+        return self.get(request)
 
     def get(self, request):
         logs = InstituteBackupLog.objects.filter(tenant=request.user.tenant)
@@ -101,7 +115,8 @@ class InstituteBackupStatusView(APIView):
         days = (timezone.now() - last["file"]).days if last["file"] else None
         last_auto = InstituteSnapshot.objects.filter(tenant=request.user.tenant, kind=InstituteSnapshot.AUTO).values_list(
             "created_at", flat=True).first()
-        return Response({"last_file": last["file"], "last_excel": last["excel"], "days_since_file": days, "last_auto": last_auto})
+        return Response({"last_file": last["file"], "last_excel": last["excel"], "days_since_file": days, "last_auto": last_auto,
+                         "auto_backup": request.user.tenant.auto_backup})
 
 
 class PlatformTenantBackupView(APIView):
@@ -189,7 +204,8 @@ class SnapshotSerializer(serializers.ModelSerializer):
 
 
 class SnapshotsView(APIView):
-    """Copies saved by the app (daily automatic backups, and before each restore): list, download, or put back.
+    """Copies saved by the app (daily automatic backups, “Back up now”, and before each restore): list, make one now
+    (POST without an id), download, or put back.
     The owner's download keeps payment keys; the institute's download leaves them out."""
 
     for_owner = True
@@ -215,6 +231,8 @@ class SnapshotsView(APIView):
 
     def post(self, request, pk=None, snapshot_id=None):
         tenant = self.get_tenant(request, pk)
+        if snapshot_id is None:
+            return Response(SnapshotSerializer(institute.manual_backup(tenant, request.user)).data, status=201)
         snap = InstituteSnapshot.objects.filter(tenant=tenant, pk=snapshot_id).first() if snapshot_id else None
         if snap is None:
             raise NotFound("Saved copy not found.")

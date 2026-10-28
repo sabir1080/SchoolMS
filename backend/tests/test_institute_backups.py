@@ -292,3 +292,45 @@ def test_daily_automatic_backup(api, admin_a, school_a, make_tenant, make_user, 
     api.force_authenticate(User.objects.get(username="admin_b2"))
     api.get("/api/students/")
     assert not daily.filter(tenant=beta).exists()
+
+
+def test_auto_backup_switch_and_back_up_now(api, admin_a, school_a, make_user, super_admin, settings):
+    from apps.backups import auto
+
+    settings.AUTO_BACKUP = True
+    auto._done.clear()
+    teacher = make_user("teacher_a", Role.TEACHER, school_a)
+    snaps = InstituteSnapshot.objects.filter(tenant=school_a)
+    api.force_authenticate(admin_a)
+
+    # Switched off: no daily copy.
+    res = api.patch("/api/institute/backup/status/", {"auto_backup": False}, format="json").json()
+    assert res["auto_backup"] is False
+    snaps.delete()
+    auto._done.clear()
+    api.get("/api/students/")
+    assert not snaps.filter(kind="auto").exists()
+    assert api.patch("/api/institute/backup/status/", {"auto_backup": "yes"}, format="json").status_code == 400
+
+    # Switched on again: today's copy is made right away.
+    assert api.patch("/api/institute/backup/status/", {"auto_backup": True}, format="json").json()["auto_backup"] is True
+    assert snaps.filter(kind="auto").count() == 1
+
+    # Back up now (manual): saved in the app, the last 10 kept, and it can be put back.
+    Student.objects.create(tenant=school_a, admission_no="1", first_name="Zara", gender="female")
+    made = api.post("/api/institute/backup/snapshots/", format="json")
+    assert made.status_code == 201 and made.json()["kind"] == "manual"
+    for _ in range(11):
+        api.post("/api/institute/backup/snapshots/", format="json")
+    assert snaps.filter(kind="manual").count() == 10
+    Student.objects.filter(tenant=school_a).delete()
+    latest = snaps.filter(kind="manual").first()
+    assert api.post(f"/api/institute/backup/snapshots/{latest.pk}/", {"confirm_code": "alpha"}, format="json").json()["restored"]
+    assert Student.objects.filter(tenant=school_a, first_name="Zara").exists()
+
+    # The owner can also back up one institute now; teachers can do neither.
+    api.force_authenticate(super_admin)
+    assert api.post(f"/api/platform/tenants/{school_a.pk}/snapshots/", format="json").json()["kind"] == "manual"
+    api.force_authenticate(teacher)
+    assert api.post("/api/institute/backup/snapshots/", format="json").status_code == 403
+    assert api.patch("/api/institute/backup/status/", {"auto_backup": False}, format="json").status_code == 403
