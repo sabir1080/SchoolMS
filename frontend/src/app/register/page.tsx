@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { AgreementDocument } from "@/components/agreements/AgreementDocument";
 import { Button, Card, ErrorBox, Field, PasswordField, SelectField } from "@/components/ui";
+import type { AgreementPreview } from "@/lib/agreements";
 import { api, type LoginResponse } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { browserTimezone, COUNTRIES, suggestCode } from "@/lib/regions";
@@ -37,6 +39,14 @@ export default function RegisterPage() {
   const [codeEdited, setCodeEdited] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [trialDoc, setTrialDoc] = useState<AgreementPreview | null>(null);
+
+  useEffect(() => {
+    api<AgreementPreview>("/api/public/agreements/trial/", {}, false)
+      .then(setTrialDoc)
+      .catch(() => setTrialDoc(null));
+  }, []);
 
   useEffect(() => {
     setForm((f) => ({ ...f, timezone: browserTimezone() }));
@@ -64,7 +74,10 @@ export default function RegisterPage() {
     setBusy(true);
     setError(null);
     try {
-      const data = await api<LoginResponse>("/api/public/register/", { method: "POST", body: JSON.stringify(form) });
+      const data = await api<LoginResponse>("/api/public/register/", {
+        method: "POST",
+        body: JSON.stringify({ ...form, accept_terms: acceptTerms }),
+      });
       await acceptLogin(data);
     } catch (err) {
       setError(err);
@@ -133,6 +146,22 @@ export default function RegisterPage() {
               At least 4 characters. You can make password rules stricter later in Institute settings.
             </p>
           </div>
+        </Card>
+        <Card>
+          <h2 className="font-medium">Free trial agreement</h2>
+          <p className="mt-1 text-sm text-slate-500">The trial is free; nothing is charged automatically when it ends.</p>
+          {trialDoc && (
+            <details className="mt-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+              <summary className="cursor-pointer text-sm font-medium text-brand-600">Read the free trial agreement</summary>
+              <div className="mt-3">
+                <AgreementDocument preview={trialDoc} />
+              </div>
+            </details>
+          )}
+          <label className="mt-3 flex items-start gap-2 text-sm">
+            <input type="checkbox" checked={acceptTerms} onChange={(e) => setAcceptTerms(e.target.checked)} className="mt-1" required />
+            I have read and agree to the free trial agreement on behalf of the institute.
+          </label>
         </Card>
         <ErrorBox error={error} />
         <Button type="submit" disabled={busy} className="w-full py-3 sm:w-auto">

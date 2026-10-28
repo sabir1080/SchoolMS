@@ -89,8 +89,18 @@ class PlatformOverviewView(APIView):
         tenants = Tenant.objects.all()
         from apps.backups.views import last_backup
 
+        from apps.agreements.models import SignedAgreement
+        from apps.agreements.models import Status as AgreementStatus
+
+        pending = SignedAgreement.objects.filter(status=AgreementStatus.PENDING).select_related("tenant", "plan")
         return Response({
             "last_backup": last_backup(),
+            "pending_agreements": [
+                {"id": a.id, "number": a.number, "tenant": a.tenant_id, "name": a.tenant.name, "slug": a.tenant.slug,
+                 "plan": a.plan.name if a.plan else "", "plan_code": a.plan.code if a.plan else "", "billing_cycle": a.billing_cycle,
+                 "amount": money(a.amount), "currency": a.currency, "signed_at": a.signed_at, "payment_reference": a.payment_reference}
+                for a in pending
+            ],
             "institutes": {
                 "total": tenants.count(),
                 "active": len(usable),

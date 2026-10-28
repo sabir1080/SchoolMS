@@ -19,6 +19,9 @@ from django.utils import timezone
 
 from apps.academics.models import AcademicSession, Program, Section, Subject
 from apps.accounts.models import Role, User
+from apps.agreements.models import Kind, SignedAgreement
+from apps.agreements.models import Status as AgreementStatus
+from apps.agreements.services import subscription_document
 from apps.attendance.models import AttendanceRecord, AttendanceStatus
 from apps.core.timeutils import tenant_today
 from apps.exams.models import CombinedExam, CombinedResult, Exam, ExamStatus, ExamSubject, Mark
@@ -145,6 +148,16 @@ def seed_demo(today=None):
         billing_cycle=BillingCycle.YEARLY, current_period_start=now, current_period_end=now + datetime.timedelta(days=365),
     )
     today = today or tenant_today(tenant)
+    pro = Plan.objects.get(code="pro")
+    doc = subscription_document(pro, BillingCycle.YEARLY, "PKR")
+    SignedAgreement.objects.create(
+        tenant=tenant, kind=Kind.SUBSCRIPTION, version=doc["version"], status=AgreementStatus.ACTIVE, plan=pro,
+        billing_cycle=BillingCycle.YEARLY, amount=doc["amount"], currency=doc["currency"],
+        institute_legal_name="Bright Future Academy (Pvt) Ltd", institute_address=tenant.address, signer_name="Farhan Ahmed",
+        signer_designation="Principal", signer_cnic="35202-1234567-1", signer_phone=tenant.phone, signature="Farhan Ahmed",
+        provider=doc["provider"], schedule=doc["schedule"], sections=doc["sections"], period_start=now,
+        period_end=now + datetime.timedelta(days=365), activated_at=now,
+    )
     user = lambda username, first, last, role: User.objects.create_user(  # noqa: E731
         username=username, password=DEMO_PASSWORD, role=role, tenant=tenant, first_name=first, last_name=last,
         email=f"{username}@brightfuture-demo.pk",

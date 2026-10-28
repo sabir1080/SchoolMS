@@ -21,6 +21,18 @@ interface SubRow {
 }
 
 interface Overview {
+  pending_agreements: {
+    id: number;
+    number: string;
+    name: string;
+    slug: string;
+    plan: string;
+    billing_cycle: string;
+    amount: string;
+    currency: string;
+    signed_at: string;
+    payment_reference: string;
+  }[];
   last_backup: { created_at: string; days_ago: number; size_bytes: number; institutes: number } | null;
   institutes: { total: number; active: number; trial: number; paying: number; expired: number; suspended: number; new_this_month: number };
   plans: { plan: string; institutes: number }[];
@@ -144,6 +156,31 @@ export default function PlatformOverviewPage() {
       </div>
 
       <BackupCard last={data.last_backup} onDone={load} />
+
+      {data.pending_agreements.length > 0 && (
+        <Card>
+          <h2 className="font-medium">Agreements waiting for payment</h2>
+          <p className="mt-1 text-sm text-slate-500">These institutes signed. Record the payment when the money arrives.</p>
+          <ul className="mt-2 divide-y divide-slate-100 text-sm dark:divide-slate-800">
+            {data.pending_agreements.map((a) => (
+              <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                <span className="min-w-0">
+                  <span className="block font-medium">
+                    {a.name} · {a.plan} ({a.billing_cycle})
+                  </span>
+                  <span className="block text-xs text-slate-500">
+                    {a.number} · signed {formatDate(a.signed_at)} · {formatMoney(a.amount, a.currency)}
+                    {a.payment_reference && ` · ref. ${a.payment_reference}`}
+                  </span>
+                </span>
+                <Link href={`/platform/agreement/?id=${a.id}`} className="font-medium text-brand-600 hover:underline">
+                  Open
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Tile label="Institutes" value={i.total} note={`${i.new_this_month} new this month`} />

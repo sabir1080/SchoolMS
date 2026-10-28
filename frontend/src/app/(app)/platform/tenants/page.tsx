@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { TenantAgreements } from "@/components/agreements/TenantAgreements";
 import { Button, Card, ErrorBox, Field, PasswordField, SelectField } from "@/components/ui";
 import { api, formatMoney, type Plan, type Subscription, type Tenant } from "@/lib/api";
 import { formatDate, STATUS_LABELS } from "@/lib/navigation";
@@ -226,6 +227,8 @@ function ManageSubscription({ tenant, plans, onSaved }: { tenant: PlatformTenant
           {busy ? "Saving…" : "Record payment"}
         </Button>
       </form>
+
+      <TenantAgreements tenantId={tenant.id} />
 
       <div>
         <h3 className="mb-2 text-sm font-medium">Payment history</h3>

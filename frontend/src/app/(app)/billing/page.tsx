@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from "react";
 
-import { Card, ErrorBox } from "@/components/ui";
+import { BillingAgreements } from "@/components/agreements/BillingAgreements";
+import { Button, Card, ErrorBox } from "@/components/ui";
 import { api, formatMoney, type Plan, type PlanPrice } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { formatDate, STATUS_LABELS } from "@/lib/navigation";
-
-const SUPPORT_CONTACT = process.env.NEXT_PUBLIC_SUPPORT_CONTACT ?? "";
 
 function priceFor(plan: Plan, currency: string, cycle: PlanPrice["billing_cycle"]) {
   return (
@@ -24,6 +23,12 @@ export default function BillingPage() {
   const { user, subscription, refreshSubscription } = useAuth();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [error, setError] = useState<unknown>(null);
+  const [choose, setChoose] = useState<string | null>(null);
+
+  function pick(code: string) {
+    setChoose(code);
+    setTimeout(() => document.getElementById("agreements")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+  }
 
   useEffect(() => {
     refreshSubscription();
@@ -129,24 +134,27 @@ export default function BillingPage() {
                   <li key={label}>✓ {label}</li>
                 ))}
               </ul>
+              <Button type="button" onClick={() => pick(plan.code)} className="mt-4 w-full">
+                {current && subscription?.effective_status !== "trialing" ? `Renew ${plan.name}` : `Choose ${plan.name}`}
+              </Button>
             </Card>
           );
         })}
       </div>
 
       <Card>
-        <h2 className="font-medium">Upgrade or renew</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Online payment is coming soon. For now, pay by bank transfer, JazzCash or Easypaisa and we will activate
-          your plan.
-          {SUPPORT_CONTACT && (
-            <>
-              {" "}
-              Contact: <span className="font-medium text-slate-700 dark:text-slate-200">{SUPPORT_CONTACT}</span>
-            </>
-          )}
-        </p>
+        <h2 className="font-medium">How to upgrade or renew</h2>
+        <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-300">
+          <li>Tap Choose (or Renew) on a plan and pick monthly or yearly.</li>
+          <li>Fill in your details, read the subscription agreement and sign it by typing your name.</li>
+          <li>Pay by bank transfer, JazzCash or Easypaisa using the details shown, and add the payment reference.</li>
+          <li>We confirm the payment, your plan starts, and the agreement shows as Active with the paid period.</li>
+        </ol>
       </Card>
+
+      <div id="agreements" className="scroll-mt-4">
+        <BillingAgreements plans={plans} choose={choose} onChosen={() => setChoose(null)} />
+      </div>
     </div>
   );
 }

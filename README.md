@@ -238,6 +238,14 @@ Shared database, every institute-owned row has a `tenant_id`.
   login card and as "Help & manual" in the menu.
 - `/platform/guide`: the platform owner's guide (Roman Urdu) with live plans and a developer appendix.
 
+## Subscription agreements
+
+- Registration requires accepting the free trial agreement (`accept_terms`); institutes created by the owner accept it on
+  Plan & Billing. Paid plans: the admin signs a subscription agreement (details, typed-name e-signature) before paying;
+  it waits as "payment pending" with the owner's payment instructions; recording the payment (`record-payment`,
+  optional `agreement`) activates it with the paid period. Each agreement stores the exact text, provider details,
+  version, signer, time and IP (`apps.agreements`); the owner edits business details at `/platform/business`.
+
 ## Backups
 
 - Platform overview → "Download backup" (super admin): one `.json.gz` with every institute's data
@@ -349,6 +357,10 @@ the demo. `--wipe-all` first deletes **every** institute and its data (super adm
 | GET/POST | `/api/push/` (subscribe; `action`: `test`, `unsubscribe`) | logged-in institute users |
 | GET | `/api/platform/overview/` | super admin |
 | GET | `/api/platform/backup/` (download `.json.gz`) | super admin |
+| GET | `/api/public/agreements/trial/` | public |
+| GET/POST | `/api/agreements/` (sign), `/api/agreements/preview/?plan=&cycle=`, POST `/api/agreements/accept-trial/` | institute admin |
+| GET/POST | `/api/agreements/<id>/` (`payment_reference`, `action: cancel`) | institute admin |
+| GET/PATCH | `/api/platform/profile/`; GET `/api/platform/agreements/` (`?tenant=&status=`), `/api/platform/agreements/<id>/` | super admin |
 | GET/POST | `/api/pay/stripe/return/`, `/api/pay/stripe/webhook/<code>/`, `/api/pay/safepay/return/` | gateways (public) |
 | GET/POST | `/api/students/promotion/` (`?section=&to_session=`) | institute admin |
 | GET/POST/DELETE | `/api/certificates/` (`?student=`) | institute admin |

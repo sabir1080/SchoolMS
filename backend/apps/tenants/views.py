@@ -1,6 +1,7 @@
+from django.db import transaction
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.generics import RetrieveAPIView, RetrieveUpdateAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -8,6 +9,9 @@ from rest_framework.views import APIView
 
 from apps.accounts.models import Role
 from apps.accounts.serializers import SetPasswordSerializer, issue_tokens
+from apps.agreements.models import SignedAgreement
+from apps.agreements.models import Status as AgreementStatus
+from apps.agreements.services import accept_trial, activate, pending_for
 from apps.core.permissions import IsInstituteAdmin, IsSuperAdmin
 from apps.subscriptions.gating import ActiveSubscription
 from apps.subscriptions.serializers import (
@@ -61,8 +65,20 @@ class TenantViewSet(viewsets.ModelViewSet):
         tenant = self.get_object()
         serializer = RecordPaymentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        record_payment(tenant.subscription, recorded_by=request.user, **serializer.validated_data)
-        return Response(TenantSerializer(self.get_object()).data)
+        data = serializer.validated_data
+        agreement_id = request.data.get("agreement")
+        agreement = None
+        if agreement_id:
+            agreement = SignedAgreement.objects.filter(tenant=tenant, pk=agreement_id, status=AgreementStatus.PENDING).first()
+            if agreement is None:
+                raise ValidationError({"agreement": ["No agreement waiting for payment with this number."]})
+        with transaction.atomic():
+            subscription = record_payment(tenant.subscription, recorded_by=request.user, **data)
+            payment = subscription.payments.order_by("-created_at", "-id").first()
+            agreement = agreement or pending_for(tenant, data["plan"], data["billing_cycle"])
+            if agreement is not None:
+                activate(agreement, payment)
+        return Response({**TenantSerializer(self.get_object()).data, "agreement": agreement.pk if agreement else None})
 
     @action(detail=True, methods=["post"], url_path="reset-admin-password")
     def reset_admin_password(self, request, pk=None):
@@ -111,9 +127,14 @@ class InstituteRegistrationView(APIView):
     def post(self, request):
         serializer = InstituteRegistrationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        if request.data.get("accept_terms") is not True:
+            raise ValidationError({"accept_terms": ["Please read and accept the free trial agreement."]})
         tenant_fields, admin = serializer.split()
         tenant_fields.pop("is_active", None)
-        _, user = create_institute(admin=admin, **tenant_fields)
+        with transaction.atomic():
+            tenant, user = create_institute(admin=admin, **tenant_fields)
+            signer = user.get_full_name() or user.username
+            accept_trial(tenant, user, request, signer)
         return Response(issue_tokens(user), status=status.HTTP_201_CREATED)
 
 

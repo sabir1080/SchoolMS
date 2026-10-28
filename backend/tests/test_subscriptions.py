@@ -19,6 +19,7 @@ REGISTRATION = {
     "admin_email": "Principal@Bright.test",
     "admin_password": "Str0ng-pass-123",
     "admin_first_name": "Sara",
+    "accept_terms": True,
 }
 
 

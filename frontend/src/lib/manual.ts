@@ -525,13 +525,17 @@ export const MANUAL: ManualSection[] = [
     steps: {
       en: [
         "Plan & Billing shows your plan, days left, student and staff limits.",
-        "To upgrade or renew, follow Upgrade or renew; the platform team activates it after payment.",
+        "To upgrade or renew: tap Choose (or Renew) on a plan, pick monthly or yearly, fill in your details, read the subscription agreement and sign by typing your name.",
+        "Pay using the details shown under “How to pay” and add the payment reference. We record the payment, your plan starts and the agreement shows as Active with the paid period.",
+        "Your agreements lists the free trial and every subscription agreement: tap View to read or print one.",
         "Users → Add user for admins and teachers; Reset password for anyone who forgot theirs.",
         "Institute settings → Password rules chooses how strong new passwords must be.",
       ],
       ur: [
         "Plan & Billing mein aap ka plan, baqi din, students aur staff ki had nazar aati hai.",
-        "Upgrade ya renew ke liye Upgrade or renew par amal karein; adaigi ke baad platform team activate karti hai.",
+        "Upgrade ya renew: plan par Choose (ya Renew) dabayein, monthly ya yearly chunein, apni maloomat bharein, subscription agreement parhein aur apna naam likh kar sign karein.",
+        "“How to pay” mein diye gaye tareeqe se payment karein aur reference likh dein. Hum payment record karte hain, plan chalu ho jata hai aur agreement Active (paid period ke saath) ho jata hai.",
+        "Your agreements mein free trial aur har subscription ka agreement hai: View se parhein ya print karein.",
         "Users → Add user admins aur teachers ke liye; password bhoolne wale ke liye Reset password.",
         "Institute settings → Password rules se naye passwords ki mazbooti chunein.",
       ],

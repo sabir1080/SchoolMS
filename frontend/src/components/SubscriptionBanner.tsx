@@ -16,7 +16,7 @@ export function SubscriptionBanner() {
   } else if (subscription.effective_status === "trialing") {
     message = `Free trial: ${subscription.days_left} day${subscription.days_left === 1 ? "" : "s"} left.`;
   } else if (subscription.days_left <= 7) {
-    message = `Your subscription renews in ${subscription.days_left} day${subscription.days_left === 1 ? "" : "s"}.`;
+    message = `Your subscription ends in ${subscription.days_left} day${subscription.days_left === 1 ? "" : "s"}. Renew from Plan & Billing.`;
   }
   if (!message) return null;
 

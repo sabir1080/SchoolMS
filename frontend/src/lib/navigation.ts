@@ -15,6 +15,7 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   super_admin: [
     { label: "Overview", href: "/platform/overview" },
     { label: "Institutes", href: "/platform/tenants" },
+    { label: "Business details", href: "/platform/business" },
     { label: "Owner guide", href: "/platform/guide" },
     ACCOUNT,
   ],
@@ -54,7 +55,7 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
 };
 
 /** Pages that stay open after an institute's subscription expires. */
-export const ALWAYS_OPEN = ["/billing", "/account", "/manual"];
+export const ALWAYS_OPEN = ["/billing", "/agreement", "/account", "/manual"];
 
 export const ROLE_LABELS: Record<Role, string> = {
   super_admin: "Super Admin",
