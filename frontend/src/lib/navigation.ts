@@ -9,9 +9,15 @@ export interface NavItem {
 
 /** Menu per role. New feature modules add their entries here. */
 const ACCOUNT: NavItem = { label: "Change password", href: "/account" };
+const HELP: NavItem = { label: "Help & manual", href: "/manual" };
 
 export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
-  super_admin: [{ label: "Overview", href: "/platform/overview" }, { label: "Institutes", href: "/platform/tenants" }, ACCOUNT],
+  super_admin: [
+    { label: "Overview", href: "/platform/overview" },
+    { label: "Institutes", href: "/platform/tenants" },
+    { label: "Owner guide", href: "/platform/guide" },
+    ACCOUNT,
+  ],
   admin: [
     { label: "Dashboard", href: "/dashboard" },
     { label: "Students", href: "/students", feature: "students" },
@@ -29,6 +35,7 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { label: "Users", href: "/users" },
     { label: "Institute settings", href: "/settings" },
     { label: "Plan & Billing", href: "/billing" },
+    HELP,
     ACCOUNT,
   ],
   teacher: [
@@ -39,14 +46,15 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { label: "Exams", href: "/exams", feature: "exams" },
     { label: "Students", href: "/students", feature: "students" },
     { label: "My salary slips", href: "/my-payslips", feature: "payroll" },
+    HELP,
     ACCOUNT,
   ],
-  student: [{ label: "Dashboard", href: "/dashboard" }, ACCOUNT],
-  parent: [{ label: "Dashboard", href: "/dashboard" }, ACCOUNT],
+  student: [{ label: "Dashboard", href: "/dashboard" }, HELP, ACCOUNT],
+  parent: [{ label: "Dashboard", href: "/dashboard" }, HELP, ACCOUNT],
 };
 
 /** Pages that stay open after an institute's subscription expires. */
-export const ALWAYS_OPEN = ["/billing", "/account"];
+export const ALWAYS_OPEN = ["/billing", "/account", "/manual"];
 
 export const ROLE_LABELS: Record<Role, string> = {
   super_admin: "Super Admin",
