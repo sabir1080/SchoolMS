@@ -64,7 +64,8 @@ Then: promotion to next class/session ✅ → subject teacher marks entry (timet
 certificates ✅ → white-label logo + theme colour ✅ (`apps.tenants.branding`).
 
 Then: fee receipts + payment message ✅ → online admission form ✅ → student photo + ID cards ✅ →
-platform owner dashboard ✅ → PWA + Web Push notifications ✅ → Safepay + Stripe ✅. Not yet: library, transport.
+platform owner dashboard ✅ → PWA + Web Push notifications ✅ → Safepay + Stripe ✅ → backups ✅
+(`apps.backups`: download on platform overview, `restore_backup` command). Not yet: library, transport.
 
 - Payments: a gateway payment counts only after server-side verification (signature, read-back or IPN).
 - Web Push needs `VAPID_PRIVATE_KEY` on the API service; push endpoints are limited to real push services.

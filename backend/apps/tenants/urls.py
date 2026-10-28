@@ -1,6 +1,8 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 
+from apps.backups.views import BackupDownloadView
+
 from .overview import PlatformOverviewView
 from .views import InstituteLookupView, InstituteRegistrationView, InstituteSettingsView, TenantViewSet
 
@@ -11,6 +13,7 @@ urlpatterns = [
     path("public/institutes/<str:code>/", InstituteLookupView.as_view(), name="institute-lookup"),
     path("public/register/", InstituteRegistrationView.as_view(), name="institute-register"),
     path("institute/settings/", InstituteSettingsView.as_view(), name="institute-settings"),
+    path("platform/backup/", BackupDownloadView.as_view(), name="platform-backup"),
     path("platform/overview/", PlatformOverviewView.as_view(), name="platform-overview"),
     *router.urls,
 ]

@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     "apps.reports",
     "apps.certificates",
     "apps.admissions",
+    "apps.backups",
 ]
 
 MIDDLEWARE = [

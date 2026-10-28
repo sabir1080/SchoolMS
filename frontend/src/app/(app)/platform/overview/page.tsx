@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { AmountColumns, BarList } from "@/components/dashboard/charts";
-import { Card, ErrorBox } from "@/components/ui";
-import { api, formatMoney } from "@/lib/api";
+import { Button, Card, ErrorBox } from "@/components/ui";
+import { api, downloadFile, formatMoney } from "@/lib/api";
 import { formatDate, STATUS_LABELS } from "@/lib/navigation";
 
 interface SubRow {
@@ -21,6 +21,7 @@ interface SubRow {
 }
 
 interface Overview {
+  last_backup: { created_at: string; days_ago: number; size_bytes: number; institutes: number } | null;
   institutes: { total: number; active: number; trial: number; paying: number; expired: number; suspended: number; new_this_month: number };
   plans: { plan: string; institutes: number }[];
   students: number;
@@ -70,14 +71,63 @@ function SubList({ rows, empty, expired = false }: { rows: SubRow[]; empty: stri
   );
 }
 
+function fileSize(bytes: number) {
+  return bytes >= 1_048_576 ? `${(bytes / 1_048_576).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
+/** Download a full backup of every institute; warns when the last one is a week old. */
+function BackupCard({ last, onDone }: { last: Overview["last_backup"]; onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  const overdue = !last || last.days_ago >= 7;
+
+  async function download() {
+    setBusy(true);
+    setError(null);
+    try {
+      await downloadFile("/api/platform/backup/", "schoolms-backup.json.gz");
+      onDone();
+    } catch (err) {
+      setError(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="font-medium">Backup of all data</h2>
+          <p className={`mt-1 text-sm ${overdue ? "font-medium text-red-600" : "text-slate-500"}`} data-testid="backup-status">
+            {!last
+              ? "No backup downloaded yet."
+              : `Last backup: ${last.days_ago === 0 ? "today" : `${last.days_ago} day${last.days_ago === 1 ? "" : "s"} ago`} · ${last.institutes} institutes · ${fileSize(last.size_bytes)}`}
+            {overdue && " Please download one now."}
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            One file with every institute&apos;s students, fees, results and settings. Download it every week and keep it in Google
+            Drive or another safe place: it contains private data and payment keys, so do not share it.
+          </p>
+        </div>
+        <Button type="button" onClick={download} disabled={busy}>
+          {busy ? "Preparing…" : "Download backup"}
+        </Button>
+      </div>
+      <ErrorBox error={error} />
+    </Card>
+  );
+}
+
 /** The platform owner's dashboard. */
 export default function PlatformOverviewPage() {
   const [data, setData] = useState<Overview | null>(null);
   const [error, setError] = useState<unknown>(null);
 
-  useEffect(() => {
+  const load = () => {
     api<Overview>("/api/platform/overview/").then(setData).catch(setError);
-  }, []);
+  };
+  useEffect(load, []);
 
   if (!data) return error ? <ErrorBox error={error} /> : <p className="text-sm text-slate-500">Loading…</p>;
   const { institutes: i } = data;
@@ -92,6 +142,8 @@ export default function PlatformOverviewPage() {
           Manage institutes →
         </Link>
       </div>
+
+      <BackupCard last={data.last_backup} onDone={load} />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Tile label="Institutes" value={i.total} note={`${i.new_this_month} new this month`} />

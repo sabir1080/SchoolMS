@@ -230,6 +230,15 @@ Shared database, every institute-owned row has a `tenant_id`.
 - `/platform/overview` (super admin landing page): institutes by status, plans, students, users,
   subscription revenue per month, renewals due in 14 days, expired institutes, newest institutes and payments.
 
+## Backups
+
+- Platform overview → "Download backup" (super admin): one `.json.gz` with every institute's data
+  (`dumpdata` without content types, permissions, sessions and logs; plain ids, because usernames repeat
+  across institutes). The card turns red when the last download is 7+ days old. The file holds password
+  hashes and gateway keys: keep it private.
+- Restore into an empty, migrated database: `python manage.py restore_backup <file>` (refuses a database
+  that already has institutes). `python manage.py create_backup <file>` makes one from the command line.
+
 ## Promotion to the next class / session
 
 - Students page -> "Promote to next class": pick a section of the current session and the new session.
@@ -331,6 +340,7 @@ the demo. `--wipe-all` first deletes **every** institute and its data (super adm
 | GET | `/api/students/id-cards/` (`?section=` or `?ids=`) | admin / teacher |
 | GET/POST | `/api/push/` (subscribe; `action`: `test`, `unsubscribe`) | logged-in institute users |
 | GET | `/api/platform/overview/` | super admin |
+| GET | `/api/platform/backup/` (download `.json.gz`) | super admin |
 | GET/POST | `/api/pay/stripe/return/`, `/api/pay/stripe/webhook/<code>/`, `/api/pay/safepay/return/` | gateways (public) |
 | GET/POST | `/api/students/promotion/` (`?section=&to_session=`) | institute admin |
 | GET/POST/DELETE | `/api/certificates/` (`?student=`) | institute admin |

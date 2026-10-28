@@ -87,7 +87,10 @@ class PlatformOverviewView(APIView):
 
         recent_payments = payments.select_related("subscription__tenant", "plan").order_by("-created_at")[:6]
         tenants = Tenant.objects.all()
+        from apps.backups.views import last_backup
+
         return Response({
+            "last_backup": last_backup(),
             "institutes": {
                 "total": tenants.count(),
                 "active": len(usable),
