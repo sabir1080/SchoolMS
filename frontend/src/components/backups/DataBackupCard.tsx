@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { Button, Card, ErrorBox } from "@/components/ui";
+import { TenantBackups } from "@/components/backups/TenantBackups";
 import { api, downloadFile } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { formatDate } from "@/lib/navigation";
 
 interface Status {
@@ -14,6 +16,7 @@ interface Status {
 
 /** Institute settings: the institute downloads its own data (backup file and Excel copy). */
 export function DataBackupCard() {
+  const { user } = useAuth();
   const [status, setStatus] = useState<Status | null>(null);
   const [busy, setBusy] = useState<"file" | "excel" | null>(null);
   const [error, setError] = useState<unknown>(null);
@@ -66,10 +69,15 @@ export function DataBackupCard() {
         </button>
       </div>
       <p className="mt-2 text-xs text-slate-500">
-        The backup file is what the SchoolMS team uses to bring your data back if something goes wrong; it does not contain your payment
-        gateway keys. The Excel file has sheets you can open yourself (students, bills, payments, results, attendance, staff).
+        If something goes wrong, restore your data from this file below (or send it to the SchoolMS team). It does not contain your
+        payment gateway keys. The Excel file has sheets you can open yourself (students, bills, payments, results, attendance, staff).
       </p>
       <ErrorBox error={error} />
+      {user?.tenant && (
+        <div className="mt-4">
+          <TenantBackups code={user.tenant.slug} />
+        </div>
+      )}
     </Card>
   );
 }

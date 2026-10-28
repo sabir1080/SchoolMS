@@ -28,9 +28,11 @@ interface Snapshot {
 
 const outline = "rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium disabled:opacity-60 dark:border-slate-700";
 
-/** Owner's Manage panel: one institute's backup, restore from a file, and the copies saved before each restore. */
-export function TenantBackups({ tenantId, code }: { tenantId: number; code: string }) {
-  const base = `/api/platform/tenants/${tenantId}`;
+/** Restore one institute from a file, and the copies saved before each restore. The owner (Institutes → Manage)
+ * also downloads the institute's backup and saved copies; an institute admin restores its own backup files. */
+export function TenantBackups({ tenantId, code }: { tenantId?: number; code: string }) {
+  const owner = tenantId !== undefined;
+  const base = owner ? `/api/platform/tenants/${tenantId}` : "/api/institute/backup";
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [confirm, setConfirm] = useState("");
@@ -74,6 +76,7 @@ export function TenantBackups({ tenantId, code }: { tenantId: number; code: stri
       setFile(null);
       setConfirm("");
       setMessage(`Restored ${result.name} from the backup. Its data before the restore was saved below, so you can put it back if needed.`);
+      if (!owner) setTimeout(() => window.location.reload(), 2500);
       loadSnapshots();
     });
 
@@ -84,6 +87,7 @@ export function TenantBackups({ tenantId, code }: { tenantId: number; code: stri
       setPutBack(null);
       setConfirm("");
       loadSnapshots();
+      if (!owner) setTimeout(() => window.location.reload(), 2500);
     });
 
   const names = preview ? Array.from(new Set([...Object.keys(preview.backup), ...Object.keys(preview.current)])).sort() : [];
@@ -118,18 +122,23 @@ export function TenantBackups({ tenantId, code }: { tenantId: number; code: stri
 
   return (
     <div data-testid="tenant-backups">
-      <h3 className="mb-2 text-sm font-medium">Backup &amp; restore (this institute only)</h3>
-      <div className="flex flex-wrap gap-2">
-        <button type="button" disabled={busy} className={outline} onClick={() => run(() => downloadFile(`${base}/backup/`, `${code}-backup.json.gz`))}>
-          Download this institute&apos;s backup
-        </button>
-      </div>
+      {owner && (
+        <>
+          <h3 className="mb-2 text-sm font-medium">Backup &amp; restore (this institute only)</h3>
+          <div className="mb-3 flex flex-wrap gap-2">
+            <button type="button" disabled={busy} className={outline} onClick={() => run(() => downloadFile(`${base}/backup/`, `${code}-backup.json.gz`))}>
+              Download this institute&apos;s backup
+            </button>
+          </div>
+        </>
+      )}
 
-      <div className="mt-3 rounded-lg border border-slate-200 p-3 dark:border-slate-800">
-        <p className="text-sm font-medium">Restore this institute</p>
+      <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+        <p className="text-sm font-medium">{owner ? "Restore this institute" : "Restore from a backup"}</p>
         <p className="text-xs text-slate-500">
-          Choose this institute&apos;s backup file, or a full platform backup. Only this institute changes; other institutes, its plan,
-          payments and agreements stay as they are.
+          {owner
+            ? "Choose this institute's backup file, or a full platform backup. Only this institute changes; other institutes, its plan, payments and agreements stay as they are."
+            : "Choose a backup file you downloaded above (not changed). Your plan, payments and agreements stay as they are. Passwords go back to what they were on the backup date."}
         </p>
         <input
           type="file"
@@ -196,13 +205,15 @@ export function TenantBackups({ tenantId, code }: { tenantId: number; code: stri
                     {formatDate(s.created_at)} · {s.reason} · {Math.max(1, Math.round(s.size_bytes / 1024))} KB
                   </span>
                   <span className="flex gap-3">
-                    <button
-                      type="button"
-                      className="text-brand-600 hover:underline"
-                      onClick={() => run(() => downloadFile(`${base}/snapshots/${s.id}/`, `${code}-saved.json.gz`))}
-                    >
-                      Download
-                    </button>
+                    {owner && (
+                      <button
+                        type="button"
+                        className="text-brand-600 hover:underline"
+                        onClick={() => run(() => downloadFile(`${base}/snapshots/${s.id}/`, `${code}-saved.json.gz`))}
+                      >
+                        Download
+                      </button>
+                    )}
                     <button
                       type="button"
                       className="text-brand-600 hover:underline"

@@ -116,17 +116,32 @@ class PlatformTenantBackupView(APIView):
         return _download(content, f"{tenant.slug}-backup-{_stamp()}.json.gz", "application/gzip")
 
 
-class PlatformTenantRestoreView(APIView):
-    """Restore one institute from its backup file or from a full backup. Without ``confirm_code`` it only
-    describes what would happen; with the institute code typed in, it restores (saving the current data first)."""
+def _confirm(request, tenant):
+    if str(request.data.get("confirm_code", "")).strip().lower() != tenant.slug:
+        raise ValidationError({"confirm_code": [f"Type the institute code “{tenant.slug}” to confirm."]})
 
-    permission_classes = [IsSuperAdmin]
+
+LOCKED_OUT = "Your own login is not in this backup (it was made before your account), so restoring it would lock you out."
+
+
+class RestoreView(APIView):
+    """Restore one institute from a backup file. Without ``confirm_code`` it only describes what would happen; with
+    the institute code typed in, it restores (saving the current data first, so it can be undone).
+
+    The owner may use any file of the institute, including a full platform backup. An institute admin may only use
+    a file downloaded from SchoolMS for this institute, unchanged (checked with the file's server signature)."""
+
     parser_classes = [MultiPartParser, FormParser, JSONParser]
+    for_owner = True
 
-    def post(self, request, pk):
-        tenant = Tenant.objects.filter(pk=pk).first()
+    def get_tenant(self, request, pk):
+        tenant = Tenant.objects.filter(pk=pk).first() if self.for_owner else request.user.tenant
         if tenant is None:
             raise NotFound("Institute not found.")
+        return tenant
+
+    def post(self, request, pk=None):
+        tenant = self.get_tenant(request, pk)
         upload = request.FILES.get("file")
         if upload is None:
             raise ValidationError({"file": ["Choose a backup file."]})
@@ -136,18 +151,31 @@ class PlatformTenantRestoreView(APIView):
             rows, info = institute.read_file(upload.read(), tenant)
         except institute.BackupFileError as exc:
             raise ValidationError({"file": [str(exc)]})
+        if not self.for_owner:
+            if not info["signed"]:
+                raise ValidationError({"file": ["This file was changed or was not downloaded from SchoolMS for this institute. "
+                                                "Use a backup file from Data backup, or ask the SchoolMS team."]})
+            if not institute.backup_has_user(rows, request.user):
+                raise ValidationError({"file": [LOCKED_OUT]})
         preview = {**info, "institute": tenant.slug, "name": tenant.name, "backup": institute.summary(rows),
                    "current": institute.current_summary(tenant)}
-        code = str(request.data.get("confirm_code", "")).strip().lower()
-        if not code:
+        if not str(request.data.get("confirm_code", "")).strip():
             return Response({**preview, "restored": False})
-        if code != tenant.slug:
-            raise ValidationError({"confirm_code": [f"Type the institute code “{tenant.slug}” to confirm."]})
+        _confirm(request, tenant)
         try:
-            safety, counts = institute.restore(tenant, rows, request.user)
+            safety, _ = institute.restore(tenant, rows, request.user)
         except institute.BackupFileError as exc:
             raise ValidationError({"file": [str(exc)]})
         return Response({**preview, "restored": True, "safety_snapshot": safety.pk, "current": institute.current_summary(tenant)})
+
+
+class PlatformTenantRestoreView(RestoreView):
+    permission_classes = [IsSuperAdmin]
+
+
+class InstituteRestoreView(RestoreView):
+    permission_classes = [IsInstituteAdmin]
+    for_owner = False
 
 
 class SnapshotSerializer(serializers.ModelSerializer):
@@ -158,27 +186,44 @@ class SnapshotSerializer(serializers.ModelSerializer):
         fields = ["id", "reason", "size_bytes", "created_at", "created_by_name"]
 
 
-class PlatformSnapshotsView(APIView):
-    """Copies saved before each restore: list, download, or put back (undo a restore)."""
+class SnapshotsView(APIView):
+    """Copies saved before each restore: list, download (owner only: they hold payment keys), or put back."""
 
-    permission_classes = [IsSuperAdmin]
+    for_owner = True
 
-    def get(self, request, pk, snapshot_id=None):
-        snaps = InstituteSnapshot.objects.filter(tenant_id=pk).select_related("created_by")
+    def get_tenant(self, request, pk):
+        tenant = Tenant.objects.filter(pk=pk).first() if self.for_owner else request.user.tenant
+        if tenant is None:
+            raise NotFound("Institute not found.")
+        return tenant
+
+    def get(self, request, pk=None, snapshot_id=None):
+        tenant = self.get_tenant(request, pk)
+        snaps = InstituteSnapshot.objects.filter(tenant=tenant).select_related("created_by")
         if snapshot_id is None:
             return Response(SnapshotSerializer(snaps, many=True).data)
         snap = snaps.filter(pk=snapshot_id).first()
+        if snap is None or not self.for_owner:
+            raise NotFound("Saved copy not found.")
+        return _download(bytes(snap.data), f"{tenant.slug}-saved-{snap.created_at:%Y-%m-%d-%H%M}.json.gz", "application/gzip")
+
+    def post(self, request, pk=None, snapshot_id=None):
+        tenant = self.get_tenant(request, pk)
+        snap = InstituteSnapshot.objects.filter(tenant=tenant, pk=snapshot_id).first() if snapshot_id else None
         if snap is None:
             raise NotFound("Saved copy not found.")
-        return _download(bytes(snap.data), f"{snap.tenant.slug}-saved-{snap.created_at:%Y-%m-%d-%H%M}.json.gz", "application/gzip")
-
-    def post(self, request, pk, snapshot_id=None):
-        tenant = Tenant.objects.filter(pk=pk).first()
-        snap = InstituteSnapshot.objects.filter(tenant_id=pk, pk=snapshot_id).first() if snapshot_id else None
-        if tenant is None or snap is None:
-            raise NotFound("Saved copy not found.")
-        if str(request.data.get("confirm_code", "")).strip().lower() != tenant.slug:
-            raise ValidationError({"confirm_code": [f"Type the institute code “{tenant.slug}” to confirm."]})
+        _confirm(request, tenant)
         rows, _ = institute.read_file(bytes(snap.data), tenant)
+        if not self.for_owner and not institute.backup_has_user(rows, request.user):
+            raise ValidationError({"confirm_code": [LOCKED_OUT]})
         safety, _ = institute.restore(tenant, rows, request.user, reason="before putting back a saved copy")
         return Response({"restored": True, "safety_snapshot": safety.pk, "current": institute.current_summary(tenant)})
+
+
+class PlatformSnapshotsView(SnapshotsView):
+    permission_classes = [IsSuperAdmin]
+
+
+class InstituteSnapshotsView(SnapshotsView):
+    permission_classes = [IsInstituteAdmin]
+    for_owner = False

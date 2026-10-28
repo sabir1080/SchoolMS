@@ -259,7 +259,12 @@ Shared database, every institute-owned row has a `tenant_id`.
   The owner downloads one institute (with keys) and restores ONLY that institute from its file or from a full
   backup: preview first, then the institute code to confirm. The current data is saved as an `InstituteSnapshot`
   (last 5 kept) so a restore can be undone. Subscription, payments, agreements and push devices are not touched;
-  blank secrets keep their current values.
+  blank secrets keep their current values. Rows outside the backup that point at the institute's users (push
+  devices, agreement signers, "deleted by", "created by") are saved and re-linked.
+- Institute admins can restore too, but only a file SchoolMS made for their institute, unchanged: every institute
+  file carries an HMAC signature (`salted_hmac` over the rows, tied to the tenant id). A full backup, an edited file
+  or a backup without the admin's own login is refused; admins can list and put back saved copies but not download
+  them (they hold payment keys).
 
 ## Recycle bin
 
@@ -372,6 +377,7 @@ the demo. `--wipe-all` first deletes **every** institute and its data (super adm
 | GET | `/api/platform/backup/` (download `.json.gz`) | super admin |
 | GET | `/api/institute/backup/`, `/api/institute/backup/excel/`, `/api/institute/backup/status/` | institute admin |
 | GET | `/api/platform/tenants/<id>/backup/`; POST `.../restore/` (multipart `file`, optional `confirm_code`) | super admin |
+| POST | `/api/institute/backup/restore/`; GET/POST `/api/institute/backup/snapshots/`, `.../snapshots/<sid>/` (put back) | institute admin |
 | GET/POST | `/api/platform/tenants/<id>/snapshots/`, `.../snapshots/<sid>/` (download / put back with `confirm_code`) | super admin |
 | GET | `/api/recycle-bin/`; POST/DELETE `/api/recycle-bin/<id>/` (restore / delete for good) | institute admin |
 | GET | `/api/public/agreements/trial/` | public |

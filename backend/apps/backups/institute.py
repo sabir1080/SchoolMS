@@ -14,8 +14,10 @@ from django.apps import apps
 from django.core import serializers
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import IntegrityError, connection, transaction
+from django.db import models
 from django.db.models import ProtectedError
 from django.utils import timezone
+from django.utils.crypto import constant_time_compare, salted_hmac
 
 FORMAT = "schoolms-institute-backup"
 FORMAT_VERSION = 1
@@ -80,6 +82,13 @@ def export_rows(tenant, include_secrets):
     return rows
 
 
+def _signature(content, tenant_pk):
+    """Server signature of a backup file, so an institute admin can only restore a file SchoolMS made, unchanged."""
+    signed = {k: content.get(k) for k in ("format", "version", "institute", "created_at", "with_secrets", "rows")}
+    text = json.dumps(signed, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return salted_hmac("schoolms.institute-backup", f"{tenant_pk}:{text}", algorithm="sha256").hexdigest()
+
+
 def export_file(tenant, include_secrets):
     """A gzip'd JSON backup of one institute."""
     payload = {
@@ -87,7 +96,9 @@ def export_file(tenant, include_secrets):
         "created_at": timezone.now().isoformat(), "with_secrets": include_secrets,
         "rows": export_rows(tenant, include_secrets),
     }
-    return gzip.compress(json.dumps(payload, cls=_Encoder).encode())
+    payload = json.loads(json.dumps(payload, cls=_Encoder))  # plain JSON values, exactly as read back
+    payload["signature"] = _signature(payload, tenant.pk)
+    return gzip.compress(json.dumps(payload).encode())
 
 
 class BackupFileError(ValueError):
@@ -103,9 +114,11 @@ def read_file(data, tenant):
     if isinstance(content, dict) and content.get("format") == FORMAT:
         if content.get("institute") != tenant.slug:
             raise BackupFileError(f"This backup is for institute “{content.get('institute')}”, not “{tenant.slug}”.")
-        return content["rows"], {"source": "institute", "created_at": content.get("created_at"), "with_secrets": content.get("with_secrets")}
+        signed = constant_time_compare(str(content.get("signature", "")), _signature(content, tenant.pk))
+        return content["rows"], {"source": "institute", "created_at": content.get("created_at"),
+                                 "with_secrets": content.get("with_secrets"), "signed": signed}
     if isinstance(content, list):
-        return extract_from_full(content, tenant), {"source": "full", "created_at": None, "with_secrets": True}
+        return extract_from_full(content, tenant), {"source": "full", "created_at": None, "with_secrets": True, "signed": False}
     raise BackupFileError("This is not a SchoolMS backup file.")
 
 
@@ -171,17 +184,53 @@ def snapshot(tenant, reason, user=None):
     return snap
 
 
+def _user_links(tenant):
+    """Rows kept out of backups that point at this institute's users (push devices, agreement signers, who deleted
+    or backed up what). Restoring deletes and re-creates the users, so these are saved and put back afterwards."""
+    from apps.accounts.models import User
+
+    users = User.objects.filter(tenant=tenant)
+    links, cascaded = [], []
+    for label in sorted(KEEP_OUT):
+        model = apps.get_model(label)
+        for field in model._meta.concrete_fields:
+            if not (field.many_to_one and field.related_model is User):
+                continue
+            found = model.objects.filter(**{f"{field.name}__in": users})
+            if field.remote_field.on_delete is models.CASCADE:
+                cascaded += serializers.serialize("python", found)
+            else:
+                links += [(model, pk, field.attname, uid) for pk, uid in found.values_list("pk", field.attname)]
+    return links, cascaded
+
+
+def _put_back_user_links(links, cascaded):
+    from apps.accounts.models import User
+
+    wanted = {uid for *_, uid in links} | {r["fields"][f] for r in cascaded for f in r["fields"] if f == "user"}
+    alive = set(User.objects.filter(pk__in=wanted).values_list("pk", flat=True))
+    for model, pk, attname, uid in links:
+        if uid in alive:
+            model.objects.filter(pk=pk).update(**{attname: uid})
+    for obj in serializers.deserialize("python", cascaded):
+        if obj.object.user_id in alive:
+            obj.save()
+
+
+def backup_has_user(rows, user):
+    return any(r["model"] == "accounts.user" and r["pk"] == user.pk for r in rows)
+
+
 @transaction.atomic
 def restore(tenant, rows, user=None, reason="before restore"):
     """Replace this institute's data with ``rows``. Saves the current data first (see ``snapshot``)."""
-    from apps.agreements.models import SignedAgreement
     from apps.messaging.models import MessagingSettings
     from apps.payments.models import GatewayAccount
 
     safety = snapshot(tenant, reason, user)
     keys = {a.provider: (a.password, a.secret) for a in GatewayAccount.objects.filter(tenant=tenant)}
     token = MessagingSettings.objects.filter(tenant=tenant).values_list("twilio_auth_token", flat=True).first()
-    signers = dict(SignedAgreement.objects.filter(tenant=tenant).values_list("pk", "signed_by_id"))
+    links, cascaded = _user_links(tenant)
 
     _delete_institute_rows(tenant)
     tenant_row = next(r for r in rows if r["model"] == "tenants.tenant")
@@ -206,10 +255,5 @@ def restore(tenant, rows, user=None, reason="before restore"):
             account.save(update_fields=["password", "secret"])
     if token:
         MessagingSettings.objects.filter(tenant=tenant, twilio_auth_token="").update(twilio_auth_token=token)
-    from apps.accounts.models import User
-
-    alive = set(User.objects.filter(pk__in=[v for v in signers.values() if v]).values_list("pk", flat=True))
-    for pk, signer in signers.items():
-        if signer in alive:
-            SignedAgreement.objects.filter(pk=pk).update(signed_by_id=signer)
+    _put_back_user_links(links, cascaded)
     return safety, summary(rows)

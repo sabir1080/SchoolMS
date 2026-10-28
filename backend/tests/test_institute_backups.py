@@ -162,3 +162,78 @@ def test_expired_school_can_still_download(api, admin_a, school_a):
     api.force_authenticate(admin_a)
     assert api.get("/api/institute/backup/").status_code == 200
     assert Tenant.objects.count() == 1
+
+
+def test_school_admin_restores_its_own_signed_file(api, admin_a, school_a, make_tenant, make_user, super_admin):
+    from apps.messaging.models import PushSubscription
+    from apps.recyclebin.models import DeletedItem
+
+    teacher = make_user("teacher_a", Role.TEACHER, school_a)
+    beta = make_tenant("beta")
+    Student.objects.create(tenant=beta, admission_no="1", first_name="Bilal", gender="male")
+    beta_before = rows_of(beta)
+    Student.objects.create(tenant=school_a, admission_no="1", first_name="Zara", gender="female")
+    GatewayAccount.objects.create(tenant=school_a, provider="jazzcash", merchant_id="M", password="pw", secret="salt")
+    push = PushSubscription.objects.create(tenant=school_a, user=admin_a, endpoint="https://fcm.googleapis.com/x", p256dh="k", auth="a")
+
+    api.force_authenticate(admin_a)
+    file = api.get("/api/institute/backup/").content
+    late = api.post("/api/students/", {"first_name": "Late", "gender": "male"}, format="json").json()["id"]
+    zara = Student.objects.get(first_name="Zara")
+    assert api.delete(f"/api/students/{zara.pk}/").status_code == 204
+    bin_item = DeletedItem.objects.get(tenant=school_a)
+
+    url = "/api/institute/backup/restore/"
+    preview = api.post(url, {"file": upload(file)}, format="multipart").json()
+    assert preview["restored"] is False and preview["signed"] is True
+    assert preview["backup"]["Students"] == 1 and preview["current"]["Students"] == 1
+    assert "confirm" in str(api.post(url, {"file": upload(file), "confirm_code": "beta"}, format="multipart").json())
+    res = api.post(url, {"file": upload(file), "confirm_code": "ALPHA"}, format="multipart").json()
+    assert res["restored"] is True
+    assert set(Student.objects.filter(tenant=school_a).values_list("first_name", flat=True)) == {"Zara"}
+    assert not Student.objects.filter(pk=late).exists()
+    assert rows_of(beta) == beta_before
+    # Kept: payment keys (blank in the school's file), the admin's phone for notifications, who deleted what.
+    assert GatewayAccount.objects.get(tenant=school_a).secret == "salt"
+    assert PushSubscription.objects.filter(pk=push.pk, user=admin_a).exists()
+    bin_item.refresh_from_db()
+    assert bin_item.deleted_by_id == admin_a.pk
+    snap = InstituteSnapshot.objects.get(tenant=school_a)
+    assert snap.created_by_id == admin_a.pk
+
+    # Saved copies: listed and put back, never downloaded by the school (they hold payment keys).
+    assert [s["id"] for s in api.get("/api/institute/backup/snapshots/").json()] == [snap.pk]
+    assert api.get(f"/api/institute/backup/snapshots/{snap.pk}/").status_code == 404
+    assert api.post(f"/api/institute/backup/snapshots/{snap.pk}/", {"confirm_code": "alpha"}, format="json").json()["restored"]
+    assert set(Student.objects.filter(tenant=school_a).values_list("first_name", flat=True)) == {"Late"}
+
+    # Teachers cannot restore; the owner can still use the same file.
+    api.force_authenticate(teacher)
+    assert api.post(url, {"file": upload(file)}, format="multipart").status_code == 403
+    api.force_authenticate(super_admin)
+    assert api.post(f"/api/platform/tenants/{school_a.pk}/restore/", {"file": upload(file)}, format="multipart").json()["signed"]
+
+
+def test_school_admin_cannot_restore_changed_or_foreign_files(api, admin_a, school_a, make_tenant, make_user, tmp_path):
+    beta = make_tenant("beta")
+    api.force_authenticate(admin_a)
+    url = "/api/institute/backup/restore/"
+    good = json.loads(gzip.decompress(api.get("/api/institute/backup/").content))
+
+    # A changed file (e.g. rows pointed at another institute) is refused.
+    tampered = dict(good, rows=good["rows"] + [{"model": "students.student", "pk": 999,
+                                                 "fields": {"tenant": beta.pk, "first_name": "X", "gender": "male"}}])
+    res = api.post(url, {"file": upload(gzip.compress(json.dumps(tampered).encode()))}, format="multipart")
+    assert res.status_code == 400 and "was changed" in str(res.json())
+    unsigned = {k: v for k, v in good.items() if k != "signature"}
+    assert "was changed" in str(api.post(url, {"file": upload(json.dumps(unsigned).encode())}, format="multipart").json())
+    # Another institute's file, and a full platform backup (owner only).
+    assert "for institute “beta”" in str(api.post(url, {"file": upload(institute.export_file(beta, False))}, format="multipart").json())
+    with open(create_backup(str(tmp_path)), "rb") as full:
+        assert "was changed" in str(api.post(url, {"file": upload(full.read())}, format="multipart").json())
+
+    # A backup made before this admin's account would lock them out.
+    old = institute.export_file(school_a, False)
+    newcomer = make_user("new_admin", Role.ADMIN, school_a)
+    api.force_authenticate(newcomer)
+    assert "lock you out" in str(api.post(url, {"file": upload(old)}, format="multipart").json())
