@@ -12,6 +12,7 @@ interface Status {
   last_file: string | null;
   last_excel: string | null;
   days_since_file: number | null;
+  last_auto: string | null;
 }
 
 /** Institute settings: the institute downloads its own data (backup file and Excel copy). */
@@ -55,6 +56,10 @@ export function DataBackupCard() {
           {overdue && " We suggest downloading one every month."}
         </p>
       )}
+      <p className="mt-1 text-sm text-slate-600 dark:text-slate-300" data-testid="auto-backup-status">
+        Automatic backup: the app saves a copy of your data every day it is used and keeps the last 14 days (see below).
+        {status?.last_auto && ` Last: ${formatDate(status.last_auto)}.`}
+      </p>
       <div className="mt-3 flex flex-wrap gap-2">
         <Button type="button" onClick={() => get("file")} disabled={busy !== null}>
           {busy === "file" ? "Preparing…" : "Download backup"}

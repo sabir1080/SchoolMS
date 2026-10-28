@@ -101,6 +101,18 @@ def export_file(tenant, include_secrets):
     return gzip.compress(json.dumps(payload).encode())
 
 
+def without_secrets(data, tenant):
+    """A saved copy as the institute may download it: payment keys and tokens blanked, signed again."""
+    content = json.loads(gzip.decompress(data))
+    for row in content["rows"]:
+        for field in SECRETS.get(row["model"], ()):
+            if field in row["fields"]:
+                row["fields"][field] = ""
+    content["with_secrets"] = False
+    content["signature"] = _signature(content, tenant.pk)
+    return gzip.compress(json.dumps(content).encode())
+
+
 class BackupFileError(ValueError):
     pass
 
@@ -179,7 +191,7 @@ def snapshot(tenant, reason, user=None):
 
     data = export_file(tenant, include_secrets=True)
     snap = InstituteSnapshot.objects.create(tenant=tenant, reason=reason, data=data, size_bytes=len(data), created_by=user)
-    for old in InstituteSnapshot.objects.filter(tenant=tenant).order_by("-created_at")[5:]:
+    for old in InstituteSnapshot.objects.filter(tenant=tenant, kind=InstituteSnapshot.RESTORE).order_by("-created_at")[5:]:
         old.delete()
     return snap
 

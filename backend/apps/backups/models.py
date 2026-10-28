@@ -27,9 +27,13 @@ class InstituteBackupLog(models.Model):
 
 
 class InstituteSnapshot(models.Model):
-    """An institute's data saved automatically before a restore, so the restore can be undone."""
+    """An institute's data saved by the app: before a restore (so it can be undone), or the daily automatic backup."""
+
+    RESTORE, AUTO = "restore", "auto"
 
     tenant = models.ForeignKey("tenants.Tenant", on_delete=models.CASCADE, related_name="+")
+    kind = models.CharField(max_length=10, choices=[(RESTORE, "Before a restore"), (AUTO, "Daily backup")], default=RESTORE)
+    day = models.DateField(null=True, blank=True)  # the institute's date of a daily backup
     reason = models.CharField(max_length=100)
     data = models.BinaryField()
     size_bytes = models.PositiveIntegerField(default=0)
@@ -38,3 +42,4 @@ class InstituteSnapshot(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        constraints = [models.UniqueConstraint(fields=["tenant", "day"], condition=models.Q(kind="auto"), name="one_auto_backup_a_day")]

@@ -99,7 +99,9 @@ class InstituteBackupStatusView(APIView):
         logs = InstituteBackupLog.objects.filter(tenant=request.user.tenant)
         last = {kind: logs.filter(kind=kind).values_list("created_at", flat=True).first() for kind in ("file", "excel")}
         days = (timezone.now() - last["file"]).days if last["file"] else None
-        return Response({"last_file": last["file"], "last_excel": last["excel"], "days_since_file": days})
+        last_auto = InstituteSnapshot.objects.filter(tenant=request.user.tenant, kind=InstituteSnapshot.AUTO).values_list(
+            "created_at", flat=True).first()
+        return Response({"last_file": last["file"], "last_excel": last["excel"], "days_since_file": days, "last_auto": last_auto})
 
 
 class PlatformTenantBackupView(APIView):
@@ -183,11 +185,12 @@ class SnapshotSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = InstituteSnapshot
-        fields = ["id", "reason", "size_bytes", "created_at", "created_by_name"]
+        fields = ["id", "kind", "day", "reason", "size_bytes", "created_at", "created_by_name"]
 
 
 class SnapshotsView(APIView):
-    """Copies saved before each restore: list, download (owner only: they hold payment keys), or put back."""
+    """Copies saved by the app (daily automatic backups, and before each restore): list, download, or put back.
+    The owner's download keeps payment keys; the institute's download leaves them out."""
 
     for_owner = True
 
@@ -203,9 +206,12 @@ class SnapshotsView(APIView):
         if snapshot_id is None:
             return Response(SnapshotSerializer(snaps, many=True).data)
         snap = snaps.filter(pk=snapshot_id).first()
-        if snap is None or not self.for_owner:
+        if snap is None:
             raise NotFound("Saved copy not found.")
-        return _download(bytes(snap.data), f"{tenant.slug}-saved-{snap.created_at:%Y-%m-%d-%H%M}.json.gz", "application/gzip")
+        data = bytes(snap.data) if self.for_owner else institute.without_secrets(bytes(snap.data), tenant)
+        when = timezone.localtime(snap.created_at)
+        return _download(data, f"{tenant.slug}-{'daily' if snap.kind == snap.AUTO else 'saved'}-{when:%Y-%m-%d-%H%M}.json.gz",
+                         "application/gzip")
 
     def post(self, request, pk=None, snapshot_id=None):
         tenant = self.get_tenant(request, pk)

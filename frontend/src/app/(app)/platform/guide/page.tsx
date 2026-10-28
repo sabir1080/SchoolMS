@@ -128,10 +128,10 @@ const PARTS: Part[] = [
       ["Kahan rakhein", "Google Drive (ya koi aur mehfooz jagah). File private hai: is mein passwords ke hash aur payment keys hain. Kisi ko na bhejein."],
       ["Sirf aik school wapas lana", "Institutes → Manage → Restore this institute: school ki file ya pura backup chunein → Check file (pehle/baad ki ginti dikhti hai) → institute code likhein → Restore now. Baqi schools, plan, payments aur agreements nahi badalte."],
       ["Restore undo", "Har restore se pehle us school ka mojooda data “Copies saved before a restore” mein mehfooz hota hai (aakhri 5). Put back dabayein aur code likhein to pehle wala data wapas."],
+      ["Rozana auto backup", "Har school ka backup app khud banati hai: jis din school app chalaye, us din ki pehli activity par peeche copy ban jati hai (aakhri 14 din). Institutes → Manage aur school ke Data backup mein “Daily automatic backups”. Ye copies database ke andar hain, is liye mahine mein aik dafa pura backup Google Drive mein bhi rakhein."],
       ["School khud restore", "School admin bhi Institute settings → Data backup → Restore from a backup se apni file wapas laga sakta hai. Sirf SchoolMS se download hui, badli na gayi, apne school ki file chalti hai (file par server ka signature check hota hai); pura backup sirf aap laga sakte hain."],
       ["Recycle bin", "Schools ki delete ki hui cheezen 30 din unke Recycle bin mein rehti hain; school admin khud Restore kar sakta hai."],
       ["Sab kuch wapas lana", "Agar pura database kharab ho jaye: Claude ko pura backup dein aur kahein “is backup se data restore kar dein”. Ye sirf khaali database mein hota hai."],
-      ["Khud-ba-khud backup", "Free plan par mumkin nahi. Render paid plan lein to Claude rozana automatic backup laga sakta hai."],
     ],
   },
   {

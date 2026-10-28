@@ -13,6 +13,10 @@ DATABASES = {
     "default": dj_database_url.parse(os.environ.get("TEST_DATABASE_URL", f"sqlite:///{BASE_DIR / 'test.sqlite3'}"))
 }
 
+# Daily automatic backups are switched on only in their own tests (and run without a thread there).
+AUTO_BACKUP = False
+AUTO_BACKUP_ASYNC = False
+
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
 REST_FRAMEWORK = {

@@ -266,6 +266,12 @@ Shared database, every institute-owned row has a `tenant_id`.
   or a backup without the admin's own login is refused; admins can list and put back saved copies but not download
   them (they hold payment keys).
 
+- Daily automatic backups (`apps.backups.auto`): the free server has no scheduler, so `AutoBackupMiddleware` makes
+  the day's copy in a background thread after an institute user's first request of the day (institute timezone).
+  Stored as `InstituteSnapshot(kind="auto", day=...)`, one per day (unique constraint), last 14 kept. Listed with
+  the restore copies; the institute downloads them without keys. They live in the same database, so the owner's
+  monthly full download to Drive is still needed. Off in tests (`AUTO_BACKUP = False`).
+
 ## Recycle bin
 
 - Deletes in institute modules go through `apps.recyclebin.services.trash()` (or `RecycleBinMixin`): the object and

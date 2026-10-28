@@ -201,9 +201,10 @@ def test_school_admin_restores_its_own_signed_file(api, admin_a, school_a, make_
     snap = InstituteSnapshot.objects.get(tenant=school_a)
     assert snap.created_by_id == admin_a.pk
 
-    # Saved copies: listed and put back, never downloaded by the school (they hold payment keys).
+    # Saved copies: listed, downloaded without the payment keys, and put back.
     assert [s["id"] for s in api.get("/api/institute/backup/snapshots/").json()] == [snap.pk]
-    assert api.get(f"/api/institute/backup/snapshots/{snap.pk}/").status_code == 404
+    copy = json.loads(gzip.decompress(api.get(f"/api/institute/backup/snapshots/{snap.pk}/").content))
+    assert copy["with_secrets"] is False and "salt" not in json.dumps(copy)
     assert api.post(f"/api/institute/backup/snapshots/{snap.pk}/", {"confirm_code": "alpha"}, format="json").json()["restored"]
     assert set(Student.objects.filter(tenant=school_a).values_list("first_name", flat=True)) == {"Late"}
 
@@ -237,3 +238,57 @@ def test_school_admin_cannot_restore_changed_or_foreign_files(api, admin_a, scho
     newcomer = make_user("new_admin", Role.ADMIN, school_a)
     api.force_authenticate(newcomer)
     assert "lock you out" in str(api.post(url, {"file": upload(old)}, format="multipart").json())
+
+
+def test_daily_automatic_backup(api, admin_a, school_a, make_tenant, make_user, super_admin, settings, monkeypatch):
+    from apps.backups import auto
+
+    settings.AUTO_BACKUP = True
+    auto._done.clear()
+    beta = make_tenant("beta")
+    GatewayAccount.objects.create(tenant=school_a, provider="jazzcash", merchant_id="M", password="pw", secret="salt")
+    Student.objects.create(tenant=school_a, admission_no="1", first_name="Zara", gender="female")
+    daily = InstituteSnapshot.objects.filter(kind=InstituteSnapshot.AUTO)
+
+    api.force_authenticate(super_admin)  # the owner's own use backs up nothing
+    api.get("/api/platform/tenants/")
+    assert not daily.exists()
+    api.force_authenticate(admin_a)
+    api.get("/api/students/")
+    api.get("/api/students/")
+    assert daily.filter(tenant=school_a).count() == 1 and not daily.filter(tenant=beta).exists()
+    status = api.get("/api/institute/backup/status/").json()
+    assert status["last_auto"] is not None
+
+    # Each new day of use adds one; copies older than 14 days are removed.
+    first = daily.get()
+    for n in range(1, 16):
+        day = first.day + datetime.timedelta(days=n)
+        monkeypatch.setattr(auto, "tenant_today", lambda tenant, day=day: day)
+        auto._done.clear()
+        api.get("/api/students/")
+    days = sorted(daily.filter(tenant=school_a).values_list("day", flat=True))
+    assert len(days) == 14 and days[-1] == first.day + datetime.timedelta(days=15)
+
+    # The school downloads a daily copy without keys and can put it back; the owner's copy keeps them.
+    latest = daily.filter(tenant=school_a).first()
+    listed = api.get("/api/institute/backup/snapshots/").json()
+    assert listed[0]["kind"] == "auto" and len(listed) == 14
+    school_copy = json.loads(gzip.decompress(api.get(f"/api/institute/backup/snapshots/{latest.pk}/").content))
+    assert school_copy["with_secrets"] is False and "salt" not in json.dumps(school_copy)
+    Student.objects.filter(tenant=school_a).delete()
+    assert api.post(f"/api/institute/backup/snapshots/{latest.pk}/", {"confirm_code": "alpha"}, format="json").json()["restored"]
+    assert Student.objects.filter(tenant=school_a, first_name="Zara").exists()
+    assert GatewayAccount.objects.get(tenant=school_a).secret == "salt"
+    assert daily.filter(tenant=school_a).count() == 14  # putting back keeps the daily copies
+    api.force_authenticate(super_admin)
+    owner_copy = gzip.decompress(api.get(f"/api/platform/tenants/{school_a.pk}/snapshots/{latest.pk}/").content)
+    assert b"salt" in owner_copy
+
+    # Nothing happens when switched off.
+    settings.AUTO_BACKUP = False
+    auto._done.clear()
+    make_user("admin_b2", Role.ADMIN, beta)
+    api.force_authenticate(User.objects.get(username="admin_b2"))
+    api.get("/api/students/")
+    assert not daily.filter(tenant=beta).exists()

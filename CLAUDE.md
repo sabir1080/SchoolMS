@@ -67,7 +67,7 @@ Then: fee receipts + payment message ✅ → online admission form ✅ → stude
 platform owner dashboard ✅ → PWA + Web Push notifications ✅ → Safepay + Stripe ✅ → backups ✅
 (`apps.backups`: download on platform overview, `restore_backup` command) → subscription agreements ✅
 (`apps.agreements`: trial accepted at registration, sign before paying, activated by record-payment). → per-institute backup, Excel,
-single-institute restore with undo snapshots (owner, and admins with signed files) ✅ (`apps.backups.institute`) → recycle bin, 30 days ✅ (`apps.recyclebin`). Not yet: library, transport.
+single-institute restore with undo snapshots (owner, and admins with signed files) ✅ → daily auto backup ✅ (`apps.backups.auto`, on first use each day, 14 days) (`apps.backups.institute`) → recycle bin, 30 days ✅ (`apps.recyclebin`). Not yet: library, transport.
 - Agreement wording lives in `apps/agreements/texts.py`; changing it means bumping the VERSION constants.
 
 - Payments: a gateway payment counts only after server-side verification (signature, read-back or IPN).

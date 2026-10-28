@@ -20,6 +20,8 @@ interface Preview {
 
 interface Snapshot {
   id: number;
+  kind: "restore" | "auto";
+  day: string | null;
   reason: string;
   size_bytes: number;
   created_at: string;
@@ -194,43 +196,48 @@ export function TenantBackups({ tenantId, code }: { tenantId?: number; code: str
         )}
       </div>
 
-      {snapshots.length > 0 && (
-        <div className="mt-3">
-          <p className="text-sm font-medium">Copies saved before a restore</p>
-          <ul className="divide-y divide-slate-200 text-sm dark:divide-slate-800">
-            {snapshots.map((s) => (
-              <li key={s.id} className="py-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span>
-                    {formatDate(s.created_at)} · {s.reason} · {Math.max(1, Math.round(s.size_bytes / 1024))} KB
-                  </span>
-                  <span className="flex gap-3">
-                    {owner && (
-                      <button
-                        type="button"
-                        className="text-brand-600 hover:underline"
-                        onClick={() => run(() => downloadFile(`${base}/snapshots/${s.id}/`, `${code}-saved.json.gz`))}
-                      >
-                        Download
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      className="text-brand-600 hover:underline"
-                      onClick={() => {
-                        setPutBack(s);
-                        setConfirm("");
-                      }}
-                    >
-                      Put back
-                    </button>
-                  </span>
-                </div>
-                {putBack?.id === s.id && confirmBox(restoreSnapshot, "Put this copy back", () => setPutBack(null))}
-              </li>
-            ))}
-          </ul>
-        </div>
+      {[
+        { title: "Copies saved before a restore", items: snapshots.filter((s) => s.kind !== "auto"), testId: "restore-copies" },
+        { title: "Daily automatic backups (last 14 days)", items: snapshots.filter((s) => s.kind === "auto"), testId: "daily-backups" },
+      ].map(
+        (group) =>
+          group.items.length > 0 && (
+            <div key={group.testId} className="mt-3" data-testid={group.testId}>
+              <p className="text-sm font-medium">{group.title}</p>
+              <ul className="divide-y divide-slate-200 text-sm dark:divide-slate-800">
+                {group.items.map((s) => (
+                  <li key={s.id} className="py-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span>
+                        {formatDate(s.created_at)}, {new Date(s.created_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                        {s.kind !== "auto" && ` · ${s.reason}`} · {Math.max(1, Math.round(s.size_bytes / 1024))} KB
+                      </span>
+                      <span className="flex gap-3">
+                        <button
+                          type="button"
+                          className="text-brand-600 hover:underline"
+                          onClick={() => run(() => downloadFile(`${base}/snapshots/${s.id}/`, `${code}-saved.json.gz`))}
+                        >
+                          Download
+                        </button>
+                        <button
+                          type="button"
+                          className="text-brand-600 hover:underline"
+                          onClick={() => {
+                            setPutBack(s);
+                            setConfirm("");
+                          }}
+                        >
+                          Put back
+                        </button>
+                      </span>
+                    </div>
+                    {putBack?.id === s.id && confirmBox(restoreSnapshot, "Put this copy back", () => setPutBack(null))}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ),
       )}
       <ErrorBox error={error} />
       {message && <p className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</p>}
