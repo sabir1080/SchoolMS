@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { AuthCard } from "@/components/AuthCard";
+import { ExpiredNotice } from "@/components/ExpiredNotice";
 import { Button, ErrorBox, Field, PasswordField } from "@/components/ui";
 import { ApiError, api, savedInstitute, type SavedInstitute } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -173,6 +174,7 @@ function CredentialsStep({
 
   return (
     <AuthCard title={institute.name} subtitle="Sign in to continue" logo={institute.brand?.logo}>
+      <ExpiredNotice />
       <div className="flex items-center justify-between gap-3 rounded-lg bg-slate-100 px-3 py-2 text-sm dark:bg-slate-800">
         <span>
           Institute code: <span className="font-semibold">{institute.slug}</span>

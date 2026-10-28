@@ -134,6 +134,44 @@ export const savedInstitute = {
   },
 };
 
+/** Fired when the saved login can no longer be used (expired or refused); the app goes back to the login page. */
+export const SESSION_EXPIRED_EVENT = "sms:session-expired";
+const EXPIRED_KEY = "sms_expired";
+const LOGIN_PATHS = ["/api/auth/login/", "/api/auth/platform-login/", "/api/auth/refresh/"];
+
+function sessionExpired(path: string) {
+  if (LOGIN_PATHS.some((p) => path.startsWith(p))) return;
+  tokens.clear();
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+}
+
+/** Remembers (for this tab) that the last login ran out, so the login page can say so. */
+export const expiredNotice = {
+  set(role: string) {
+    try {
+      window.sessionStorage.setItem(EXPIRED_KEY, role);
+    } catch {
+      /* private mode: no notice */
+    }
+  },
+  take(): string | null {
+    try {
+      const role = window.sessionStorage.getItem(EXPIRED_KEY);
+      window.sessionStorage.removeItem(EXPIRED_KEY);
+      return role;
+    } catch {
+      return null;
+    }
+  },
+  peek(): string | null {
+    try {
+      return window.sessionStorage.getItem(EXPIRED_KEY);
+    } catch {
+      return null;
+    }
+  },
+};
+
 async function refreshAccessToken(): Promise<boolean> {
   const refresh = tokens.refresh;
   if (!refresh) return false;
@@ -171,6 +209,7 @@ export async function api<T = unknown>(path: string, init: RequestInit = {}, ret
   if (res.status === 401 && retry && tokens.refresh && (await refreshAccessToken())) {
     return api<T>(path, init, false);
   }
+  if (res.status === 401) sessionExpired(path);
   const body = res.status === 204 ? null : await res.json().catch(() => null);
   if (!res.ok) throw new ApiError(res.status, body);
   return body as T;
@@ -187,6 +226,7 @@ export async function downloadFile(path: string, fallbackName: string, retry = t
     throw new ApiError(0, { detail: "Cannot reach the server. Check your internet connection and try again." });
   }
   if (res.status === 401 && retry && tokens.refresh && (await refreshAccessToken())) return downloadFile(path, fallbackName, false);
+  if (res.status === 401) sessionExpired(path);
   if (!res.ok) throw new ApiError(res.status, await res.json().catch(() => null));
   const name = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") ?? "")?.[1] ?? fallbackName;
   const url = URL.createObjectURL(await res.blob());

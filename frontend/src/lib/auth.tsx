@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 import { applyBrand } from "./brand";
-import { ApiError, api, savedInstitute, tokens, type LoginResponse, type Subscription, type User } from "./api";
+import { ApiError, SESSION_EXPIRED_EVENT, api, expiredNotice, savedInstitute, tokens, type LoginResponse, type Subscription, type User } from "./api";
 
 interface AuthState {
   user: User | null;
@@ -56,6 +56,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(restore, [restore]);
+
+  // The saved login ran out (or was refused) while the app was open: back to the login page with a notice.
+  useEffect(() => {
+    const onExpired = () => {
+      setUser((current) => {
+        expiredNotice.set(current?.role ?? "user");
+        return null;
+      });
+      setSubscription(null);
+    };
+    window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
+  }, []);
 
   const acceptLogin = useCallback(async (data: LoginResponse) => {
     tokens.set(data.access, data.refresh);

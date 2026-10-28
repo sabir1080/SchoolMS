@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 import { BrandLogo } from "@/components/BrandLogo";
 import { InstallApp } from "@/components/InstallApp";
+import { expiredNotice } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { ALWAYS_OPEN, NAV_BY_ROLE, ROLE_LABELS } from "@/lib/navigation";
 
@@ -18,7 +19,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const locked = Boolean(user?.tenant && subscription && !subscription.is_usable);
 
   useEffect(() => {
-    if (!loading && !user && !unreachable) router.replace("/login");
+    if (!loading && !user && !unreachable) router.replace(expiredNotice.peek() === "super_admin" ? "/platform/login" : "/login");
   }, [user, loading, unreachable, router]);
 
   useEffect(() => {

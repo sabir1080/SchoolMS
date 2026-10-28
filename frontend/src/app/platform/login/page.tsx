@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { AuthCard } from "@/components/AuthCard";
+import { ExpiredNotice } from "@/components/ExpiredNotice";
 import { Button, ErrorBox, Field, PasswordField } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
 
@@ -34,6 +35,7 @@ export default function PlatformLoginPage() {
   return (
     <AuthCard title="Platform admin" subtitle="Sign in to manage institutes and subscriptions">
       <form onSubmit={onSubmit} className="space-y-4">
+        <ExpiredNotice />
         <Field
           label="Username"
           value={username}
@@ -57,3 +59,4 @@ export default function PlatformLoginPage() {
     </AuthCard>
   );
 }
+
