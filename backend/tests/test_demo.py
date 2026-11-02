@@ -62,3 +62,45 @@ def test_seed_twice_replaces_demo_and_wipe_keeps_platform(db, make_tenant, super
     assert Tenant.objects.count() == 0 and Student.objects.count() == 0 and Mark.objects.count() == 0
     assert User.objects.filter(role=Role.SUPER_ADMIN).exists() or User.objects.filter(is_superuser=True).exists()
     assert Plan.objects.count() == 3
+
+
+def test_scholars_school_nursery_to_class_3_with_photos(db, api):
+    from apps.academics.models import Section
+    from apps.students.models import Enrollment
+    from apps.tenants.demo import SCHOLARS, seed_school
+
+    seed_demo(today=TODAY)
+    tenant = seed_school(SCHOLARS, today=TODAY)
+    assert tenant.slug == "scholars" and tenant.subscription.is_usable
+    assert Tenant.objects.filter(slug="demo").exists()  # the other demo school is left alone
+    sections = Section.objects.filter(tenant=tenant)
+    assert sorted(f"{s.program.name} {s.name}" for s in sections) == sorted(
+        f"{c} {s}" for c in ["Nursery", "Prep", "Class 1", "Class 2", "Class 3"] for s in "AB"
+    )
+    for section in sections:
+        assert 18 <= Enrollment.objects.filter(section=section).count() <= 21
+    students = Student.objects.filter(tenant=tenant)
+    assert students.count() == 201
+    assert all(s.photo.startswith("data:image/jpeg;base64,") and len(s.photo) < 140_000 for s in students)
+    # Every student in a class has a different photo, and the photos match the class's age group
+    for section in sections:
+        photos = list(Student.objects.filter(enrollments__section__program=section.program).values_list("photo", flat=True))
+        assert len(set(photos)) == len(photos)
+    ages = {
+        name: {TODAY.year - d.year for d in Student.objects.filter(
+            tenant=tenant, enrollments__section__program__name=name).values_list("date_of_birth", flat=True)}
+        for name in ["Nursery", "Class 3"]
+    }
+    assert ages == {"Nursery": {4}, "Class 3": {8}}
+    assert Invoice.objects.filter(tenant=tenant).values("period").distinct().count() == 6
+    assert Mark.objects.filter(tenant=tenant).count() > 1000
+    assert AttendanceRecord.objects.filter(tenant=tenant).count() > 5000
+    # Logins: admin, class teacher, parent with two children, student; the student's photo is on the ID card
+    for username in ["admin", "teacher", "parent", "student", "rabia"]:
+        res = api.post("/api/auth/login/", {"institute_code": "scholars", "username": username, "password": "demo1234"}, format="json")
+        assert res.status_code == 200, (username, res.json())
+    res = api.post("/api/auth/login/", {"institute_code": "scholars", "username": "parent", "password": "demo1234"}, format="json")
+    api.credentials(HTTP_AUTHORIZATION=f"Bearer {res.json()['access']}")
+    assert {c["full_name"] for c in api.get("/api/me/children/").json()} == {"Hamza Siddiqui", "Anaya Siddiqui"}
+    call_command("seed_demo", "--school", "scholars")
+    assert Tenant.objects.filter(slug="scholars").count() == 1 and Tenant.objects.filter(slug="demo").exists()

@@ -7,7 +7,8 @@ python manage.py collectstatic --no-input
 python manage.py migrate --no-input
 python manage.py ensure_superadmin
 # One-time demo reset: runs only when SEED_DEMO_COMMIT is set to exactly this deploy's commit,
-# so it can never run again on a later deploy.
+# so it can never run again on a later deploy. SEED_DEMO_SCHOOL picks the school (demo, scholars or all;
+# default demo); only that institute is rebuilt.
 if [ -n "$SEED_DEMO_COMMIT" ] && [ "$SEED_DEMO_COMMIT" = "$RENDER_GIT_COMMIT" ]; then
-  python manage.py seed_demo
+  python manage.py seed_demo --school "${SEED_DEMO_SCHOOL:-demo}"
 fi

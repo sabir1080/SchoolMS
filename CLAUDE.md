@@ -46,6 +46,10 @@ and tuition centers). See README.md for stack, structure and API.
 - Free plan has no one-off jobs. To run `seed_demo` (rebuilds only the demo institute) on production (only when the owner
   asks): set env var `SEED_DEMO_COMMIT` to the deployed commit SHA, trigger a deploy of that commit,
   check the logs, then DELETE the env var. Demo institute: code `demo`, password `demo1234`.
+  `SEED_DEMO_SCHOOL` picks which demo school is rebuilt (`demo` default, `scholars`, or `all`); delete it too.
+  Second demo: "Little Scholars School", code `scholars` (Nursery-Class 3, sections A/B, ~20 students each,
+  illustrated photos from `apps/tenants/demo_photos`, drawn by `backend/tools/demo_photos.mjs`), logins
+  admin/teacher/parent/student, password `demo1234`.
 
 ## Roadmap
 
