@@ -175,6 +175,8 @@ SCHOLARS = {
         "Drawing": ["Colour the apple in your drawing book", "Draw a house and a tree", "Make a paper boat"],
     },
     "photos": True,
+    # Photos the owner supplied for a few students (class, section, roll); everyone else keeps a drawing.
+    "real_photos": {("Class 1", "A", 1): "real_1_b.jpg", ("Class 3", "A", 1): "real_4_b.jpg"},
     "applications": [
         ("Zoya", "Mirza", "female", (3, 9), "Babar Mirza", "0302-5550303", "father", "Gulistan-e-Johar, Karachi", "Seat required in Nursery."),
         ("Ayaan", "Memon", "male", (6, 21), "Sadia Memon", "0345-5550404", "mother", "PECHS, Karachi", ""),
@@ -351,6 +353,9 @@ def seed_school(spec, today=None):
             key = (level[section_key[0]], "g" if gender == "female" else "b")
             photo = student_photo(key[0], key[1], photo_count.get(key, 0))
             photo_count[key] = photo_count.get(key, 0) + 1
+            real = spec.get("real_photos", {}).get((*section_key, roll))
+            if real:
+                photo = "data:image/jpeg;base64," + base64.b64encode((PHOTO_DIR / real).read_bytes()).decode()
         student = Student.objects.create(
             tenant=tenant, admission_no=str(seq), admission_seq=seq, first_name=first, last_name=last, gender=gender,
             date_of_birth=datetime.date(birth_year, rng.randint(1, 12), rng.randint(1, 28)),

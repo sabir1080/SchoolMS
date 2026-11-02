@@ -1,3 +1,4 @@
+import base64
 import datetime
 
 from django.core.management import call_command
@@ -92,6 +93,11 @@ def test_scholars_school_nursery_to_class_3_with_photos(db, api):
         for name in ["Nursery", "Class 3"]
     }
     assert ages == {"Nursery": {4}, "Class 3": {8}}
+    from apps.tenants.demo import PHOTO_DIR
+    for cls, file in [("Class 1", "real_1_b.jpg"), ("Class 3", "real_4_b.jpg")]:
+        first = Enrollment.objects.get(section__tenant=tenant, section__program__name=cls, section__name="A", roll_number="1")
+        assert first.student.photo.endswith(base64.b64encode((PHOTO_DIR / file).read_bytes()).decode())
+    assert Student.objects.filter(tenant=tenant, photo__contains=base64.b64encode((PHOTO_DIR / "real_1_b.jpg").read_bytes()).decode()[-40:]).count() == 1
     assert Invoice.objects.filter(tenant=tenant).values("period").distinct().count() == 6
     assert Mark.objects.filter(tenant=tenant).count() > 1000
     assert AttendanceRecord.objects.filter(tenant=tenant).count() > 5000
